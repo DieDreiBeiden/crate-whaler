@@ -22,6 +22,8 @@ Diese ID ist öffentlich: Sie steht bei jedem Aufruf in der Anfrage an Wargaming
 2. Unter Settings → Pages: „Deploy from a branch“ wählen, Branch `main`, Ordner `/ (root)`.
 3. Nach etwa einer Minute ist die Seite unter `https://<name>.github.io/<repo>/` erreichbar.
 
+Live-Adresse: https://whaling.starbane.de (Datei `CNAME`, DNS bei Strato als CNAME auf `diedreibeiden.github.io`).
+
 Cloudflare Pages, Netlify oder ein eigener Webspace funktionieren genauso. Die Seite muss nur unter HTTPS und einer festen Adresse laufen. Als Rücksprung-Adresse nach dem Login nutzt sie automatisch ihre eigene Adresse.
 
 ## Ablauf für Nutzer
