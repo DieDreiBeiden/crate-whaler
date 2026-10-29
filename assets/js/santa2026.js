@@ -15,8 +15,8 @@ const SANTA_GROUPS = {
     7: "Nueve de Julio|Yukon|Tashkent '39|Leningrad|Arkhangelsk|Poltava|Yūdachi|Maya|Tokachi|Hyūga|Ashitaka|FR25|Gorizia|Francesco Ferruccio|Duca degli Abruzzi|Weimar|München|Scharnhorst|Toulon|Strasbourg|Jupiter '42|Royal Sovereign|Rodney|Collingwood|Hood|Sims|Boise|Indianapolis|Atlanta|California|Florida",
     6: "Xin Zhong Guo'14|Elli|Juruá|Mysore|Admiral Makarov|Ise|Mutsu|Béarn|Orion '44|Monaghan",
     5: "Rio de Janeiro|Okhotnik|Krasny Krym|Exeter|Hill" } },
-  GR: { label: "Golden: neue Schiffe", tiers: { 10: "Latouche-Tréville|Tōgasa", 0: "Rodina" } },
-  GG: { label: "Golden: Gold-Versionen und Naval Legacy", tiers: { 10: "Tōgasa G|Somers G", 8: "Tywysog Cymru", 0: "Rodina G" } },
+  GR: { label: "Golden: neue Schiffe", tiers: { 10: "Latouche-Tréville|Tōgasa|Rodina" } },
+  GG: { label: "Golden: Gold-Versionen und Naval Legacy", tiers: { 10: "Tōgasa G|Somers G|Rodina G", 8: "Tywysog Cymru" } },
   NJ: { label: "Battle Forged", tiers: { 0: "New Jersey BF" } }
 };
 const B = (p, res) => ({ p, res });
