@@ -6,7 +6,7 @@
 <title>WoWs Santa-Rechner</title>
 <meta name="description" content="Santa-Event 15.11: Hafen per Wargaming-Login einlesen, Schneeflocken planen, Santa's, Golden und Battle Forged Container simulieren.">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kHfLBsVMoFwT+iEtKmvGOKWSnrjwfOakjm6499wzUnk=' 'sha256-tTJ8wJw2iZGP8AD04exMCIw32Md3xRhoBSCo4VYlTQI=' 'sha256-gK/iFZu0ZVPygnEtER6TNT8BoUKaM9TlA67QwRJd8Rw='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kHfLBsVMoFwT+iEtKmvGOKWSnrjwfOakjm6499wzUnk=' 'sha256-tTJ8wJw2iZGP8AD04exMCIw32Md3xRhoBSCo4VYlTQI=' 'sha256-+/PWVOkcvFiX3EmLXL9YZ9oKDbIlpQ+vQNeqZOzmud0='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
 <style>
 /* Schriften lokal (SIL Open Font License, siehe fonts/), keine Anfragen an Google */
 @font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/barlow-condensed-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
@@ -723,7 +723,6 @@ function renderAccount() {
   $("skipLogin").hidden = pendingLogin;
   $("gateTitle").textContent = pendingLogin ? "Anmeldung erfolgreich" : "Server wählen und anmelden";
   $("gateSub").textContent = pendingLogin ? `Willkommen, ${session.nick || session.account}. Dein Hafen wird geladen …` : "Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.";
-  document.querySelectorAll("[data-realm]").forEach((b) => { b.disabled = !appId(); });
   $("accountBox").hidden = !logged;
   $("userbar").hidden = !logged || gate;
   if (!logged) return;
@@ -740,7 +739,7 @@ $("skipLogin").addEventListener("click", () => setSource("manual"));
 $("appId").addEventListener("input", (e) => { store.set("appId", e.target.value.trim()); renderAccount(); });
 
 document.querySelectorAll("[data-realm]").forEach((b) => b.addEventListener("click", () => {
-  if (!appId()) { importMsg("Erst die Application ID eintragen.", "err"); return; }
+  if (!appId()) { importMsg("Für die Anmeldung fehlt noch die Wargaming Application ID. Trag sie oben ein (oder in index.html bei WG_APPLICATION_ID).", "err"); $("appId").focus(); return; }
   const realm = b.dataset.realm;
   const back = `${selfUrl()}?realm=${realm}`;
   const exp = Math.floor(Date.now() / 1000) + 14 * 86400;
