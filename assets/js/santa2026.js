@@ -17,7 +17,7 @@ const SANTA_GROUPS = {
     5: "Rio de Janeiro|Okhotnik|Krasny Krym|Exeter|Hill" } },
   GR: { label: "Golden: neue Schiffe", tiers: { 10: "Latouche-Tréville|Tōgasa|Rodina" } },
   GG: { label: "Golden: Gold-Versionen und Naval Legacy", tiers: { 10: "Tōgasa G|Somers G|Rodina G", 8: "Tywysog Cymru" } },
-  NJ: { label: "Battle Forged", tiers: { 0: "New Jersey BF" } }
+  NJ: { label: "Battle Forged", tiers: { 10: "New Jersey BF" } }
 };
 const B = (p, res) => ({ p, res });
 const CONTAINER_DEFS = {
