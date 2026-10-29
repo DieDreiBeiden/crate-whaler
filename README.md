@@ -16,8 +16,8 @@ Dann http://localhost:8000 öffnen.
 |---|---|
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
 | `assets/js/boot.js` | Wargaming Application ID, Farbschema vor dem ersten Zeichnen |
-| `assets/js/app.js` | Seitenlogik: Login, Tabelle „Wie viele Container“, Plan, Schiffsliste |
-| `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`) und benötigte Container je Stufe (`runNeeds`) |
+| `assets/js/app.js` | Seitenlogik: Login, Tabelle „Wie viele Container“, Kaufplan in Paketen, Plan, Schiffsliste |
+| `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`), Container je Stufe (`runNeeds`), Meilensteine je Paket (`runMilestones`), Golden-Gift-Zähler (`runPityTable`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
 | `assets/js/santa2026.js` | Drop-Tabellen und Schiffslisten des Events |
 | `assets/js/ships.js` | Schiffsdaten (ID, Name, Stufe, Typ, Testschiff) |
@@ -59,3 +59,12 @@ Ohne Login lässt sich der Hafen auch von Hand eingeben.
 ## Lizenz
 
 Rechenlogik und Schiffsdaten stammen aus https://github.com/Rukenshia/shipwhaling (GPL-3.0), deshalb steht auch diese Seite unter GPL-3.0.
+
+## Modellannahmen
+
+Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine und Ertrag je Paket stimmen auf ±3 % überein.
+
+- Garantie zählt Container ohne Schiff und setzt sich bei jedem Schiffsdrop zurück.
+- Ein leerer Pool gibt seinen Anteil gewichtet an die übrigen Pools ab, erst ohne fehlende Schiffe gibt es Stahl.
+- Golden Gift: erst die 3 regulären Schiffe, dann die 4 Gold-Schiffe, danach ersetzt der Battle Forged Container den Schiffsplatz. Ob die Golden-Gift-Garantie auch für den Battle Forged Container gilt, ist offen und auf der Seite umschaltbar.
+- Unterschied zu `santa_sim.py`: Die Seite lässt die Container-Garantie weiterlaufen, wenn dem Container keine Schiffe mehr fehlen (dann Stahl statt Golden-Gift-Chance). Das macht die Golden-Gift-Ziele rund 3 % teurer.

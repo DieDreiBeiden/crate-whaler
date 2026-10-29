@@ -45,7 +45,9 @@ function openContainer(type, ctx) {
     }
     const pity = ctx.pity[type] || 0;
     const N = ctx.pityCfg[type];
-    const forced = N > 0 && pity + 1 >= N;
+    // Optional: Golden-Gift-Garantie greift nicht mehr, wenn statt eines Schiffs nur noch Battle Forged käme
+    const bfOnly = def.golden && ctx.bfPity === false && !availIn("GR", ctx.owned).length && !availIn("GG", ctx.owned).length;
+    const forced = N > 0 && pity + 1 >= N && !bfOnly;
     const pool = forced ? entries.filter((e) => e.ship) : entries;
     const e = pickWeighted(pool, pool.reduce((a, x) => a + x.p, 0));
     if (!e.ship) {
@@ -151,6 +153,71 @@ function runNeeds({ ownedKeys, type, pityCfg, runs, targets, tiers, cap }) {
     const a = samples[t.id].sort((x, y) => x - y);
     const q = (f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
     out[t.id] = { p50: q(0.5), p90: q(0.9) };
+  }
+  return out;
+}
+
+// Kaufplan: Container eines Typs paketweise öffnen, bis New Jersey BF da ist und dem Container kein Schiff mehr fehlt.
+// Golden Gift und Battle Forged aus Drops werden sofort geöffnet.
+// Gibt je Meilenstein Ø, Median und 90 % in Containern zurück, dazu Ø neue Schiffe je Paket.
+function runMilestones({ ownedKeys, type, pityCfg, runs, pack, cap, bfPity, maxPacks }) {
+  const base = new Set(ownedKeys);
+  const poolKeys = [...new Set(CONTAINER_DEFS[type].slots.flat().filter((e) => e.ship).map((e) => e.ship))].flatMap((g) => GROUP_SHIPS[g].map((s) => s.key));
+  const has = (owned, keys) => keys.every((k) => owned.has(k));
+  const GR = GROUP_SHIPS.GR.map((s) => s.key), ALL7 = GR.concat(GROUP_SHIPS.GG.map((s) => s.key)), NJ = GROUP_SHIPS.NJ.map((s) => s.key);
+  const goals = { pool: (o) => has(o, poolKeys), reg3: (o) => has(o, GR), all7: (o) => has(o, ALL7), nj: (o) => has(o, NJ) };
+  const times = Object.fromEntries(Object.keys(goals).map((k) => [k, []]));
+  const yields = new Array(maxPacks + 1).fill(0);
+  for (let r = 0; r < runs; r++) {
+    const ctx = { owned: new Set(base), pity: {}, pityCfg, bfPity };
+    const t = {};
+    for (const [k, f] of Object.entries(goals)) if (f(ctx.owned)) t[k] = 0;
+    let n = 0;
+    while ((t.nj === undefined || t.pool === undefined) && n < cap) {
+      n++;
+      let got = 0;
+      const queue = [type];
+      while (queue.length) {
+        const o = openContainer(queue.shift(), ctx);
+        got += o.ships.length;
+        for (const g of o.give) queue.push(g);
+      }
+      const p = Math.ceil(n / pack);
+      if (p <= maxPacks) yields[p] += got;
+      for (const [k, f] of Object.entries(goals)) if (t[k] === undefined && f(ctx.owned)) t[k] = n;
+    }
+    for (const k of Object.keys(goals)) times[k].push(t[k] === undefined ? Infinity : t[k]);
+  }
+  const out = { yields: yields.map((v) => v / runs) };
+  for (const [k, a] of Object.entries(times)) {
+    a.sort((x, y) => x - y);
+    const fin = a.filter(Number.isFinite);
+    out[k] = { done: a[a.length - 1] === 0, mean: fin.length === a.length ? fin.reduce((s, v) => s + v, 0) / a.length : Infinity,
+      p50: a[Math.floor(a.length / 2)], p90: a[Math.min(a.length - 1, Math.floor(a.length * 0.9))] };
+  }
+  return out;
+}
+
+// Chance auf einen Treffer im Golden Gift (Schiff oder Battle Forged) innerhalb des nächsten Pakets,
+// je nach Golden-Gift-Zählerstand 0 … Garantie-1. Zähler des Hauptcontainers startet bei 0.
+function runPityTable({ ownedKeys, type, pityCfg, runs, pack, bfPity }) {
+  const base = new Set(ownedKeys);
+  const N = pityCfg.golden, out = [];
+  for (let c = 0; c < N; c++) {
+    let hits = 0;
+    for (let r = 0; r < runs; r++) {
+      const ctx = { owned: new Set(base), pity: { golden: c }, pityCfg, bfPity };
+      let hit = false;
+      for (let i = 0; i < pack && !hit; i++) {
+        const o = openContainer(type, ctx);
+        for (const g of o.give) if (g === "golden") {
+          const og = openContainer("golden", ctx);
+          if (og.ships.length || og.give.includes("bf")) hit = true;
+        }
+      }
+      if (hit) hits++;
+    }
+    out.push(hits / runs);
   }
   return out;
 }

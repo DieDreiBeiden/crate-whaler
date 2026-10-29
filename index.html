@@ -121,6 +121,58 @@
     <p class="mini" id="needsNote"></p>
   </section>
 
+  <!-- ============ KAUFPLAN ============ -->
+  <section class="panel" aria-labelledby="buyTitle">
+    <div class="panel-head">
+      <h2 id="buyTitle">Kaufplan in Paketen</h2>
+      <span class="calc-state" id="buyState" role="status"></span>
+    </div>
+    <p class="lede">Wie viele Pakete du bis zu jedem Ziel brauchst, mit deinem Hafen. Golden Gift und Battle Forged aus den Drops werden sofort geöffnet.</p>
+    <div class="fields">
+      <label class="f">Container
+        <select id="b-type">
+          <option value="ultra">Ultra Gift</option>
+          <option value="mega">Mega Gift</option>
+          <option value="santa">Santa's Gift</option>
+        </select>
+      </label>
+      <label class="f">Container je Paket <input type="number" inputmode="numeric" min="1" id="b-pack" value="20"></label>
+      <label class="f">Preis je Paket (€) <input type="number" inputmode="decimal" min="0" step="0.01" id="b-price" value="123"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="b-bfpity" checked> Golden-Gift-Garantie gilt auch für den Battle Forged Container</label>
+
+    <div class="tbl"><table class="buy-table">
+      <thead><tr>
+        <th scope="col">Ziel</th>
+        <th scope="col" class="num col-miss">Ø Container</th>
+        <th scope="col" class="num">50 % Chance</th>
+        <th scope="col" class="num">90 % Chance</th>
+      </tr></thead>
+      <tbody id="buyBody"></tbody>
+    </table></div>
+    <p class="mini">Die Ziele bauen aufeinander auf: Jedes spätere schließt die früheren ein, die Kosten werden nicht addiert.</p>
+
+    <details class="plain">
+      <summary>Ertrag je Paket</summary>
+      <div class="tbl" style="margin-top: 6px;"><table>
+        <thead><tr><th scope="col">Paket</th><th scope="col" class="num">Ø neue Schiffe</th><th scope="col" class="num">€ je neuem Schiff</th></tr></thead>
+        <tbody id="yieldBody"></tbody>
+      </table></div>
+    </details>
+
+    <div class="pity-box">
+      <h3>Noch ein Paket kaufen?</h3>
+      <div class="row">
+        <label class="f" style="flex: 0 1 260px;">Golden Gifts seit dem letzten Golden-Gift-Schiff
+          <input type="number" inputmode="numeric" min="0" id="b-counter" value="0">
+        </label>
+        <p class="pity-verdict" id="pityVerdict" role="status"></p>
+      </div>
+      <div class="pitygrid" id="pityGrid" aria-label="Chance auf ein Golden-Gift-Schiff im nächsten Paket je Zählerstand"></div>
+      <p class="mini" id="pityNote"></p>
+    </div>
+  </section>
+
   <!-- ============ PLAN ============ -->
   <section class="stack" style="gap: 20px;" aria-label="Dein Plan">
     <div class="readout" id="contReadout" aria-live="polite"></div>

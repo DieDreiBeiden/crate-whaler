@@ -255,3 +255,30 @@ footer { font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--ru
   .needs-table th, .needs-table td { padding: 8px 6px; }
 }
 .needs-table td.wait { color: var(--ink-soft); animation: pulse 1.2s infinite ease-in-out; }
+
+/* ---------- Kaufplan ---------- */
+label.check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); font-size: 15px; cursor: pointer; }
+.buy-table th[scope="row"] { font-family: var(--body); font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); border-bottom: 1px solid var(--rule); }
+.buy-table td, .buy-table th { vertical-align: middle; }
+.buy-table .packs { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--ink); display: block; }
+.buy-table .eur { font-size: 13px; color: var(--ink-soft); }
+.buy-table tr.done th, .buy-table tr.done td { color: var(--ink-soft); }
+.pity-box { display: grid; gap: 10px; border-top: 1px solid var(--rule); padding-top: 14px; }
+.pity-verdict { font-weight: 600; align-self: center; flex: 1 1 220px; }
+.pity-verdict.buy { color: var(--good); }
+.pity-verdict.maybe { color: var(--brass); }
+.pity-verdict.stop { color: var(--ink-soft); }
+.pitygrid { display: grid; grid-template-columns: repeat(10, 1fr); border: 1px solid var(--rule); }
+.pitygrid div { display: grid; gap: 2px; text-align: center; padding: 8px 2px; border-right: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.pitygrid div:last-child { border-right: 0; }
+.pitygrid .z { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+.pitygrid .c { font-family: var(--mono); font-size: 14px; }
+.pitygrid .cur { background: var(--brass-soft); outline: 2px solid var(--brass); outline-offset: -2px; }
+.pitygrid .cur .c { font-weight: 500; }
+@media (max-width: 560px) {
+  .pitygrid { grid-template-columns: repeat(5, 1fr); }
+  .pitygrid div:nth-child(5) { border-right: 0; }
+  .pitygrid div:nth-child(-n+5) { border-bottom: 1px solid var(--rule); }
+  .buy-table .packs { font-size: 20px; }
+}
+@media (max-width: 560px) { .buy-table .col-miss { display: none; } }

@@ -276,6 +276,101 @@ document.querySelectorAll("[data-ctype]").forEach((b) => b.addEventListener("cli
 }));
 const scheduleNeeds = debounce(renderNeeds, 250);
 
+// ---------- Kaufplan in Paketen ----------
+const fmtEur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const BUY_RUNS = { ultra: 1000, mega: 600, santa: 200 }, BUY_CAP = 30000, BUY_MAX_PACKS = 15, PITY_RUNS = 2000;
+const GOALS = [
+  { id: "pool", label: (t) => `Alle Schiffe aus dem ${SHORT[t]}` },
+  { id: "reg3", label: () => "Latouche-Tréville, Rodina, Tōgasa" },
+  { id: "all7", label: () => "Alle 7 Golden-Gift-Schiffe" },
+  { id: "nj", label: () => "New Jersey BF" }
+];
+const buy = { type: "ultra", pack: 20, price: 123, bfPity: true, counter: 0, ...store.get("buy", {}) };
+if (!BUY_RUNS[buy.type]) buy.type = "ultra";
+$("b-type").value = buy.type; $("b-pack").value = buy.pack; $("b-price").value = buy.price;
+$("b-bfpity").checked = buy.bfPity; $("b-counter").value = buy.counter;
+
+let buyWorker = null, buyId = 0, buyResult = null, pityResult = null;
+const buyCache = new Map();
+try {
+  buyWorker = new Worker("assets/js/sim-worker.js");
+  buyWorker.onmessage = (e) => { const job = buyJobs.get(e.data.id); if (!job) return; buyJobs.delete(e.data.id); buyCache.set(job.key, e.data.result); if (job.key === buyKey(job.kind)) applyBuy(job.kind, e.data.result); };
+  buyWorker.onerror = () => { buyWorker = null; };
+} catch { buyWorker = null; }
+const buyJobs = new Map();
+
+function buyKey(kind) { return `${kind}|${buy.type}|${buy.pack}|${buy.bfPity}|${JSON.stringify(state.pity)}|${[...ownedSet()].sort().join(",")}`; }
+function buyParams() { return { ownedKeys: [...ownedSet()], type: buy.type, pityCfg: { ...state.pity }, pack: buy.pack, bfPity: buy.bfPity }; }
+function requestBuy() {
+  buyResult = pityResult = null;
+  const jobs = [["milestones", { ...buyParams(), runs: BUY_RUNS[buy.type], cap: BUY_CAP, maxPacks: BUY_MAX_PACKS }], ["pitytable", { ...buyParams(), runs: PITY_RUNS }]];
+  let pending = 0;
+  for (const [kind, params] of jobs) {
+    const key = buyKey(kind);
+    if (buyCache.has(key)) { applyBuy(kind, buyCache.get(key)); continue; }
+    pending++;
+    const id = ++buyId;
+    buyJobs.set(id, { kind, key });
+    if (buyWorker) buyWorker.postMessage({ id, kind, params });
+    else setTimeout(() => { const fn = kind === "milestones" ? runMilestones : runPityTable; const res = fn({ ...params, runs: Math.ceil(params.runs / 4) }); buyCache.set(key, res); if (key === buyKey(kind)) applyBuy(kind, res); }, 0);
+  }
+  if (pending) { $("buyState").dataset.busy = "true"; $("buyState").textContent = "Rechnet …"; }
+  drawBuy(); drawPity();
+}
+function applyBuy(kind, res) {
+  if (kind === "milestones") buyResult = res; else pityResult = res;
+  if (buyResult && pityResult) { $("buyState").dataset.busy = "false"; $("buyState").textContent = `${fmt.format(BUY_RUNS[buy.type])} Durchläufe`; }
+  if (kind === "milestones") drawBuy(); else drawPity();
+}
+const scheduleBuy = debounce(requestBuy, 300);
+
+function drawBuy() {
+  const r = buyResult;
+  const cell = (n) => {
+    if (!Number.isFinite(n)) return `<span class="packs">–</span><span class="eur">nicht erreicht</span>`;
+    const packs = Math.ceil(n / buy.pack);
+    return `<span class="packs">${fmt.format(packs)} ${packs === 1 ? "Paket" : "Pakete"}</span><span class="eur">${fmtEur.format(packs * buy.price)}</span>`;
+  };
+  $("buyBody").innerHTML = GOALS.map((g) => {
+    const head = `<th scope="row">${esc(g.label(buy.type))}</th>`;
+    if (!r) return `<tr>${head}<td class="num col-miss wait">…</td><td class="num wait">…</td><td class="num wait">…</td></tr>`;
+    const m = r[g.id];
+    if (m.done) return `<tr class="done">${head}<td colspan="3" class="mini">schon erreicht</td></tr>`;
+    return `<tr>${head}<td class="num col-miss">${Number.isFinite(m.mean) ? fmt.format(Math.round(m.mean)) : "–"}</td><td class="num">${cell(m.p50)}</td><td class="num">${cell(m.p90)}</td></tr>`;
+  }).join("");
+  const rows = [];
+  if (r) for (let p = 1; p <= BUY_MAX_PACKS; p++) {
+    const y = r.yields[p] || 0;
+    if (y < 0.05 && p > 1) { rows.push(`<tr><td colspan="3" class="mini">Ab Paket ${p} im Schnitt unter 0,05 neue Schiffe je Paket.</td></tr>`); break; }
+    rows.push(`<tr><td>${p}</td><td class="num">${fmt1.format(y)}</td><td class="num">${y > 0 ? fmtEur.format(buy.price / y) : "–"}</td></tr>`);
+  }
+  $("yieldBody").innerHTML = rows.join("") || `<tr><td colspan="3" class="mini">Wird berechnet …</td></tr>`;
+}
+
+function drawPity() {
+  const N = state.pity.golden, c = Math.min(N - 1, Math.max(0, buy.counter));
+  $("pityGrid").innerHTML = Array.from({ length: N }, (_, i) => `<div class="${i === c ? "cur" : ""}"><span class="z">${i}</span><span class="c">${pityResult ? fmtP(pityResult[i]).replace(" %", "%") : "…"}</span></div>`).join("");
+  const v = $("pityVerdict");
+  if (!pityResult) { v.className = "pity-verdict"; v.textContent = ""; return; }
+  const p = pityResult[c];
+  if (p >= 0.8) { v.className = "pity-verdict buy"; v.textContent = `${fmtP(p)} Chance im nächsten Paket. Die Garantie ist nah, ein weiteres Paket lohnt sich.`; }
+  else if (p >= 0.5) { v.className = "pity-verdict maybe"; v.textContent = `${fmtP(p)} Chance. Nur kaufen, wenn dein Ziel ohnehin weitere Pakete braucht.`; }
+  else { v.className = "pity-verdict stop"; v.textContent = `${fmtP(p)} Chance. Guter Punkt zum Aufhören.`; }
+  $("pityNote").textContent = `Chance auf ein Golden-Gift-Schiff (bzw. einen Battle Forged Container) in den nächsten ${buy.pack} ${SHORT[buy.type]}, je nach Zählerstand. Garantie nach ${N} Golden Gifts, der Zähler des ${SHORT[buy.type]} startet bei 0.`;
+}
+
+const BUY_INPUTS = { type: ["b-type", "change"], pack: ["b-pack", "input"], price: ["b-price", "input"], bfPity: ["b-bfpity", "change"], counter: ["b-counter", "input"] };
+for (const [k, [id, ev]] of Object.entries(BUY_INPUTS)) {
+  $(id).addEventListener(ev, () => {
+    const el = $(id);
+    buy[k] = k === "type" ? el.value : k === "bfPity" ? el.checked : k === "price" ? Math.max(0, parseFloat(el.value) || 0) : Math.max(k === "pack" ? 1 : 0, parseInt(el.value, 10) || 0);
+    store.set("buy", buy);
+    if (k === "price") drawBuy();
+    else if (k === "counter") drawPity();
+    else scheduleBuy();
+  });
+}
+
 // ---------- Plan ----------
 const PLAN_IDS = { free: "c-free", pass: "c-pass", tokens: "c-tokens", tokenUse: "c-tokenUse", santa: "c-santa", mega: "c-mega", ultra: "c-ultra", golden: "c-golden" };
 function readPlan() {
@@ -308,7 +403,7 @@ for (const id of Object.values(PLAN_IDS)) {
 for (const t of Object.keys(PITY_DEFAULT)) {
   const inp = $("p-" + t);
   inp.value = state.pity[t];
-  inp.addEventListener("change", () => { state.pity[t] = Math.max(1, parseInt(inp.value, 10) || PITY_DEFAULT[t]); inp.value = state.pity[t]; store.set("pity", state.pity); renderDropTables(); renderNeeds(); scheduleSim(); });
+  inp.addEventListener("change", () => { state.pity[t] = Math.max(1, parseInt(inp.value, 10) || PITY_DEFAULT[t]); inp.value = state.pity[t]; store.set("pity", state.pity); renderDropTables(); renderNeeds(); scheduleBuy(); scheduleSim(); });
 }
 $("runs").addEventListener("change", () => scheduleSim());
 
@@ -445,6 +540,7 @@ $("groups").addEventListener("change", (e) => {
   row.querySelector(".p").textContent = e.target.checked ? "im Hafen" : "…";
   rollCtx = null;
   scheduleNeeds();
+  scheduleBuy();
   scheduleSim();
 });
 $("groups").addEventListener("click", (e) => {
@@ -456,6 +552,7 @@ $("groups").addEventListener("click", (e) => {
   rollCtx = null;
   renderGroups();
   renderNeeds();
+  scheduleBuy();
   scheduleSim();
 });
 
@@ -503,6 +600,7 @@ $("rollReset").addEventListener("click", () => { rollCtx = null; $("rollLog").in
 function changed() {
   rollCtx = null;
   renderNeeds();
+  requestBuy();
   renderPlanInputs();
   renderGroups();
   scheduleSim();
