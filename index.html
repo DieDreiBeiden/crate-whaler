@@ -6,13 +6,13 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>WoWs Santa-Rechner</title>
-<meta name="description" content="Santa-Event Update 15.11: Hafen per Wargaming-Login einlesen, Schneeflocken planen und Santa's, Golden und Battle Forged Container mit deinem Hafen simulieren.">
+<meta name="description" content="Wie viele Santa's Gift Container brauchst du für ein neues Schiff? Hafen per Wargaming-Login einlesen und Santa's, Golden und Battle Forged Container durchrechnen.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#eef2f1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1922" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:title" content="WoWs Santa-Rechner">
-<meta property="og:description" content="Welche Schiffe bringen dir Santa's, Golden und Battle Forged Container? Hafen einlesen und durchrechnen.">
+<meta property="og:description" content="Wie viele Santa's Gift brauchst du für ein neues Schiff jeder Stufe? Hafen einlesen und durchrechnen.">
 <meta property="og:url" content="https://whaling.starbane.de/">
 <meta property="og:image" content="https://whaling.starbane.de/assets/img/og.png">
 <meta property="og:locale" content="de_DE">
@@ -40,8 +40,10 @@
         <span class="visually-hidden">Angemeldet als</span>
         <strong id="ubName"></strong>
         <span class="tag" id="ubRealm"></span>
+        <button type="button" class="ghost sm" id="ubReload" title="Hafen neu laden">Neu laden</button>
         <button type="button" class="ghost sm" id="ubLogout">Abmelden</button>
       </div>
+      <button type="button" class="ghost sm" id="ubLogin" hidden>Mit Wargaming anmelden</button>
       <button type="button" class="ghost icon-btn" id="themeBtn" aria-label="Farbschema wechseln">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 7a5 5 0 0 0 0 10z" fill="currentColor"/></svg>
         <span id="themeLabel">Auto</span>
@@ -55,7 +57,7 @@
     <div class="panel">
       <div class="stack" style="gap: 4px;">
         <h2 id="gateTitle">Server wählen und anmelden</h2>
-        <p class="lede" id="gateSub">Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.</p>
+        <p class="lede" id="gateSub">Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach weiß der Rechner, welche Schiffe du schon hast.</p>
       </div>
       <div id="setupBox" hidden class="stack">
         <p class="note warn">Für diese Seite ist keine Wargaming Application ID hinterlegt. Trage sie in <code>assets/js/boot.js</code> ein. Zum Testen geht sie auch hier, sie bleibt dann nur in diesem Browser.</p>
@@ -69,7 +71,7 @@
         <button type="button" class="realm asia" data-realm="asia">ASIA</button>
       </div>
       <div class="msg" id="gateMsg" role="status" aria-live="polite"></div>
-      <button type="button" class="link" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter und den Hafen von Hand eingeben</button>
+      <button type="button" class="link" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter und Schiffe von Hand abhaken</button>
     </div>
 
     <div class="panel">
@@ -87,97 +89,41 @@
       </details>
       <details class="plain">
         <summary>Die Anmeldung klappt nicht. Was tun?</summary>
-        <p class="note">Prüfe den Server: EU, NA und ASIA sind getrennte Konten. Hilft das nicht, nutze „Ohne Anmeldung weiter“ und trag die Schiffe von Hand ein.</p>
+        <p class="note">Prüfe den Server: EU, NA und ASIA sind getrennte Konten. Hilft das nicht, nutze „Ohne Anmeldung weiter“ und hake deine Schiffe von Hand ab.</p>
       </details>
     </div>
   </section>
 
   <div id="app" class="stack" style="gap: 20px;">
-  <nav class="tabs" aria-label="Bereiche">
-    <a href="#hafen" data-view="hafen"><span class="n">01</span>Hafen</a>
-    <a href="#container" data-view="container"><span class="n">02</span>Container</a>
-    <a href="#gefechte" data-view="gefechte"><span class="n">03</span>Gefechte</a>
-  </nav>
+  <div class="msg" id="importMsg" role="status" aria-live="polite"></div>
 
-  <!-- ============ HAFEN ============ -->
-  <section class="view" id="v-hafen" aria-label="Hafen">
-    <div class="readout" id="portReadout" aria-live="polite"></div>
-
-    <div class="grid2">
-      <div class="panel" id="portPanel">
-        <div class="panel-head">
-          <h2>Dein Hafen</h2>
-          <span class="tag ex" id="exampleTag" hidden>Beispielwerte</span>
-        </div>
-
-        <div id="importBox" class="stack">
-          <div id="accountBox" hidden class="stack">
-            <div class="acct">
-              <div><strong id="accName"></strong> <span class="tag" id="accRealm"></span></div>
-              <div class="mini" id="accInfo"></div>
-            </div>
-            <div class="row">
-              <button type="button" id="reloadBtn">Hafen neu laden</button>
-              <button type="button" class="ghost" id="logoutBtn">Abmelden</button>
-            </div>
-          </div>
-          <div class="msg" id="importMsg" role="status" aria-live="polite"></div>
-          <button type="button" class="link" id="toManual" style="justify-self: start;">Stattdessen von Hand eingeben</button>
-        </div>
-
-        <div id="manualBox" hidden class="stack">
-          <p class="note">Anzahl Schiffe je Stufe, ohne Testschiffe. Welche Container-Schiffe du hast, hakst du im Reiter Container ab.</p>
-          <div class="tierin" id="tierInputs"></div>
-          <button type="button" class="link" id="toLogin" style="justify-self: start;">Lieber mit Wargaming anmelden</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>Schneeflocken je Stufe</h2>
-        <div class="tbl"><table>
-          <thead><tr><th scope="col">Stufe</th><th scope="col" class="num">Schiffe</th><th scope="col">Belohnung</th><th scope="col" class="num">Summe</th><th scope="col" class="num">Basis-EP</th></tr></thead>
-          <tbody id="tierBody"></tbody>
-        </table></div>
+  <!-- ============ BENÖTIGTE CONTAINER ============ -->
+  <section class="panel needs" aria-labelledby="needsTitle">
+    <div class="panel-head">
+      <h2 id="needsTitle">Wie viele Container brauchst du?</h2>
+      <div class="seg" role="group" aria-label="Container">
+        <button type="button" data-ctype="santa" aria-pressed="true">Santa's</button>
+        <button type="button" data-ctype="mega" aria-pressed="false">Mega</button>
+        <button type="button" data-ctype="ultra" aria-pressed="false">Ultra</button>
       </div>
     </div>
-
-    <details class="more" id="shipDetails" hidden>
-      <summary><span id="shipSummary">Schiffe im Hafen</span></summary>
-      <div class="inner"><div class="shiplist" id="shipList"></div></div>
-    </details>
-
-    <details class="more">
-      <summary><span>Regeln anpassen <span class="mini">für Fortgeschrittene</span></span></summary>
-      <div class="inner">
-        <div class="row">
-          <label class="f" style="flex: 1 1 220px;">Vorlage
-            <select id="preset">
-              <option value="xmas26">Weihnachten 2026 (15.11)</option>
-              <option value="ann26">Jubiläum 2026</option>
-            </select>
-          </label>
-        </div>
-        <div class="tbl"><table>
-          <thead><tr><th scope="col">Stufe</th><th scope="col">Ressource</th><th scope="col" class="num">Menge</th><th scope="col" class="num">Basis-EP</th></tr></thead>
-          <tbody id="rulesBody"></tbody>
-        </table></div>
-        <div class="fields">
-          <label class="f">Basis-EP je Zusatz-Schneeflocke
-            <input id="addXp" type="number" inputmode="numeric" min="1" step="50">
-          </label>
-          <label class="f" style="grid-column: span 2;">Zusatz-Schneeflocken nach Hafengröße
-            <input id="addTiers" type="text" spellcheck="false" style="font-family: var(--mono);">
-          </label>
-        </div>
-        <p class="note">Format <code>Schwelle:Anzahl</code>, z.&nbsp;B. <code>25:2</code> heißt ab 25 Schiffen 2 Zusatz-Schneeflocken je 1.000 Basis-EP. Werte laut Devblog 15.11.</p>
-      </div>
-    </details>
+    <p class="lede" id="needsLede"></p>
+    <div class="tbl"><table class="needs-table">
+      <thead><tr>
+        <th scope="col">Neues Schiff</th>
+        <th scope="col" class="num col-miss">Fehlen dir</th>
+        <th scope="col" class="num">50 % Chance</th>
+        <th scope="col" class="num">90 % Chance</th>
+        <th scope="col" class="bar-col"><span class="visually-hidden">Vergleich</span></th>
+      </tr></thead>
+      <tbody id="needsBody"></tbody>
+    </table></div>
+    <p class="mini" id="needsNote"></p>
   </section>
 
-  <!-- ============ CONTAINER ============ -->
-  <section class="view" id="v-container" hidden aria-label="Container">
+  <!-- ============ PLAN ============ -->
+  <section class="stack" style="gap: 20px;" aria-label="Dein Plan">
     <div class="readout" id="contReadout" aria-live="polite"></div>
-
     <div class="grid2">
       <div class="panel">
         <div class="panel-head">
@@ -202,7 +148,7 @@
           <div class="fields">
             <label class="f">Anzahl Tokens
               <input type="number" inputmode="numeric" min="0" id="c-tokens" value="0">
-              <span class="hint" id="tokenSrc"></span>
+              <span class="hint">1 Token je Schneeflocke auf Stufe X</span>
             </label>
             <label class="f">Eintauschen gegen
               <select id="c-tokenUse">
@@ -249,7 +195,7 @@
       </div>
 
       <div class="panel">
-        <h2>Ergebnis</h2>
+        <h2>Ergebnis deines Plans</h2>
         <p class="mini" id="histNote"></p>
         <div class="hist" id="hist" role="img" aria-label="Verteilung der Anzahl neuer Schiffe"></div>
         <h3>Erwartete Ressourcen</h3>
@@ -259,74 +205,49 @@
         </table></div>
       </div>
     </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Container-Schiffe</h2>
-        <div class="seg" role="group" aria-label="Anzeige">
-          <button type="button" id="fMissing" aria-pressed="true">Fehlende</button>
-          <button type="button" id="fAll" aria-pressed="false">Alle</button>
-        </div>
-      </div>
-      <p class="mini" id="ownedNote"></p>
-      <div class="toolbar">
-        <label class="visually-hidden" for="shipSearch">Schiff suchen</label>
-        <input type="search" id="shipSearch" placeholder="Schiff suchen" autocomplete="off" enterkeyhint="search">
-      </div>
-      <div class="groups" id="groups"></div>
-    </div>
-
-    <details class="more">
-      <summary><span>Einzeln öffnen <span class="mini">zum Ausprobieren</span></span></summary>
-      <div class="inner">
-        <div class="row">
-          <label class="f" style="flex: 1 1 200px;">Container
-            <select id="rollSel"></select>
-          </label>
-          <button type="button" id="rollBtn">Öffnen</button>
-          <button type="button" class="ghost" id="rollReset">Zurücksetzen</button>
-        </div>
-        <p class="note">Würfelt mit deinem Hafen. Gezogene Schiffe gelten danach als vorhanden, bis du zurücksetzt.</p>
-        <div class="log" id="rollLog" aria-live="polite"></div>
-      </div>
-    </details>
-
-    <details class="more">
-      <summary><span>Drop-Tabellen <span class="mini">Chancen laut Devblog</span></span></summary>
-      <div class="inner" id="dropTables"></div>
-    </details>
   </section>
 
-  <!-- ============ GEFECHTE ============ -->
-  <section class="view" id="v-gefechte" hidden aria-label="Gefechte">
-    <div class="readout" id="battleReadout" aria-live="polite"></div>
-    <div class="grid2">
-      <div class="panel">
-        <h2>Annahmen</h2>
-        <label class="f">Durchschnittliche Basis-EP pro Gefecht: <strong id="xpVal" style="font-family: var(--mono); color: var(--ink);"></strong>
-          <input id="avgXp" type="range" min="100" max="3200" step="50" value="800">
-        </label>
-        <label class="f">Gefechte pro Tag
-          <input id="perDay" type="number" inputmode="numeric" min="1" step="1" value="8">
-        </label>
-        <p class="note">Basis-EP sind die EP vor Signalen, Tarnungen und Premium. Modifikatoren beschleunigen die Schneeflocken deshalb nicht.</p>
-      </div>
-      <div class="panel">
-        <h2>So wird gerechnet</h2>
-        <p>Jedes Schiff ab Stufe V hat eine Schneeflocke, die nach einer festen Menge Basis-EP auf diesem Schiff fällig wird. Zusätzlich aktivieren je 1.000 Basis-EP (alle Gefechte zusammen) weitere Schneeflocken auf anderen Schiffen.</p>
-        <p><strong>Optimiert:</strong> Du spielst die Schiffe mit der niedrigsten EP-Hürde, die Zusatz-Schneeflocken fallen auf die teuersten. <strong>Ungünstig:</strong> umgekehrt.</p>
+  <!-- ============ SCHIFFE ============ -->
+  <section class="panel" aria-labelledby="shipsTitle">
+    <div class="panel-head">
+      <h2 id="shipsTitle">Container-Schiffe</h2>
+      <div class="seg" role="group" aria-label="Anzeige">
+        <button type="button" id="fMissing" aria-pressed="true">Fehlende</button>
+        <button type="button" id="fAll" aria-pressed="false">Alle</button>
       </div>
     </div>
-    <div class="panel chart">
-      <h2>Gefechte nach Basis-EP</h2>
-      <div id="battleChart"></div>
+    <p class="mini" id="ownedNote"></p>
+    <div class="toolbar">
+      <label class="visually-hidden" for="shipSearch">Schiff suchen</label>
+      <input type="search" id="shipSearch" placeholder="Schiff suchen" autocomplete="off" enterkeyhint="search">
     </div>
+    <div class="groups" id="groups"></div>
   </section>
+
+  <details class="more">
+    <summary><span>Einzeln öffnen <span class="mini">zum Ausprobieren</span></span></summary>
+    <div class="inner">
+      <div class="row">
+        <label class="f" style="flex: 1 1 200px;">Container
+          <select id="rollSel"></select>
+        </label>
+        <button type="button" id="rollBtn">Öffnen</button>
+        <button type="button" class="ghost" id="rollReset">Zurücksetzen</button>
+      </div>
+      <p class="note">Würfelt mit deinem Hafen. Gezogene Schiffe gelten danach als vorhanden, bis du zurücksetzt.</p>
+      <div class="log" id="rollLog" aria-live="polite"></div>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary><span>Drop-Tabellen <span class="mini">Chancen laut Devblog</span></span></summary>
+    <div class="inner" id="dropTables"></div>
+  </details>
   </div>
   </main>
 
   <footer>
-    <div>Drop-Raten und Regeln: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026, vorläufig.</div>
+    <div>Drop-Raten: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026, vorläufig.</div>
     <div>Logik nach <a href="https://github.com/Rukenshia/shipwhaling" target="_blank" rel="noopener">Rukenshia/shipwhaling</a> · <a href="https://github.com/DieDreiBeiden/crate-whaler" target="_blank" rel="noopener">Quelltext</a> (GPL-3.0) · Schiffsdaten: <span id="shipCount"></span> Einträge, neuere aus der Wargaming-Enzyklopädie.</div>
   </footer>
 </div>

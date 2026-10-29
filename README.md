@@ -1,6 +1,6 @@
 # WoWs Santa-Rechner
 
-Statische Seite für das Santa-Event in Update 15.11, live unter https://whaling.starbane.de. Du meldest dich bei Wargaming an, danach lädt die Seite deinen Hafen. Damit rechnet sie die Schneeflocken-Belohnungen aus und simuliert Santa's Gift, Mega, Ultra, Golden Gift und Battle Forged Container.
+Container-Rechner für das Santa-Event in Update 15.11, live unter https://whaling.starbane.de. Nach dem Wargaming-Login kennt die Seite deinen Hafen und zeigt, wie viele Santa's, Mega oder Ultra Gift du für ein neues Schiff jeder Stufe brauchst (50 % und 90 % Chance). Dazu rechnet sie einen eigenen Container-Plan inklusive Golden Gift und Battle Forged Container durch.
 
 Kein Build-Schritt, kein Backend. Lokal testen:
 
@@ -16,8 +16,8 @@ Dann http://localhost:8000 öffnen.
 |---|---|
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
 | `assets/js/boot.js` | Wargaming Application ID, Farbschema vor dem ersten Zeichnen |
-| `assets/js/app.js` | Seitenlogik: Login, Hafen, Plan, Schiffsliste, Gefechte |
-| `assets/js/sim.js` | Container-Simulation (von Seite und Worker genutzt) |
+| `assets/js/app.js` | Seitenlogik: Login, Tabelle „Wie viele Container“, Plan, Schiffsliste |
+| `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`) und benötigte Container je Stufe (`runNeeds`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
 | `assets/js/santa2026.js` | Drop-Tabellen und Schiffslisten des Events |
 | `assets/js/ships.js` | Schiffsdaten (ID, Name, Stufe, Typ, Testschiff) |

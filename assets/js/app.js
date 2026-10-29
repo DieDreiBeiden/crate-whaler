@@ -21,7 +21,7 @@ function applyTheme(t) {
   $("themeLabel").textContent = THEME_LABEL[t];
   $("themeBtn").setAttribute("aria-label", `Farbschema: ${THEME_LABEL[t]}. Klicken zum Wechseln`);
   const bg = getComputedStyle(document.body).backgroundColor;
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { if (t === "auto") m.content = m.media.includes("dark") ? "#0d1922" : "#eef2f1"; else m.content = bg; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = t === "auto" ? (m.media.includes("dark") ? "#0d1922" : "#eef2f1") : bg; });
 }
 let theme = store.get("theme", "auto");
 if (!THEMES.includes(theme)) theme = "auto";
@@ -32,89 +32,29 @@ $("themeBtn").addEventListener("click", () => {
 });
 applyTheme(theme);
 
-// ---------- Schiffsdaten ----------
+// ---------- Zustand ----------
 const SHIPS = new Map(SHIPS_RAW.map(([id, name, tier, type, demo]) => [id, { id, name, tier, type, demo }]));
 $("shipCount").textContent = fmt.format(SHIPS.size);
 
-// ---------- Event-Regeln ----------
-const ADD_TIERS = "0:1, 25:2, 50:3, 100:4, 200:5, 400:6, 600:7";
-const PRESETS = {
-  xmas26: { rows: { 5: ["Kohle", 700, 200], 6: ["Kohle", 750, 250], 7: ["Kohle", 800, 300], 8: ["Stahl", 70, 400], 9: ["Stahl", 80, 500], 10: ["Festive Token", 1, 600], 11: ["Stahl", 200, 600] }, addXp: 1000, addTiers: ADD_TIERS },
-  ann26: { rows: { 5: ["Festive Token", 25, 200], 6: ["Festive Token", 35, 250], 7: ["Festive Token", 50, 300], 8: ["Festive Token", 75, 400], 9: ["Festive Token", 100, 500], 10: ["Festive Token", 125, 600], 11: ["Stahl", 200, 600] }, addXp: 1000, addTiers: ADD_TIERS }
-};
-const TIERS = [5, 6, 7, 8, 9, 10, 11];
-const EXAMPLE_COUNTS = { low: 22, 5: 8, 6: 11, 7: 14, 8: 31, 9: 17, 10: 24, 11: 2 };
-
 const state = {
-  source: store.get("source", "import"),
-  counts: store.get("counts", null) || { ...EXAMPLE_COUNTS },
+  source: store.get("source", "import"),   // "import" = Wargaming-Login, "manual" = nur Häkchen
   imported: store.get("imported", null),
-  preset: store.get("preset", "xmas26"),
-  rules: store.get("rules", null),
   manual: store.get("manual", {}),
   plan: store.get("plan", null),
   pity: { ...PITY_DEFAULT, ...store.get("pity", {}) },
   filter: store.get("filter", "missing"),
+  ctype: store.get("ctype", "santa"),
   openGroups: new Set(store.get("openGroups", []))
 };
-if (!state.rules || !PRESETS[state.preset]) { state.preset = "xmas26"; state.rules = structuredClone(PRESETS.xmas26); }
+if (!CONTAINER_DEFS[state.ctype] || state.ctype === "golden" || state.ctype === "bf") state.ctype = "santa";
 
-// ---------- Hafen-Daten ----------
-function addUnlocks(portSize) {
-  let n = 0;
-  for (const part of String(state.rules.addTiers).split(",")) {
-    const m = part.trim().match(/^(\d+)\s*:\s*(\d+)$/);
-    if (m && portSize >= +m[1]) n = Math.max(n, +m[2]);
-  }
-  return n;
-}
 const hasImport = () => state.source === "import" && state.imported && state.imported.ids.length > 0;
-const isExample = () => state.source === "manual" && TIERS.concat(["low"]).every((t) => (+state.counts[t] || 0) === EXAMPLE_COUNTS[t]);
-
-function portShips() {
-  if (state.source === "import") {
-    if (!hasImport()) return { total: 0, eligible: [], unknown: 0, low: 0, demo: 0, list: null };
-    const eligible = [], list = []; let unknown = 0, low = 0, demo = 0;
-    for (const id of state.imported.ids) {
-      const s = SHIPS.get(id);
-      if (!s) { unknown++; continue; }
-      list.push(s);
-      if (s.demo) { demo++; continue; }
-      if (s.tier < 5) { low++; continue; }
-      eligible.push(s);
-    }
-    return { total: state.imported.ids.length, eligible, unknown, low, demo, list };
-  }
-  const eligible = [];
-  for (const t of TIERS) for (let i = 0; i < (+state.counts[t] || 0); i++) eligible.push({ tier: t });
-  const low = +state.counts.low || 0;
-  return { total: eligible.length + low, eligible, unknown: 0, low, demo: 0, list: null };
-}
-function rewardFor(tier) {
-  const r = state.rules.rows[tier];
-  return r ? { res: r[0], amount: +r[1] || 0, xp: +r[2] || 0 } : null;
-}
-function portSummary() {
-  const p = portShips();
-  const byTier = {}, byRes = {}, reqs = [];
-  let totalXp = 0;
-  for (const s of p.eligible) {
-    const r = rewardFor(s.tier);
-    if (!r) continue;
-    const bt = byTier[s.tier] ||= { n: 0, res: r.res, sum: 0, xp: 0 };
-    bt.n++; bt.sum += r.amount; bt.xp += r.xp;
-    byRes[r.res] = (byRes[r.res] || 0) + r.amount;
-    totalXp += r.xp; reqs.push(r.xp);
-  }
-  return { ...p, byTier, byRes, totalXp, reqs, add: addUnlocks(p.total) };
-}
-
-// Besitz der Container-Schiffe: Import (per Name) plus Handeingabe
 function importedKeys() {
   const s = new Set();
   if (hasImport()) for (const id of state.imported.ids) { const sh = SHIPS.get(id); if (sh) s.add(shipKey(sh.name)); }
   return s;
 }
+// Besitz der Container-Schiffe: Import (per Name) plus Häkchen von Hand
 function ownedSet() {
   const imp = importedKeys(), s = new Set();
   for (const g of GROUP_ORDER) for (const sh of GROUP_SHIPS[g]) {
@@ -123,95 +63,10 @@ function ownedSet() {
   }
   return s;
 }
-
-// ---------- Ansicht: Hafen ----------
-function readout(el, items) {
-  el.innerHTML = items.map((it) => `<div><span class="k">${esc(it.k)}</span><span class="v${it.accent ? " accent" : ""}">${it.v}</span>${it.s ? `<span class="s">${it.s}</span>` : ""}</div>`).join("");
-}
-function renderTierInputs() {
-  const box = $("tierInputs");
-  box.innerHTML = "";
-  const mk = (k, label) => {
-    const l = document.createElement("label");
-    l.innerHTML = `${label}<input type="number" inputmode="numeric" min="0" step="1" id="cnt-${k}">`;
-    const inp = l.querySelector("input");
-    inp.value = state.counts[k] ?? 0;
-    inp.addEventListener("input", () => { state.counts[k] = Math.max(0, parseInt(inp.value, 10) || 0); store.set("counts", state.counts); changed(); });
-    box.appendChild(l);
-  };
-  mk("low", "I–IV");
-  for (const t of TIERS) mk(t, "Stufe " + ROMAN[t]);
-}
-function renderRules() {
-  const body = $("rulesBody");
-  body.innerHTML = "";
-  for (const t of TIERS) {
-    const r = state.rules.rows[t];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${ROMAN[t]}</td><td><input type="text" aria-label="Ressource Stufe ${ROMAN[t]}"></td><td class="num"><input type="number" inputmode="numeric" min="0" aria-label="Menge Stufe ${ROMAN[t]}"></td><td class="num"><input type="number" inputmode="numeric" min="1" step="50" aria-label="Basis-EP Stufe ${ROMAN[t]}"></td>`;
-    const [res, amt, xp] = tr.querySelectorAll("input");
-    res.value = r[0]; amt.value = r[1]; xp.value = r[2];
-    res.addEventListener("input", () => { r[0] = res.value; saveRules(); });
-    amt.addEventListener("input", () => { r[1] = Math.max(0, +amt.value || 0); saveRules(); });
-    xp.addEventListener("input", () => { r[2] = Math.max(1, +xp.value || 1); saveRules(); });
-    body.appendChild(tr);
-  }
-  $("addXp").value = state.rules.addXp;
-  $("addTiers").value = state.rules.addTiers;
-  $("preset").value = state.preset;
-}
-function saveRules() { store.set("rules", state.rules); changed(); }
-$("preset").addEventListener("change", (e) => {
-  state.preset = e.target.value; state.rules = structuredClone(PRESETS[state.preset]);
-  store.set("preset", state.preset); store.set("rules", state.rules);
-  renderRules(); changed();
-});
-$("addXp").addEventListener("input", (e) => { state.rules.addXp = Math.max(1, +e.target.value || 1); saveRules(); });
-$("addTiers").addEventListener("input", (e) => { state.rules.addTiers = e.target.value; saveRules(); });
-
-function renderPort(sum) {
-  const sub = state.source === "import" ? "aus deinem Wargaming-Konto" : (isExample() ? "Beispielwerte" : "von Hand eingegeben");
-  const items = [
-    { k: "Schiffe im Hafen", v: fmt.format(sum.total), s: sub },
-    { k: "Schneeflocken", v: fmt.format(sum.reqs.length), s: "Schiffe ab Stufe V" }
-  ];
-  for (const [res, n] of Object.entries(sum.byRes)) items.push({ k: res, v: fmt.format(n), s: "aus allen Schneeflocken", accent: true });
-  items.push({ k: "Zusatz je " + fmt.format(state.rules.addXp) + " EP", v: fmt.format(sum.add), s: "Schneeflocken bei deiner Hafengröße" });
-  readout($("portReadout"), items);
-  $("exampleTag").hidden = !isExample();
-
-  const rows = TIERS.filter((t) => sum.byTier[t]).map((t) => {
-    const b = sum.byTier[t];
-    return `<tr><td>${ROMAN[t]}</td><td class="num">${fmt.format(b.n)}</td><td>${esc(b.res)}</td><td class="num">${fmt.format(b.sum)}</td><td class="num">${fmt.format(b.xp)}</td></tr>`;
-  });
-  if (!rows.length) rows.push(`<tr><td colspan="5" class="mini">Noch keine Schiffe ab Stufe V.</td></tr>`);
-  const extra = [];
-  if (sum.low) extra.push(`${fmt.format(sum.low)} Schiffe Stufe I–IV`);
-  if (sum.demo) extra.push(`${fmt.format(sum.demo)} Testschiffe`);
-  if (sum.unknown) extra.push(`${fmt.format(sum.unknown)} unbekannte Schiffe`);
-  rows.push(`<tr class="sub"><td colspan="4">Gesamt${extra.length ? `<div class="mini" style="font-weight: 400;">Ohne Schneeflocke: ${extra.join(", ")}</div>` : ""}</td><td class="num">${fmt.format(sum.totalXp)}</td></tr>`);
-  $("tierBody").innerHTML = rows.join("");
-
-  const det = $("shipDetails");
-  det.hidden = !sum.list;
-  if (sum.list) {
-    $("shipSummary").textContent = `Alle Schiffe im Hafen (${fmt.format(sum.list.length)})`;
-    const sorted = [...sum.list].sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name, "de"));
-    $("shipList").innerHTML = sorted.map((s) => `<div><span class="t">${ROMAN[s.tier] || "?"}</span>${esc(s.name)}${s.demo ? " <span class='tag'>Test</span>" : ""}</div>`).join("");
-  }
-}
-
-// ---------- Datenquelle ----------
-function setSource(src) {
-  state.source = src; store.set("source", src);
-  $("manualBox").hidden = src !== "manual";
-  $("importBox").hidden = src !== "import";
-  renderAccount();
-  changed();
-}
-$("toManual").addEventListener("click", () => setSource("manual"));
-$("toLogin").addEventListener("click", () => setSource("import"));
-$("skipLogin").addEventListener("click", () => setSource("manual"));
+// Stufe eines Container-Schiffs; neue Schiffe (Stufe unbekannt) aus Enzyklopädie-Daten nachschlagen
+let tierByKey = new Map();
+function rebuildTiers() { tierByKey = new Map(); for (const sh of SHIPS.values()) tierByKey.set(shipKey(sh.name), sh.tier); }
+const tierOf = (s) => s.tier || tierByKey.get(s.key) || 0;
 
 // ---------- Wargaming-Login ----------
 // OpenID-Login: Rücksprung auf diese Seite mit ?status=ok&access_token=…&account_id=…&nickname=…&expires_at=…
@@ -227,6 +82,14 @@ function importMsg(text, kind) {
 }
 const sessionValid = () => session && session.token && (!session.exp || session.exp * 1000 > Date.now() + 60000);
 
+function setSource(src) {
+  state.source = src; store.set("source", src);
+  renderAccount();
+  changed();
+}
+$("skipLogin").addEventListener("click", () => setSource("manual"));
+$("ubLogin").addEventListener("click", () => setSource("import"));
+
 // Ohne gültige Anmeldung sieht man nur die Login-Seite (außer im Modus „von Hand“)
 function renderAccount() {
   const logged = sessionValid();
@@ -238,17 +101,12 @@ function renderAccount() {
   $("realmButtons").hidden = pendingLogin;
   $("skipLogin").hidden = pendingLogin;
   $("gateTitle").textContent = pendingLogin ? "Anmeldung erfolgreich" : "Server wählen und anmelden";
-  $("gateSub").textContent = pendingLogin ? `Willkommen, ${session.nick || session.account}. Dein Hafen wird geladen …` : "Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.";
-  $("accountBox").hidden = !logged;
-  $("userbar").hidden = !logged || gate;
+  $("gateSub").textContent = pendingLogin ? `Willkommen, ${session.nick || session.account}. Dein Hafen wird geladen …` : "Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach weiß der Rechner, welche Schiffe du schon hast.";
+  $("userbar").hidden = !logged || gate || state.source === "manual";
+  $("ubLogin").hidden = gate || state.source !== "manual";
   if (!logged) return;
-  const name = session.nick || session.account, realm = REALM_LABEL[session.realm] || session.realm;
-  $("accName").textContent = name; $("ubName").textContent = name;
-  $("accRealm").textContent = realm; $("ubRealm").textContent = realm;
-  const parts = [];
-  if (state.imported && state.imported.at) parts.push(`Geladen am ${new Date(state.imported.at).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}`);
-  if (session.exp) parts.push(`angemeldet bis ${new Date(session.exp * 1000).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}`);
-  $("accInfo").textContent = parts.join(", ");
+  $("ubName").textContent = session.nick || session.account;
+  $("ubRealm").textContent = REALM_LABEL[session.realm] || session.realm;
 }
 $("appId").addEventListener("input", (e) => { store.set("appId", e.target.value.trim()); });
 
@@ -308,12 +166,13 @@ async function resolveUnknown(realm, ids) {
 }
 function applyExtra(extra) {
   for (const [id, [name, tier, type, demo]] of Object.entries(extra || {})) SHIPS.set(+id, { id: +id, name, tier, type, demo });
+  rebuildTiers();
 }
 
 let loading = false;
 async function loadPort() {
   if (loading || !sessionValid()) return;
-  loading = true; $("reloadBtn").disabled = true; $("reloadBtn").textContent = "Lädt …";
+  loading = true; $("ubReload").disabled = true;
   importMsg("Lade Hafen von Wargaming …");
   try {
     const data = await wgGet(session.realm, "account/info/", { account_id: session.account, access_token: session.token, fields: "private.port", extra: "private.port" });
@@ -326,21 +185,21 @@ async function loadPort() {
     applyExtra(extra);
     state.imported = { ids, kind: "port", at: Date.now(), extra };
     store.set("imported", state.imported);
-    const found = [...importedKeys()].filter((k) => GROUP_ORDER.some((g) => GROUP_SHIPS[g].some((s) => s.key === k))).length;
-    importMsg(`${fmt.format(ids.length)} Schiffe geladen, davon ${fmt.format(found)} aus den Container-Listen.`, "ok");
+    const found = ownedSet().size;
+    importMsg(`Hafen geladen: ${fmt.format(ids.length)} Schiffe, davon ${fmt.format(found)} aus den Container-Listen.`, "ok");
     changed();
   } catch (err) {
     if (err.code === "INVALID_ACCESS_TOKEN") { session = null; store.set("session", null); }
     importMsg(err.message, "err");
   } finally {
-    loading = false; $("reloadBtn").disabled = false; $("reloadBtn").textContent = "Hafen neu laden";
+    loading = false; $("ubReload").disabled = false;
     pendingLogin = false;
     renderAccount();
   }
 }
-$("reloadBtn").addEventListener("click", loadPort);
+$("ubReload").addEventListener("click", loadPort);
 
-function logout() {
+$("ubLogout").addEventListener("click", () => {
   const s = session;
   session = null; store.set("session", null);
   state.imported = null; store.set("imported", null);
@@ -351,85 +210,83 @@ function logout() {
   importMsg("Abgemeldet. Deine Hafendaten sind aus diesem Browser gelöscht.");
   renderAccount();
   changed();
-}
-$("logoutBtn").addEventListener("click", logout);
-$("ubLogout").addEventListener("click", logout);
+});
 
-// ---------- Gefechte ----------
-function battlesNeeded(reqs, avgXp, addPer, addXp, order) {
-  if (!reqs.length || avgXp <= 0) return 0;
-  const r = [...reqs].sort((a, b) => a - b);
-  if (order === "worst") r.reverse();
-  let lo = 0, hi = r.length - 1, pending = 0, onShip = 0, acc = 0, battles = 0;
-  while (lo <= hi) {
-    if (onShip === 0 && pending > 0) { pending--; hi--; continue; }
-    battles++;
-    onShip += avgXp; acc += avgXp;
-    if (acc >= addXp) { pending += Math.floor(acc / addXp) * addPer; acc %= addXp; }
-    if (onShip >= r[lo]) { lo++; onShip = 0; }
-    if (battles > 1e6) break;
-  }
-  return battles;
-}
-function renderBattles(sum) {
-  const avg = +$("avgXp").value, perDay = Math.max(1, +$("perDay").value || 1);
-  $("xpVal").textContent = fmt.format(avg);
-  const best = battlesNeeded(sum.reqs, avg, sum.add, state.rules.addXp, "best");
-  const worst = battlesNeeded(sum.reqs, avg, sum.add, state.rules.addXp, "worst");
-  readout($("battleReadout"), [
-    { k: "Gefechte (optimiert)", v: fmt.format(best), s: `≈ ${fmt1.format(best / perDay)} Tage bei ${perDay} pro Tag`, accent: true },
-    { k: "Gefechte (ungünstig)", v: fmt.format(worst), s: `≈ ${fmt1.format(worst / perDay)} Tage` },
-    { k: "Schneeflocken", v: fmt.format(sum.reqs.length), s: `${fmt.format(sum.totalXp)} Basis-EP ohne Zusatz` },
-    { k: "Zusatz-Schneeflocken", v: fmt.format(sum.add), s: `je ${fmt.format(state.rules.addXp)} Basis-EP` }
-  ]);
-  renderChart(sum, avg);
-}
-function renderChart(sum, cur) {
-  const W = 720, H = 260, L = 52, R = 14, T = 14, B = 34;
-  const xs = []; for (let x = 200; x <= 3200; x += 100) xs.push(x);
-  const best = xs.map((x) => battlesNeeded(sum.reqs, x, sum.add, state.rules.addXp, "best"));
-  const worst = xs.map((x) => battlesNeeded(sum.reqs, x, sum.add, state.rules.addXp, "worst"));
-  const maxY = Math.max(1, ...worst);
-  const raw = maxY / 4, p10 = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p10;
-  const step = Math.max(1, (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10), top = Math.ceil(maxY / step) * step;
-  const sx = (x) => L + (x - 200) / 3000 * (W - L - R);
-  const sy = (y) => T + (1 - y / top) * (H - T - B);
-  const line = (arr) => arr.map((y, i) => `${i ? "L" : "M"}${sx(xs[i]).toFixed(1)},${sy(y).toFixed(1)}`).join("");
-  let g = "";
-  for (let y = 0; y <= top; y += step) g += `<line x1="${L}" x2="${W - R}" y1="${sy(y)}" y2="${sy(y)}" stroke="var(--rule)" stroke-width="1"/><text x="${L - 6}" y="${sy(y) + 4}" text-anchor="end">${fmt.format(y)}</text>`;
-  for (const x of [200, 800, 1400, 2000, 2600, 3200]) g += `<text x="${sx(x)}" y="${H - 12}" text-anchor="middle">${fmt.format(x)}</text>`;
-  const area = line(worst) + xs.slice().reverse().map((x, i) => `L${sx(x).toFixed(1)},${sy(best[best.length - 1 - i]).toFixed(1)}`).join("") + "Z";
-  const cx = Math.min(3200, Math.max(200, cur));
-  const cb = battlesNeeded(sum.reqs, cx, sum.add, state.rules.addXp, "best");
-  $("battleChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Benötigte Gefechte je nach Basis-EP pro Gefecht">
-    ${g}
-    <path d="${area}" fill="var(--brass-soft)" stroke="none"/>
-    <path d="${line(worst)}" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <path d="${line(best)}" fill="none" stroke="var(--brass)" stroke-width="2.5"/>
-    <line x1="${sx(cx)}" x2="${sx(cx)}" y1="${T}" y2="${H - B}" stroke="var(--sea)" stroke-width="1"/>
-    <circle cx="${sx(cx)}" cy="${sy(cb)}" r="5" fill="var(--brass)" stroke="var(--sheet)" stroke-width="2"/>
-    <text x="${W - R}" y="${T + 12}" text-anchor="end">Linie: optimiert · gestrichelt: ungünstig · x: Basis-EP pro Gefecht</text>
-  </svg>`;
-}
-$("avgXp").value = store.get("avgXp", 800);
-$("perDay").value = store.get("perDay", 8);
-$("avgXp").addEventListener("input", () => { store.set("avgXp", +$("avgXp").value); renderBattles(portSummary()); });
-$("perDay").addEventListener("input", () => { store.set("perDay", +$("perDay").value); renderBattles(portSummary()); });
+// ---------- Benötigte Container je Stufe ----------
+const NEED_ROWS = [{ label: "Irgendein neues Schiff", tier: null }].concat([10, 9, 8, 7, 6, 5].map((t) => ({ label: `Stufe ${ROMAN[t]}`, tier: t })));
+const SHORT = { santa: "Santa's Gift", mega: "Mega Gift", ultra: "Ultra Gift" };
 
-// ---------- Container: Plan ----------
+const NEED_RUNS = 1000, NEED_CAP = 20000;
+
+// Eigener Worker, damit die Tabelle nicht hinter der Plan-Simulation warten muss
+let needsWorker = null, needsId = 0;
+const needsCache = new Map();   // Schlüssel: Typ + Garantie + Besitz -> Ergebnis
+try {
+  needsWorker = new Worker("assets/js/sim-worker.js");
+  needsWorker.onmessage = (e) => { const job = needsJobs.get(e.data.id); if (job) { needsJobs.delete(e.data.id); needsCache.set(job, e.data.result); if (job === needsKey()) drawNeeds(e.data.result); } };
+  needsWorker.onerror = () => { needsWorker = null; };
+} catch { needsWorker = null; }
+const needsJobs = new Map();
+
+function needsKey() { return `${state.ctype}|${state.pity[state.ctype]}|${state.pity.golden}|${[...ownedSet()].sort().join(",")}`; }
+function missingByRow(owned) {
+  const def = CONTAINER_DEFS[state.ctype];
+  const groups = [...new Set(def.slots.flat().filter((e) => e.ship).map((e) => e.ship))].concat(["GR", "GG"]);
+  return NEED_ROWS.map((row) => groups.reduce((a, g) => a + availIn(g, owned).filter((s) => row.tier == null || tierOf(s) === row.tier).length, 0));
+}
+
+function renderNeeds() {
+  const type = state.ctype;
+  document.querySelectorAll("[data-ctype]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ctype === type));
+  $("needsLede").textContent = `So viele ${SHORT[type]} musst du öffnen, bis du mit 50 % bzw. 90 % Wahrscheinlichkeit ein neues Schiff der Stufe bekommst. Schiffe in deinem Hafen sind herausgerechnet, die Garantie nach ${state.pity[type]} Containern ist eingerechnet.`;
+  $("needsNote").textContent = `Simulation mit ${fmt.format(NEED_RUNS)} Durchläufen: Gezogene Schiffe fallen aus dem Pool, Golden Gift aus dem Container wird mitgeöffnet. Balken logarithmisch, kräftig = 50 %, hell = 90 %.` +
+    (!hasImport() && !Object.keys(state.manual).length ? " Ohne Anmeldung gilt jedes Schiff als fehlend." : "");
+  const key = needsKey();
+  if (needsCache.has(key)) { drawNeeds(needsCache.get(key)); return; }
+  drawNeeds(null);
+  const tiers = {};
+  for (const g of GROUP_ORDER) for (const s of GROUP_SHIPS[g]) if (!s.tier) tiers[s.key] = tierOf(s);
+  const params = { ownedKeys: [...ownedSet()], type, pityCfg: { ...state.pity }, runs: NEED_RUNS, cap: NEED_CAP,
+    targets: NEED_ROWS.map((r, i) => ({ id: "r" + i, tier: r.tier })), tiers };
+  const id = ++needsId;
+  needsJobs.set(id, key);
+  if (needsWorker) needsWorker.postMessage({ id, kind: "needs", params });
+  else setTimeout(() => { const res = runNeeds({ ...params, runs: 400 }); needsCache.set(key, res); if (key === needsKey()) drawNeeds(res); }, 0);
+}
+
+// result = null zeichnet die Tabelle mit Platzhaltern, solange gerechnet wird
+function drawNeeds(result) {
+  const missing = missingByRow(ownedSet());
+  const fin = result ? Object.values(result).flatMap((r) => [r.p90]).filter(Number.isFinite) : [];
+  const maxLog = Math.log10(Math.max(10, ...fin));
+  const w = (n) => (Number.isFinite(n) ? Math.max(2, Math.log10(Math.max(1, n)) / maxLog * 100) : 100).toFixed(1);
+  const num = (n) => (Number.isFinite(n) ? fmt.format(n) : `> ${fmt.format(NEED_CAP)}`);
+  $("needsBody").innerHTML = NEED_ROWS.map((row, i) => {
+    const head = `<th scope="row">${esc(row.label)}<span class="miss-inline">${fmt.format(missing[i])} fehlen dir</span></th><td class="num col-miss">${fmt.format(missing[i])}</td>`;
+    if (!missing[i]) return `<tr class="done">${head}<td colspan="3" class="mini">alle im Hafen</td></tr>`;
+    const r = result && result["r" + i];
+    if (!r) return `<tr${row.tier == null ? ' class="any"' : ""}>${head}<td class="num big wait">…</td><td class="num big wait">…</td><td class="bar-col"><span class="nbar"></span></td></tr>`;
+    return `<tr${row.tier == null ? ' class="any"' : ""}>${head}<td class="num big">${num(r.p50)}</td><td class="num big">${num(r.p90)}</td>
+      <td class="bar-col"><span class="nbar" aria-hidden="true"><span class="p90" style="width:${w(r.p90)}%"></span><span class="p50" style="width:${w(r.p50)}%"></span></span></td></tr>`;
+  }).join("");
+  $("needsTitle").setAttribute("aria-busy", result ? "false" : "true");
+}
+document.querySelectorAll("[data-ctype]").forEach((b) => b.addEventListener("click", () => {
+  state.ctype = b.dataset.ctype; store.set("ctype", state.ctype); renderNeeds();
+}));
+const scheduleNeeds = debounce(renderNeeds, 250);
+
+// ---------- Plan ----------
 const PLAN_IDS = { free: "c-free", pass: "c-pass", tokens: "c-tokens", tokenUse: "c-tokenUse", santa: "c-santa", mega: "c-mega", ultra: "c-ultra", golden: "c-golden" };
 function readPlan() {
   const n = (id) => Math.max(0, parseInt($(id).value, 10) || 0);
-  return { free: n("c-free"), pass: n("c-pass"), tokens: n("c-tokens"), tokenUse: $("c-tokenUse").value, santa: n("c-santa"), mega: n("c-mega"), ultra: n("c-ultra"), golden: n("c-golden"), tokensAuto: state.plan ? state.plan.tokensAuto !== false : true };
+  return { free: n("c-free"), pass: n("c-pass"), tokens: n("c-tokens"), tokenUse: $("c-tokenUse").value, santa: n("c-santa"), mega: n("c-mega"), ultra: n("c-ultra"), golden: n("c-golden") };
 }
 function planCounts(p) {
   const t = p.tokenUse === "santa" ? { santa: p.tokens, mega: 0 } : p.tokenUse === "mega" ? { santa: 0, mega: Math.floor(p.tokens / 5) } : { santa: 0, mega: 0 };
   return { ultra: p.ultra, mega: p.mega + t.mega, santa: p.free + p.pass + p.santa + t.santa, golden: p.golden };
 }
-function renderPlanInputs(sum) {
-  const auto = sum.byRes["Festive Token"] || 0;
-  if (!state.plan || state.plan.tokensAuto !== false) $("c-tokens").value = auto;
-  $("tokenSrc").innerHTML = `Aus deinem Hafen: ${fmt.format(auto)}` + (state.plan && state.plan.tokensAuto === false ? ` · <button type="button" class="link" id="tokReset">übernehmen</button>` : "");
+function renderPlanInputs() {
   const p = readPlan(), c = planCounts(p);
   const rest = p.tokenUse === "mega" ? p.tokens % 5 : 0;
   $("tokenHint").textContent = p.tokenUse === "mega" ? `5 Tokens je Mega: ${fmt.format(Math.floor(p.tokens / 5))} Mega${rest ? `, ${rest} übrig` : ""}` : p.tokenUse === "santa" ? `1 Token je Santa's: ${fmt.format(p.tokens)} Santa's Gift` : `375.000 je Token: ${fmt.format(p.tokens * 375000)} Credits`;
@@ -441,28 +298,21 @@ function renderPlanInputs(sum) {
   $("totalNote").textContent = parts.length ? `Gerechnet wird mit ${parts.join(", ")}. Golden und Battle Forged aus Drops werden automatisch mitgeöffnet.` : "Trag ein, welche Container du öffnen willst.";
 }
 if (state.plan) for (const [k, id] of Object.entries(PLAN_IDS)) if (state.plan[k] !== undefined) $(id).value = state.plan[k];
-for (const [k, id] of Object.entries(PLAN_IDS)) {
+for (const id of Object.values(PLAN_IDS)) {
   $(id).addEventListener(id === "c-tokenUse" ? "change" : "input", () => {
-    const p = readPlan();
-    if (k === "tokens") p.tokensAuto = false;
-    state.plan = p; store.set("plan", p);
-    renderPlanInputs(portSummary());
+    state.plan = readPlan(); store.set("plan", state.plan);
+    renderPlanInputs();
     scheduleSim();
   });
 }
-$("tokenSrc").addEventListener("click", (e) => {
-  if (e.target.id !== "tokReset") return;
-  state.plan = { ...readPlan(), tokensAuto: true }; store.set("plan", state.plan);
-  renderPlanInputs(portSummary()); scheduleSim();
-});
 for (const t of Object.keys(PITY_DEFAULT)) {
   const inp = $("p-" + t);
   inp.value = state.pity[t];
-  inp.addEventListener("change", () => { state.pity[t] = Math.max(1, parseInt(inp.value, 10) || PITY_DEFAULT[t]); inp.value = state.pity[t]; store.set("pity", state.pity); renderDropTables(); scheduleSim(); });
+  inp.addEventListener("change", () => { state.pity[t] = Math.max(1, parseInt(inp.value, 10) || PITY_DEFAULT[t]); inp.value = state.pity[t]; store.set("pity", state.pity); renderDropTables(); renderNeeds(); scheduleSim(); });
 }
 $("runs").addEventListener("change", () => scheduleSim());
 
-// ---------- Container: Simulation im Hintergrund ----------
+// ---------- Simulation im Hintergrund ----------
 let worker = null, simId = 0, lastSim = null;
 try {
   worker = new Worker("assets/js/sim-worker.js");
@@ -470,16 +320,13 @@ try {
   worker.onerror = () => { worker = null; scheduleSim(); };
 } catch { worker = null; }
 
-function simParams() {
-  const runs = Math.min(20000, Math.max(200, parseInt($("runs").value, 10) || 3000));
-  return { ownedKeys: [...ownedSet()], cnt: planCounts(readPlan()), runs, pityCfg: { ...state.pity } };
-}
 function startSim() {
-  const params = simParams();
+  const runs = Math.min(20000, Math.max(200, parseInt($("runs").value, 10) || 3000));
+  const params = { ownedKeys: [...ownedSet()], cnt: planCounts(readPlan()), runs, pityCfg: { ...state.pity } };
   const id = ++simId;
   $("calcState").dataset.busy = "true";
   $("calcState").textContent = "Rechnet …";
-  if (worker) worker.postMessage({ id, params });
+  if (worker) worker.postMessage({ id, kind: "plan", params });
   else setTimeout(() => { if (id === simId) finishSim(runPlan(params)); }, 0);
 }
 const scheduleSim = debounce(startSim, 200);
@@ -491,15 +338,48 @@ function finishSim(result) {
   refreshGroupStats();
 }
 
-// Nach einer Simulation nur Zahlen austauschen, nicht die Liste neu bauen (Fokus und Scrollposition bleiben)
+function renderSim(sim) {
+  const atLeast1 = 1 - (sim.hist[0] || 0) / sim.runs;
+  const nj = (sim.shipHits[shipKey("New Jersey BF")] || 0) / sim.runs;
+  readout($("contReadout"), [
+    { k: "Ø neue Schiffe", v: fmt1.format(sim.mean), s: "aus deinem Plan", accent: true },
+    { k: "Mind. 1 Schiff", v: fmtP(atLeast1), s: "Wahrscheinlichkeit" },
+    { k: "Ø Golden Gift", v: fmt1.format(sim.golden), s: "werden geöffnet" },
+    { k: "New Jersey BF", v: fmtP(nj), s: sim.bf > 0 ? `Ø ${fmt1.format(sim.bf)} Battle Forged Container` : "erst wenn alle Golden-Schiffe da sind" }
+  ]);
+  const keys = Object.keys(sim.hist).map(Number).sort((a, b) => a - b);
+  const rows = [];
+  for (let k = keys[0]; k <= keys[keys.length - 1]; k++) rows.push([k, sim.hist[k] || 0]);
+  const maxV = Math.max(...rows.map((r) => r[1]));
+  let cum = 0, median = 0;
+  for (const [k, v] of rows) { cum += v; if (cum >= sim.runs / 2) { median = k; break; } }
+  $("histNote").textContent = `So viele neue Schiffe bekommst du mit welcher Wahrscheinlichkeit. Median ${fmt.format(median)}.` + (sim.comps > 0.005 ? ` Ø ${fmt1.format(sim.comps)}× Stahl statt Schiff, weil dir kein Schiff des Containers mehr fehlt.` : "");
+  $("hist").innerHTML = rows.slice(0, 20).map(([k, v]) => `<div class="b"><span>${k} Schiff${k === 1 ? "" : "e"}</span><span class="bar${k === 0 ? " zero" : ""}" style="width:${(v / maxV * 100).toFixed(1)}%"></span><span style="text-align: right;">${fmtP(v / sim.runs)}</span></div>`).join("") + (rows.length > 20 ? `<div class="mini">… bis ${keys[keys.length - 1]} Schiffe</div>` : "");
+  $("hist").setAttribute("aria-label", `Verteilung: Median ${median} neue Schiffe, mindestens eines mit ${fmtP(atLeast1)}`);
+  const ORDER = ["Stahl", "Kohle", "Dublonen", "Credits", "Elite-Kommandanten-EP", "Forschungspunkte", "Premium-Tage", "Hafenplätze", "Signale (25×)"];
+  const res = Object.entries(sim.resSum).sort((a, b) => {
+    const ia = ORDER.indexOf(a[0]), ib = ORDER.indexOf(b[0]);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a[0].localeCompare(b[0], "de");
+  });
+  $("resBody").innerHTML = res.length ? res.map(([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(k)}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; }).join("") : `<tr><td colspan="2" class="mini">Keine Container im Plan.</td></tr>`;
+}
+function readout(el, items) {
+  el.innerHTML = items.map((it) => `<div><span class="k">${esc(it.k)}</span><span class="v${it.accent ? " accent" : ""}">${it.v}</span>${it.s ? `<span class="s">${it.s}</span>` : ""}</div>`).join("");
+}
+
+// ---------- Schiffsliste ----------
 function shipChance(g) {
   return lastSim && lastSim.missing[g] ? Math.min(1, (lastSim.groupHits[g] || 0) / lastSim.runs / lastSim.missing[g]) : 0;
 }
 function groupSub(g, owned) {
+  if (GROUP_SHIPS[g].every((s) => owned.has(s.key))) return "Alle im Hafen";
   if (!lastSim) return "";
-  const list = GROUP_SHIPS[g];
-  if (list.every((s) => owned.has(s.key))) return "Alle im Hafen";
-  return `Mind. ein Schiff daraus: ${fmtP((lastSim.groupAny[g] || 0) / lastSim.runs)}`;
+  return `Mit deinem Plan mind. ein Schiff daraus: ${fmtP((lastSim.groupAny[g] || 0) / lastSim.runs)}`;
+}
+function renderOwnedNote(owned) {
+  const all = GROUP_ORDER.reduce((a, g) => a + GROUP_SHIPS[g].length, 0);
+  $("ownedNote").textContent = `${fmt.format(owned.size)} von ${fmt.format(all)} Container-Schiffen sind in deinem Hafen. ` +
+    (hasImport() ? "Erkannt aus deinem Wargaming-Konto, per Häkchen korrigierbar." : "Hake die Schiffe ab, die du schon hast.");
 }
 function refreshGroupStats() {
   const owned = ownedSet();
@@ -512,36 +392,6 @@ function refreshGroupStats() {
     d.querySelectorAll(".ship").forEach((row) => { row.querySelector(".p").textContent = row.querySelector("input").checked ? "im Hafen" : p; });
   });
 }
-
-function renderSim(sim) {
-  const atLeast1 = 1 - (sim.hist[0] || 0) / sim.runs;
-  const nj = (sim.shipHits[shipKey("New Jersey BF")] || 0) / sim.runs;
-  readout($("contReadout"), [
-    { k: "Ø neue Schiffe", v: fmt1.format(sim.mean), s: "aus deinem Plan", accent: true },
-    { k: "Mind. 1 Schiff", v: fmtP(atLeast1), s: "Wahrscheinlichkeit" },
-    { k: "Ø Golden Gift", v: fmt1.format(sim.golden), s: "werden geöffnet" },
-    { k: "New Jersey BF", v: fmtP(nj), s: sim.bf > 0 ? `Ø ${fmt1.format(sim.bf)} Battle Forged Container` : "erst wenn alle Golden-Schiffe da sind" }
-  ]);
-
-  const keys = Object.keys(sim.hist).map(Number).sort((a, b) => a - b);
-  const rows = [];
-  for (let k = keys[0]; k <= keys[keys.length - 1]; k++) rows.push([k, sim.hist[k] || 0]);
-  const maxV = Math.max(...rows.map((r) => r[1]));
-  let cum = 0, median = 0;
-  for (const [k, v] of rows) { cum += v; if (cum >= sim.runs / 2) { median = k; break; } }
-  $("histNote").textContent = `So viele neue Schiffe bekommst du mit welcher Wahrscheinlichkeit. Median ${fmt.format(median)}.` + (sim.comps > 0.005 ? ` Ø ${fmt1.format(sim.comps)}× Stahl statt Schiff, weil dir kein Schiff des Containers mehr fehlt.` : "");
-  $("hist").innerHTML = rows.slice(0, 20).map(([k, v]) => `<div class="b"><span>${k} Schiff${k === 1 ? "" : "e"}</span><span class="bar${k === 0 ? " zero" : ""}" style="width:${(v / maxV * 100).toFixed(1)}%"></span><span style="text-align: right;">${fmtP(v / sim.runs)}</span></div>`).join("") + (rows.length > 20 ? `<div class="mini">… bis ${keys[keys.length - 1]} Schiffe</div>` : "");
-  $("hist").setAttribute("aria-label", `Verteilung: Median ${median} neue Schiffe, mindestens eines mit ${fmtP(atLeast1)}`);
-
-  const ORDER = ["Stahl", "Kohle", "Dublonen", "Credits", "Elite-Kommandanten-EP", "Forschungspunkte", "Premium-Tage", "Hafenplätze", "Signale (25×)"];
-  const res = Object.entries(sim.resSum).sort((a, b) => {
-    const ia = ORDER.indexOf(a[0]), ib = ORDER.indexOf(b[0]);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a[0].localeCompare(b[0], "de");
-  });
-  $("resBody").innerHTML = res.length ? res.map(([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(k)}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; }).join("") : `<tr><td colspan="2" class="mini">Keine Container im Plan.</td></tr>`;
-}
-
-// ---------- Container: Schiffsliste ----------
 function setFilter(f) {
   state.filter = f; store.set("filter", f);
   $("fMissing").setAttribute("aria-pressed", f === "missing");
@@ -550,11 +400,10 @@ function setFilter(f) {
 }
 $("fMissing").addEventListener("click", () => setFilter("missing"));
 $("fAll").addEventListener("click", () => setFilter("all"));
-$("shipSearch").addEventListener("input", debounce(renderGroups, 120));
+$("shipSearch").addEventListener("input", debounce(() => renderGroups(), 120));
 
 function renderGroups() {
   const owned = ownedSet(), imp = importedKeys();
-  const tierByKey = new Map(); for (const sh of SHIPS.values()) tierByKey.set(shipKey(sh.name), sh.tier);
   const q = shipKey($("shipSearch").value);
   const missingOnly = state.filter === "missing";
   let html = "";
@@ -564,28 +413,20 @@ function renderGroups() {
     const shown = list.filter((s) => (!missingOnly || !owned.has(s.key)) && (!q || s.key.includes(q)));
     if (q && !shown.length) continue;
     const open = q ? true : state.openGroups.has(g);
-    // Innerhalb einer Gruppe wird gleichverteilt unter fehlenden Schiffen gezogen: P = Ø Drops der Gruppe / fehlende Schiffe
     const p = shipChance(g);
     const rows = shown.map((s) => {
       const has = owned.has(s.key);
       const src = state.manual[s.key] !== undefined ? "von Hand" : imp.has(s.key) ? "Import" : "";
-      return `<label class="ship${has ? " owned" : ""}"><input type="checkbox" data-ship="${esc(s.key)}" ${has ? "checked" : ""}><span class="nm">${esc(s.name)}${src ? ` <span class="src">${src}</span>` : ""}</span><span class="tier">${ROMAN[s.tier || tierByKey.get(s.key) || 0]}</span><span class="p">${has ? "im Hafen" : lastSim ? fmtP(p) : ""}</span></label>`;
+      return `<label class="ship${has ? " owned" : ""}"><input type="checkbox" data-ship="${esc(s.key)}" ${has ? "checked" : ""}><span class="nm">${esc(s.name)}${src ? ` <span class="src">${src}</span>` : ""}</span><span class="tier">${ROMAN[tierOf(s)]}</span><span class="p">${has ? "im Hafen" : lastSim ? fmtP(p) : ""}</span></label>`;
     }).join("");
     html += `<details class="grp" data-group="${g}"${open ? " open" : ""}>
-      <summary><span class="gname">${esc(SANTA_GROUPS[g].label)}</span><span class="gstat">${og}/${list.length}</span>
-        <span class="gsub">${groupSub(g, owned)}</span></summary>
+      <summary><span class="gname">${esc(SANTA_GROUPS[g].label)}</span><span class="gstat">${og}/${list.length}</span><span class="gsub">${groupSub(g, owned)}</span></summary>
       <div class="grp-actions"><button type="button" class="ghost sm" data-all="${g}">Alle im Hafen</button><button type="button" class="ghost sm" data-none="${g}">Keins im Hafen</button></div>
       ${rows ? `<div class="ships">${rows}</div>` : `<div class="empty">${missingOnly ? "Du hast alle Schiffe dieser Gruppe." : "Keine Treffer."}</div>`}
     </details>`;
   }
   $("groups").innerHTML = html || `<div class="empty">Kein Schiff gefunden.</div>`;
   renderOwnedNote(owned);
-}
-function renderOwnedNote(owned) {
-  const all = GROUP_ORDER.reduce((a, g) => a + GROUP_SHIPS[g].length, 0);
-  $("ownedNote").textContent = `${fmt.format(owned.size)} von ${fmt.format(all)} Container-Schiffen sind in deinem Hafen. ` +
-    (hasImport() ? "Erkannt aus deinem Wargaming-Konto, per Häkchen korrigierbar." : "Hake die Schiffe ab, die du schon hast.") +
-    " Die Prozente gelten für deinen ganzen Plan.";
 }
 $("groups").addEventListener("toggle", (e) => {
   const g = e.target.dataset && e.target.dataset.group;
@@ -603,6 +444,7 @@ $("groups").addEventListener("change", (e) => {
   row.classList.toggle("owned", e.target.checked);
   row.querySelector(".p").textContent = e.target.checked ? "im Hafen" : "…";
   rollCtx = null;
+  scheduleNeeds();
   scheduleSim();
 });
 $("groups").addEventListener("click", (e) => {
@@ -613,10 +455,11 @@ $("groups").addEventListener("click", (e) => {
   store.set("manual", state.manual);
   rollCtx = null;
   renderGroups();
+  renderNeeds();
   scheduleSim();
 });
 
-// ---------- Container: Drop-Tabellen ----------
+// ---------- Drop-Tabellen ----------
 function renderDropTables() {
   const label = (e) => {
     if (e.ship) return `${esc(SANTA_GROUPS[e.ship].label)} (${GROUP_SHIPS[e.ship].length} Schiffe)`;
@@ -635,7 +478,7 @@ function renderDropTables() {
   }).join("");
 }
 
-// ---------- Container: einzeln öffnen ----------
+// ---------- Einzeln öffnen ----------
 let rollCtx = null, rollNo = 0;
 for (const t of ["santa", "mega", "ultra", "golden", "bf"]) {
   const o = document.createElement("option"); o.value = t; o.textContent = CONTAINER_DEFS[t].label; $("rollSel").appendChild(o);
@@ -646,7 +489,7 @@ $("rollBtn").addEventListener("click", () => {
   const o = openContainer(t, rollCtx);
   rollNo++;
   const parts = [];
-  for (const s of o.ships) parts.push(`${s.name} (${ROMAN[s.tier]})`);
+  for (const s of o.ships) parts.push(`${s.name} (${ROMAN[tierOf(s)]})`);
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${k}`);
   for (const g of o.give) parts.push(g === "golden" ? "1× Golden Gift" : "1× Battle Forged Container");
   const line = document.createElement("div");
@@ -656,38 +499,21 @@ $("rollBtn").addEventListener("click", () => {
 });
 $("rollReset").addEventListener("click", () => { rollCtx = null; $("rollLog").innerHTML = ""; });
 
-// ---------- Ansichten ----------
-const VIEWS = ["hafen", "container", "gefechte"];
-function showView() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "hafen";
-  for (const id of VIEWS) $("v-" + id).hidden = id !== v;
-  document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.dataset.view === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-}
-window.addEventListener("hashchange", () => {
-  showView();
-  const nav = document.querySelector("nav.tabs");
-  if (nav.getBoundingClientRect().top < 0) nav.scrollIntoView({ block: "start" });
-});
-
+// ---------- Neu zeichnen ----------
 function changed() {
-  const sum = portSummary();
-  renderPort(sum);
-  renderBattles(sum);
-  renderPlanInputs(sum);
   rollCtx = null;
+  renderNeeds();
+  renderPlanInputs();
   renderGroups();
   scheduleSim();
 }
 
 // ---------- Start ----------
-renderTierInputs();
-renderRules();
-if (state.imported) applyExtra(state.imported.extra);
+if (state.imported) applyExtra(state.imported.extra); else rebuildTiers();
 renderDropTables();
 setFilter(state.filter === "all" ? "all" : "missing");
 if (session && !sessionValid()) { session = null; store.set("session", null); importMsg("Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an."); }
 setSource(state.source === "manual" ? "manual" : "import");
 handleCallback();
 if (sessionValid() && !state.imported) loadPort();
-showView();
 })();

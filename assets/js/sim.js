@@ -113,3 +113,44 @@ function runPlan({ ownedKeys, cnt, runs, pityCfg }) {
   for (const g of GROUP_ORDER) missing[g] = availIn(g, base).length;
   return { runs, mean: total / runs, hist, shipHits, groupHits, groupAny, missing, resSum, golden: goldenOpened / runs, bf: bfOpened / runs, comps: comps / runs };
 }
+
+// Benötigte Container je Ziel: öffnet Container eines Typs, bis jedes Ziel einmal getroffen ist.
+// Golden Gift aus dem Container wird sofort mitgeöffnet. Gezogene Schiffe verkleinern den Pool (wie im Spiel).
+// targets = [{ id, tier|null }], tiers = { shipKey: stufe } für Schiffe ohne bekannte Stufe in den Listen.
+function runNeeds({ ownedKeys, type, pityCfg, runs, targets, tiers, cap }) {
+  const tierOf = (s) => s.tier || tiers[s.key] || 0;
+  const base = new Set(ownedKeys);
+  const reachable = new Set();
+  const groups = [...new Set(CONTAINER_DEFS[type].slots.flat().filter((e) => e.ship).map((e) => e.ship))].concat(["GR", "GG"]);
+  for (const g of groups) for (const s of availIn(g, base)) reachable.add(s.key);
+  const live = targets.filter((t) => [...reachable].some((k) => {
+    if (t.tier == null) return true;
+    const s = GROUP_ORDER.flatMap((g) => GROUP_SHIPS[g]).find((x) => x.key === k);
+    return s && tierOf(s) === t.tier;
+  }));
+  const samples = Object.fromEntries(live.map((t) => [t.id, []]));
+  for (let r = 0; r < runs; r++) {
+    const ctx = { owned: new Set(base), pity: {}, pityCfg };
+    const open = new Set(live.map((t) => t.id));
+    let n = 0;
+    const hit = (ships) => {
+      for (const s of ships) for (const t of live) {
+        if (open.has(t.id) && (t.tier == null || tierOf(s) === t.tier)) { open.delete(t.id); samples[t.id].push(n); }
+      }
+    };
+    while (open.size && n < cap) {
+      n++;
+      const o = openContainer(type, ctx);
+      hit(o.ships);
+      for (const g of o.give) if (g === "golden") hit(openContainer("golden", ctx).ships);
+    }
+    for (const id of open) samples[id].push(Infinity);
+  }
+  const out = {};
+  for (const t of live) {
+    const a = samples[t.id].sort((x, y) => x - y);
+    const q = (f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
+    out[t.id] = { p50: q(0.5), p90: q(0.9) };
+  }
+  return out;
+}

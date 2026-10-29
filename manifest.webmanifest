@@ -1,7 +1,7 @@
 {
   "name": "WoWs Santa-Rechner",
   "short_name": "Santa-Rechner",
-  "description": "Santa-Event Update 15.11: Hafen einlesen, Schneeflocken planen, Container simulieren.",
+  "description": "Wie viele Santa's Gift brauchst du für ein neues Schiff? Container-Rechner für Update 15.11.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",

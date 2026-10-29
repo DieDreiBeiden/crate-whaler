@@ -1,7 +1,8 @@
-// Rechnet die Simulation im Hintergrund, damit die Seite beim Tippen nicht ruckelt.
+// Rechnet im Hintergrund, damit die Seite beim Tippen nicht ruckelt.
+// kind "plan": Ergebnis eines Container-Plans, kind "needs": benötigte Container je Stufe.
 importScripts("santa2026.js", "sim.js");
 
 self.onmessage = (e) => {
-  const { id, params } = e.data;
-  self.postMessage({ id, result: runPlan(params) });
+  const { id, kind, params } = e.data;
+  self.postMessage({ id, result: kind === "needs" ? runNeeds(params) : runPlan(params) });
 };
