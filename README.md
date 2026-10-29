@@ -41,3 +41,13 @@ Cloudflare Pages, Netlify oder ein eigener Webspace funktionieren genauso. Die S
 ## Lizenz
 
 Die Rechenlogik und die Schiffsdaten stammen aus https://github.com/Rukenshia/shipwhaling (GPL-3.0). Wer die Seite veröffentlicht, sollte sie deshalb ebenfalls unter GPL-3.0 stellen und den Quelltext zugänglich lassen. Bei einer statischen HTML-Datei ist der Quelltext automatisch sichtbar.
+
+## Sicherheit und Datenschutz
+
+- Schriften liegen lokal in `fonts/` (SIL Open Font License), die Seite stellt keine Anfragen an Google.
+- `index.html` setzt eine Content-Security-Policy: Scripts laufen nur, wenn ihre Prüfsumme passt, und Daten gehen nur an die Wargaming-API. Dazu kommt `no-referrer`, damit keine Adresse an andere Server weitergegeben wird.
+- **Nach jeder Änderung an einem `<script>`-Block** müssen die Prüfsummen neu berechnet werden, sonst startet die Seite nicht:
+
+  ```bash
+  node scripts/update-csp.mjs
+  ```
