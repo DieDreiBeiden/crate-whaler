@@ -3,247 +3,96 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>WoWs Santa-Rechner</title>
-<meta name="description" content="Santa-Event 15.11: Hafen per Wargaming-Login einlesen, Schneeflocken planen, Santa's, Golden und Battle Forged Container simulieren.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pyraf1rOiwG0IQEra6nH559mQikl4ucawIjIJZKmfDo=' 'sha256-tTJ8wJw2iZGP8AD04exMCIw32Md3xRhoBSCo4VYlTQI=' 'sha256-+/PWVOkcvFiX3EmLXL9YZ9oKDbIlpQ+vQNeqZOzmud0='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
-<style>
-/* Schriften lokal (SIL Open Font License, siehe fonts/), keine Anfragen an Google */
-@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/barlow-condensed-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/barlow-condensed-500-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/barlow-condensed-700-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/barlow-condensed-700-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-400-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-400-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-mono-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-mono-500-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-sans-400-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-sans-400-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-sans-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-sans-500-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/ibm-plex-sans-600-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/ibm-plex-sans-600-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-</style>
-<style>
-/* Layout: Seekarten-Logbuch. Schmale Spalte, Reiter oben, Ergebnisse als Logbuch-Zeilen mit Messwerten */
-:root {
-  --paper: #eef2f1;
-  --sheet: #f8faf9;
-  --ink: #142638;
-  --ink-soft: #4a5d6e;
-  --rule: #c9d3d6;
-  --sea: #1f6a86;
-  --brass: #a8701a;
-  --brass-soft: #f1e3c6;
-  --good: #2f7a4b;
-  --eu: #0e7490; --na: #be123c; --asia: #b45309;
-  --warn: #a5481f;
-  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0d1922; --sheet: #13232f; --ink: #dbe5ea; --ink-soft: #93a7b4; --rule: #29404f;
-    --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --warn: #ef8a5c;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #0d1922; --sheet: #13232f; --ink: #dbe5ea; --ink-soft: #93a7b4; --rule: #29404f;
-  --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --warn: #ef8a5c;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
-body {
-  background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 24px 48px;
-}
-.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 20px; }
-header { display: grid; gap: 6px; border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
-.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
-h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6vw, 52px); line-height: 1; margin: 0; letter-spacing: .01em; text-wrap: balance; }
-h1 span { color: var(--brass); }
-h2 { font-family: var(--display); font-weight: 700; font-size: 26px; margin: 0; letter-spacing: .02em; text-wrap: balance; }
-h3 { font-family: var(--display); font-weight: 500; font-size: 19px; margin: 0; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-soft); }
-p { margin: 0; max-width: 68ch; }
-.lede { color: var(--ink-soft); }
-a { color: var(--sea); }
-
-nav.tabs { display: flex; gap: 0; border: 1px solid var(--ink); flex-wrap: wrap; }
-nav.tabs a {
-  flex: 1 1 120px; text-align: center; padding: 10px 12px; text-decoration: none; color: var(--ink);
-  font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .05em; text-transform: uppercase;
-  border-right: 1px solid var(--ink);
-}
-nav.tabs a:last-child { border-right: 0; }
-nav.tabs a .n { font-family: var(--mono); font-weight: 400; font-size: 12px; color: var(--ink-soft); margin-right: 6px; }
-nav.tabs a[aria-current="page"] { background: var(--ink); color: var(--paper); }
-nav.tabs a[aria-current="page"] .n { color: var(--brass); }
-nav.tabs a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
-
-section.view { display: grid; gap: 20px; }
-.panel { background: var(--sheet); border: 1px solid var(--rule); padding: 18px; display: grid; gap: 14px; min-width: 0; }
-.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; }
-.row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
-label.f { display: grid; gap: 4px; font-size: 13px; color: var(--ink-soft); min-width: 0; }
-input, select, textarea {
-  font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); padding: 7px 9px; border-radius: 0; min-width: 0;
-}
-input[type="number"] { font-family: var(--mono); width: 100%; }
-textarea { font-family: var(--mono); font-size: 12px; width: 100%; min-height: 90px; resize: vertical; }
-button {
-  font: inherit; font-weight: 600; cursor: pointer; padding: 8px 14px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
-}
-button.ghost { background: transparent; color: var(--ink); }
-button:disabled { opacity: .5; cursor: default; }
-.seg { display: inline-flex; border: 1px solid var(--ink); }
-.seg button { border: 0; background: transparent; color: var(--ink); font-weight: 500; }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-
-.tierin { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
-.tierin label { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); display: grid; gap: 3px; }
-
-.tag { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border: 1px solid currentColor; }
-.tag.ex { color: var(--brass); }
-.tag.ok { color: var(--good); }
-.tag.err { color: var(--warn); }
-
-.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-top: 2px solid var(--ink); }
-.readout > div { padding: 12px 12px 10px 0; border-bottom: 1px solid var(--rule); display: grid; gap: 2px; min-width: 0; }
-.readout .k { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
-.readout .v { font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.readout .s { font-size: 12px; color: var(--ink-soft); }
-.readout .v.accent { color: var(--brass); }
-
-.tbl { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-th { font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 2px solid var(--ink); }
-td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-td input { width: 100%; padding: 4px 6px; }
-td input[type="number"] { min-width: 72px; }
-tr.ship td:first-child { border-left: 3px solid var(--brass); }
-
-.steps { display: grid; gap: 14px; counter-reset: s; }
-.step { display: grid; gap: 8px; padding-left: 34px; position: relative; }
-.step::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border: 1px solid var(--ink); font-family: var(--mono); font-size: 12px; display: grid; place-items: center; }
-.linkout { font-family: var(--mono); font-size: 12px; word-break: break-all; background: var(--paper); border: 1px dashed var(--rule); padding: 6px 8px; }
-.note { font-size: 13px; color: var(--ink-soft); border-left: 3px solid var(--rule); padding-left: 10px; }
-.note.warn { border-left-color: var(--warn); }
-.msg { font-size: 13px; }
-.msg.err { color: var(--warn); }
-.msg.ok { color: var(--good); }
-
-details { border-top: 1px solid var(--rule); padding-top: 8px; }
-summary { cursor: pointer; font-weight: 600; }
-.shiplist { columns: 3 200px; font-size: 13px; margin-top: 8px; }
-.shiplist div { break-inside: avoid; }
-.shiplist .t { font-family: var(--mono); color: var(--ink-soft); display: inline-block; width: 2.4em; }
-
-input[type="range"] { width: 100%; accent-color: var(--brass); padding: 0; border: 0; background: transparent; }
-.chart svg { width: 100%; height: auto; display: block; }
-.chart text { fill: var(--ink-soft); font-family: var(--mono); font-size: 11px; }
-
-.hist { display: grid; gap: 4px; }
-.hist .b { display: grid; grid-template-columns: 4.5em 1fr 4em; gap: 8px; align-items: center; font-family: var(--mono); font-size: 12px; }
-.hist .bar { height: 14px; background: var(--sea); }
-.hist .bar.zero { background: var(--warn); }
-.log { font-family: var(--mono); font-size: 12px; display: grid; gap: 2px; max-height: 220px; overflow-y: auto; }
-.log .ship { color: var(--brass); font-weight: 500; }
-footer { font-size: 12px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 4px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-</style>
+<title>WoWs Santa-Rechner</title>
+<meta name="description" content="Santa-Event Update 15.11: Hafen per Wargaming-Login einlesen, Schneeflocken planen und Santa's, Golden und Battle Forged Container mit deinem Hafen simulieren.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#eef2f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1922" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WoWs Santa-Rechner">
+<meta property="og:description" content="Welche Schiffe bringen dir Santa's, Golden und Battle Forged Container? Hafen einlesen und durchrechnen.">
+<meta property="og:url" content="https://whaling.starbane.de/">
+<meta property="og:image" content="https://whaling.starbane.de/assets/img/og.png">
+<meta property="og:locale" content="de_DE">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/img/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<script src="assets/js/boot.js"></script>
 </head>
 <body>
-<style>
-.grp td { background: var(--paper); font-weight: 600; }
-.grp .mini { font-weight: 400; }
-.mini { font-size: 12px; color: var(--ink-soft); }
-button.sm { padding: 3px 8px; font-size: 12px; font-weight: 500; }
-td.chk { width: 2.5em; text-align: center; }
-td.chk input { width: auto; }
-tr.owned td:not(.chk) { color: var(--ink-soft); }
-.pbar { display: inline-block; height: 8px; background: var(--brass); vertical-align: middle; margin-right: 6px; }
-.cnt { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px 14px; }
-.src { font-size: 12px; color: var(--ink-soft); }
-.realms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.realms button { padding: 18px 8px; font-family: var(--display); font-size: 22px; letter-spacing: .06em; }
-.acct { display: grid; gap: 4px; border-left: 3px solid var(--good); padding-left: 10px; }
-.acct .k { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); margin-right: 8px; }
-.split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.userbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 14px; }
-.gate { display: grid; gap: 20px; max-width: 640px; width: 100%; justify-self: center; }
-.gate-card { gap: 16px; }
-.realms button.realm { aspect-ratio: 1 / 1; max-height: 150px; font-family: var(--display); font-size: clamp(24px, 6vw, 34px); letter-spacing: .08em; color: var(--ink); border: 2px solid var(--rc); background: color-mix(in srgb, var(--rc) 16%, var(--sheet)); }
-.realms button.realm:hover:not(:disabled) { background: color-mix(in srgb, var(--rc) 32%, var(--sheet)); }
-.realm.eu { --rc: var(--eu); } .realm.na { --rc: var(--na); } .realm.asia { --rc: var(--asia); }
-</style>
-
+<a class="skip" href="#main">Zum Inhalt springen</a>
 <div class="wrap">
-  <header>
-    <div class="eyebrow">World of Warships · Update 15.11 · Weihnachten 2026</div>
-    <h1>WoWs <span>Santa-Rechner</span></h1>
-    <p class="lede">Hafen einlesen, Schneeflocken-Belohnungen planen und durchrechnen, was dir Santa's Gift, Golden Gift und Battle Forged Container bringen. Schiffe, die du schon hast, fallen aus den Drops heraus.</p>
-    <div class="userbar" id="userbar" hidden>
-      <span>Angemeldet als <strong id="ubName"></strong></span>
-      <span class="tag" id="ubRealm"></span>
-      <span class="mini" id="ubInfo"></span>
-      <button type="button" class="ghost sm" id="ubLogout">Abmelden</button>
+  <header class="topbar">
+    <div class="brand">
+      <div class="eyebrow">World of Warships · Update 15.11</div>
+      <h1>WoWs <span>Santa-Rechner</span></h1>
+    </div>
+    <div class="top-actions">
+      <div class="account" id="userbar" hidden>
+        <span class="visually-hidden">Angemeldet als</span>
+        <strong id="ubName"></strong>
+        <span class="tag" id="ubRealm"></span>
+        <button type="button" class="ghost sm" id="ubLogout">Abmelden</button>
+      </div>
+      <button type="button" class="ghost icon-btn" id="themeBtn" aria-label="Farbschema wechseln">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 7a5 5 0 0 0 0 10z" fill="currentColor"/></svg>
+        <span id="themeLabel">Auto</span>
+      </button>
     </div>
   </header>
 
+  <main id="main" class="stack" style="gap: 20px;">
   <!-- ============ ANMELDUNG ============ -->
-  <section class="gate" id="gate" hidden>
-    <div class="panel gate-card">
-      <div style="display: grid; gap: 4px;">
+  <section class="gate" id="gate" hidden aria-labelledby="gateTitle">
+    <div class="panel">
+      <div class="stack" style="gap: 4px;">
         <h2 id="gateTitle">Server wählen und anmelden</h2>
         <p class="lede" id="gateSub">Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.</p>
       </div>
-
-      <div id="setupBox" hidden style="display: grid; gap: 8px;">
-        <p class="note warn">Für diese Seite ist noch keine Wargaming Application ID hinterlegt. Trage sie in <code>index.html</code> bei <code>WG_APPLICATION_ID</code> ein. Zum Testen kannst du sie auch hier eingeben, sie bleibt dann nur in diesem Browser.</p>
+      <div id="setupBox" hidden class="stack">
+        <p class="note warn">Für diese Seite ist keine Wargaming Application ID hinterlegt. Trage sie in <code>assets/js/boot.js</code> ein. Zum Testen geht sie auch hier, sie bleibt dann nur in diesem Browser.</p>
         <label class="f">Application ID
           <input id="appId" type="text" autocomplete="off" spellcheck="false" placeholder="aus developers.wargaming.net">
         </label>
       </div>
-
-      <div class="realms" id="realmButtons">
+      <div class="realms" id="realmButtons" role="group" aria-label="Server">
         <button type="button" class="realm eu" data-realm="eu">EU</button>
         <button type="button" class="realm na" data-realm="com">NA</button>
         <button type="button" class="realm asia" data-realm="asia">ASIA</button>
       </div>
-      <div class="msg" id="gateMsg" role="status"></div>
-      <button type="button" class="ghost" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter (Hafen von Hand eingeben)</button>
+      <div class="msg" id="gateMsg" role="status" aria-live="polite"></div>
+      <button type="button" class="link" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter und den Hafen von Hand eingeben</button>
     </div>
 
-    <div class="panel gate-card">
-      <div style="display: grid; gap: 6px;">
-        <h3>Über diese Seite</h3>
-        <p>Der Santa-Rechner plant das Weihnachts-Event in Update 15.11. Um die Schiffe in deinem Hafen zu sehen, meldest du dich mit deinem Wargaming-Konto an.</p>
-      </div>
-      <div style="display: grid; gap: 6px;">
+    <div class="panel">
+      <div class="stack" style="gap: 6px;">
         <h3>Datenschutz</h3>
-        <p>Die Anmeldung läuft direkt bei Wargaming, diese Seite sieht dein Passwort nie. Sie erhält nur einen Zugriffsschlüssel, mit dem sie deine Kontodaten lesen, aber nichts ändern kann. Schlüssel und Hafendaten bleiben in deinem Browser und gehen an keinen anderen Server. „Abmelden“ löscht beides und macht den Schlüssel bei Wargaming ungültig.</p>
+        <p>Die Anmeldung läuft direkt bei Wargaming, diese Seite sieht dein Passwort nie. Sie erhält nur einen Zugriffsschlüssel, mit dem sie deine Schiffsliste lesen, aber nichts an deinem Konto ändern kann. Schlüssel und Hafendaten bleiben in deinem Browser. „Abmelden“ löscht beides und macht den Schlüssel bei Wargaming ungültig.</p>
       </div>
-      <details>
+      <details class="plain">
         <summary>Welche Daten liest die Seite?</summary>
-        <p class="note" style="margin-top: 6px;">Nur die Liste der Schiffe in deinem Hafen (<code>private.port</code>). Für Schiffe, die neuer als die eingebauten Daten sind, fragt sie Name und Stufe in der öffentlichen Wargaming-Enzyklopädie ab.</p>
+        <p class="note">Nur die Liste der Schiffe in deinem Hafen. Für Schiffe, die neuer als die eingebauten Daten sind, fragt sie Name und Stufe in der öffentlichen Wargaming-Enzyklopädie ab.</p>
       </details>
-      <details>
+      <details class="plain">
         <summary>Wie lange bleibe ich angemeldet?</summary>
-        <p class="note" style="margin-top: 6px;">Bis zu 14 Tage oder bis du dich abmeldest. Danach fragt die Seite erneut nach der Anmeldung.</p>
+        <p class="note">Bis zu 14 Tage oder bis du dich abmeldest.</p>
       </details>
-      <details>
+      <details class="plain">
         <summary>Die Anmeldung klappt nicht. Was tun?</summary>
-        <p class="note" style="margin-top: 6px;">Prüfe, ob du den richtigen Server gewählt hast: EU, NA und ASIA sind getrennte Konten. Bleibt es beim Fehler, nutze „Ohne Anmeldung weiter“ und trag deine Schiffe von Hand ein.</p>
+        <p class="note">Prüfe den Server: EU, NA und ASIA sind getrennte Konten. Hilft das nicht, nutze „Ohne Anmeldung weiter“ und trag die Schiffe von Hand ein.</p>
       </details>
     </div>
   </section>
 
-  <div id="app" style="display: grid; gap: 20px;">
+  <div id="app" class="stack" style="gap: 20px;">
   <nav class="tabs" aria-label="Bereiche">
     <a href="#hafen" data-view="hafen"><span class="n">01</span>Hafen</a>
     <a href="#container" data-view="container"><span class="n">02</span>Container</a>
@@ -251,23 +100,20 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
   </nav>
 
   <!-- ============ HAFEN ============ -->
-  <section class="view" id="v-hafen">
-    <div class="readout" id="portReadout"></div>
+  <section class="view" id="v-hafen" aria-label="Hafen">
+    <div class="readout" id="portReadout" aria-live="polite"></div>
 
     <div class="grid2">
-      <div class="panel">
-        <div class="split">
-          <h2>Schiffe im Hafen</h2>
-          <div class="seg" role="group" aria-label="Datenquelle">
-            <button type="button" id="srcImport" aria-pressed="true">Wargaming-Login</button>
-            <button type="button" id="srcManual" aria-pressed="false">Manuell</button>
-          </div>
+      <div class="panel" id="portPanel">
+        <div class="panel-head">
+          <h2>Dein Hafen</h2>
+          <span class="tag ex" id="exampleTag" hidden>Beispielwerte</span>
         </div>
 
-        <div id="importBox" style="display: grid; gap: 12px;">
-          <div id="accountBox" hidden style="display: grid; gap: 10px;">
+        <div id="importBox" class="stack">
+          <div id="accountBox" hidden class="stack">
             <div class="acct">
-              <div><span class="k">Angemeldet</span><strong id="accName"></strong> <span class="tag" id="accRealm"></span></div>
+              <div><strong id="accName"></strong> <span class="tag" id="accRealm"></span></div>
               <div class="mini" id="accInfo"></div>
             </div>
             <div class="row">
@@ -275,147 +121,166 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
               <button type="button" class="ghost" id="logoutBtn">Abmelden</button>
             </div>
           </div>
-          <div class="msg" id="importMsg" role="status"></div>
+          <div class="msg" id="importMsg" role="status" aria-live="polite"></div>
+          <button type="button" class="link" id="toManual" style="justify-self: start;">Stattdessen von Hand eingeben</button>
         </div>
 
-        <div id="manualBox" hidden style="display: grid; gap: 10px;">
-          <p class="note">Ohne Login: Anzahl Schiffe je Stufe, ohne Testschiffe. <span class="tag ex" id="exampleTag">Beispielwerte</span> Die Container-Schiffe hakst du dann im Reiter Container von Hand ab.</p>
+        <div id="manualBox" hidden class="stack">
+          <p class="note">Anzahl Schiffe je Stufe, ohne Testschiffe. Welche Container-Schiffe du hast, hakst du im Reiter Container ab.</p>
           <div class="tierin" id="tierInputs"></div>
+          <button type="button" class="link" id="toLogin" style="justify-self: start;">Lieber mit Wargaming anmelden</button>
         </div>
       </div>
 
       <div class="panel">
-        <div class="split">
-          <h2>Schneeflocken-Regeln</h2>
-          <label class="f">Vorlage
+        <h2>Schneeflocken je Stufe</h2>
+        <div class="tbl"><table>
+          <thead><tr><th scope="col">Stufe</th><th scope="col" class="num">Schiffe</th><th scope="col">Belohnung</th><th scope="col" class="num">Summe</th><th scope="col" class="num">Basis-EP</th></tr></thead>
+          <tbody id="tierBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <details class="more" id="shipDetails" hidden>
+      <summary><span id="shipSummary">Schiffe im Hafen</span></summary>
+      <div class="inner"><div class="shiplist" id="shipList"></div></div>
+    </details>
+
+    <details class="more">
+      <summary><span>Regeln anpassen <span class="mini">für Fortgeschrittene</span></span></summary>
+      <div class="inner">
+        <div class="row">
+          <label class="f" style="flex: 1 1 220px;">Vorlage
             <select id="preset">
               <option value="xmas26">Weihnachten 2026 (15.11)</option>
               <option value="ann26">Jubiläum 2026</option>
             </select>
           </label>
         </div>
-        <div class="tbl">
-          <table>
-            <thead><tr><th>Stufe</th><th>Ressource</th><th class="num">Menge</th><th class="num">Basis-EP</th></tr></thead>
-            <tbody id="rulesBody"></tbody>
-          </table>
-        </div>
-        <div class="row">
-          <label class="f" style="flex: 1 1 140px;">Basis-EP je Zusatzbelohnung
-            <input id="addXp" type="number" min="1" step="50">
+        <div class="tbl"><table>
+          <thead><tr><th scope="col">Stufe</th><th scope="col">Ressource</th><th scope="col" class="num">Menge</th><th scope="col" class="num">Basis-EP</th></tr></thead>
+          <tbody id="rulesBody"></tbody>
+        </table></div>
+        <div class="fields">
+          <label class="f">Basis-EP je Zusatz-Schneeflocke
+            <input id="addXp" type="number" inputmode="numeric" min="1" step="50">
           </label>
-          <label class="f" style="flex: 2 1 220px;">Zusatz-Schneeflocken nach Hafengröße
+          <label class="f" style="grid-column: span 2;">Zusatz-Schneeflocken nach Hafengröße
             <input id="addTiers" type="text" spellcheck="false" style="font-family: var(--mono);">
           </label>
         </div>
-        <p class="note">Format: <code>Schwelle:Anzahl</code>, z.&nbsp;B. <code>25:2</code> heißt ab 25 Schiffen 2 Zusatz-Schneeflocken je 1.000 Basis-EP. Werte laut Devblog 15.11, unverändert gegenüber 2025.</p>
+        <p class="note">Format <code>Schwelle:Anzahl</code>, z.&nbsp;B. <code>25:2</code> heißt ab 25 Schiffen 2 Zusatz-Schneeflocken je 1.000 Basis-EP. Werte laut Devblog 15.11.</p>
       </div>
-    </div>
-
-    <div class="panel">
-      <h2>Belohnungen je Stufe</h2>
-      <div class="tbl"><table>
-        <thead><tr><th>Stufe</th><th class="num">Schiffe</th><th>Ressource</th><th class="num">Summe</th><th class="num">Basis-EP gesamt</th></tr></thead>
-        <tbody id="tierBody"></tbody>
-      </table></div>
-      <details id="shipDetails" hidden><summary id="shipSummary">Importierte Schiffe</summary><div class="shiplist" id="shipList"></div></details>
-    </div>
+    </details>
   </section>
 
   <!-- ============ CONTAINER ============ -->
-  <section class="view" id="v-container" hidden>
-    <div class="readout" id="contReadout"></div>
+  <section class="view" id="v-container" hidden aria-label="Container">
+    <div class="readout" id="contReadout" aria-live="polite"></div>
 
     <div class="grid2">
       <div class="panel">
-        <h2>Deine Container</h2>
-        <div class="cnt">
-          <label class="f">Santa's Gift gratis
-            <input type="number" min="0" id="c-free" value="8">
-            <span class="src">2 Neujahrsgeschenk + 6 Login-Kalender</span>
-          </label>
-          <label class="f">Santa's Gift aus Event-Pässen
-            <input type="number" min="0" id="c-pass" value="0">
-            <span class="src">Anzahl laut Devblog offen</span>
-          </label>
-          <label class="f">Festive Tokens
-            <input type="number" min="0" id="c-tokens" value="0">
-            <span class="src" id="tokenSrc"></span>
-          </label>
-          <label class="f">Tokens tauschen in
-            <select id="c-tokenUse">
-              <option value="santa">Santa's Gift (1 Token)</option>
-              <option value="mega">Mega Gift (5 Tokens)</option>
-              <option value="none">Credits (375.000)</option>
-            </select>
-            <span class="src" id="tokenHint"></span>
-          </label>
-          <label class="f">Santa's Gift gekauft
-            <input type="number" min="0" id="c-santa" value="0">
-          </label>
-          <label class="f">Mega Gift gekauft
-            <input type="number" min="0" id="c-mega" value="0">
-          </label>
-          <label class="f">Ultra Gift gekauft
-            <input type="number" min="0" id="c-ultra" value="0">
-          </label>
-          <label class="f">Golden Gift vorhanden
-            <input type="number" min="0" id="c-golden" value="0">
-            <span class="src">alte werden mit 15.10 automatisch geöffnet</span>
-          </label>
+        <div class="panel-head">
+          <h2>Dein Plan</h2>
+          <span class="calc-state" id="calcState" role="status"></span>
         </div>
+        <fieldset>
+          <legend>Kostenlos</legend>
+          <div class="fields">
+            <label class="f">Santa's Gift gratis
+              <input type="number" inputmode="numeric" min="0" id="c-free" value="8">
+              <span class="hint">2 Neujahrsgeschenk + 6 Login-Kalender</span>
+            </label>
+            <label class="f">Santa's Gift aus Event-Pässen
+              <input type="number" inputmode="numeric" min="0" id="c-pass" value="0">
+              <span class="hint">Anzahl noch nicht bekannt</span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Festive Tokens</legend>
+          <div class="fields">
+            <label class="f">Anzahl Tokens
+              <input type="number" inputmode="numeric" min="0" id="c-tokens" value="0">
+              <span class="hint" id="tokenSrc"></span>
+            </label>
+            <label class="f">Eintauschen gegen
+              <select id="c-tokenUse">
+                <option value="santa">Santa's Gift</option>
+                <option value="mega">Mega Gift</option>
+                <option value="none">Credits</option>
+              </select>
+              <span class="hint" id="tokenHint"></span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Gekauft</legend>
+          <div class="fields">
+            <label class="f">Santa's Gift <input type="number" inputmode="numeric" min="0" id="c-santa" value="0"></label>
+            <label class="f">Mega Gift <input type="number" inputmode="numeric" min="0" id="c-mega" value="0"></label>
+            <label class="f">Ultra Gift <input type="number" inputmode="numeric" min="0" id="c-ultra" value="0"></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Bereits vorhanden</legend>
+          <div class="fields">
+            <label class="f">Golden Gift
+              <input type="number" inputmode="numeric" min="0" id="c-golden" value="0">
+              <span class="hint">Alte werden mit 15.10 automatisch geöffnet</span>
+            </label>
+          </div>
+        </fieldset>
         <p class="note" id="totalNote"></p>
-        <details>
-          <summary>Annahmen zur Garantie (Pity)</summary>
-          <p class="note" style="margin-top: 8px;">Der Devblog 15.11 nennt nur die Garantie für Battle Forged (3. Öffnung). Die übrigen Werte stammen aus dem Event 2025. Der Zähler startet bei 0, Fortschritt aus Vorjahren zählt nicht.</p>
-          <div class="cnt" style="margin-top: 8px;">
-            <label class="f">Santa's Gift <input type="number" min="1" id="p-santa"></label>
-            <label class="f">Mega Gift <input type="number" min="1" id="p-mega"></label>
-            <label class="f">Ultra Gift <input type="number" min="1" id="p-ultra"></label>
-            <label class="f">Golden Gift <input type="number" min="1" id="p-golden"></label>
-            <label class="f">Battle Forged <input type="number" min="1" id="p-bf"></label>
+        <details class="plain">
+          <summary>Annahmen und Genauigkeit</summary>
+          <div class="stack" style="margin-top: 8px;">
+            <p class="note">Der Devblog nennt nur die Garantie für Battle Forged (3. Öffnung). Die übrigen Werte stammen aus dem Event 2025. Der Zähler startet bei 0.</p>
+            <div class="fields">
+              <label class="f">Garantie Santa's <input type="number" inputmode="numeric" min="1" id="p-santa"></label>
+              <label class="f">Garantie Mega <input type="number" inputmode="numeric" min="1" id="p-mega"></label>
+              <label class="f">Garantie Ultra <input type="number" inputmode="numeric" min="1" id="p-ultra"></label>
+              <label class="f">Garantie Golden <input type="number" inputmode="numeric" min="1" id="p-golden"></label>
+              <label class="f">Garantie Battle Forged <input type="number" inputmode="numeric" min="1" id="p-bf"></label>
+              <label class="f">Simulationsläufe <input id="runs" type="number" inputmode="numeric" min="200" max="20000" step="500" value="3000"></label>
+            </div>
           </div>
         </details>
-        <div class="row">
-          <label class="f" style="flex: 0 1 150px;">Simulationsläufe
-            <input id="runs" type="number" min="200" max="20000" step="100" value="3000">
-          </label>
-          <button type="button" id="simBtn">Neu simulieren</button>
-        </div>
       </div>
 
       <div class="panel">
-        <h2>Neue Schiffe</h2>
-        <p class="note" id="histNote"></p>
-        <div class="hist" id="hist"></div>
-        <h3 style="margin-top: 6px;">Erwartete Ressourcen</h3>
+        <h2>Ergebnis</h2>
+        <p class="mini" id="histNote"></p>
+        <div class="hist" id="hist" role="img" aria-label="Verteilung der Anzahl neuer Schiffe"></div>
+        <h3>Erwartete Ressourcen</h3>
         <div class="tbl"><table>
-          <thead><tr><th>Ressource</th><th class="num">Ø gesamt</th></tr></thead>
+          <thead><tr><th scope="col">Ressource</th><th scope="col" class="num">Ø gesamt</th></tr></thead>
           <tbody id="resBody"></tbody>
         </table></div>
       </div>
     </div>
 
     <div class="panel">
-      <div class="split">
+      <div class="panel-head">
         <h2>Container-Schiffe</h2>
-        <div class="row" style="align-items: center;">
-          <label class="f" style="display: flex; gap: 6px; align-items: center; color: var(--ink);"><input type="checkbox" id="onlyMissing"> nur fehlende</label>
-          <input type="search" id="shipSearch" placeholder="Schiff suchen" style="width: 11em;">
+        <div class="seg" role="group" aria-label="Anzeige">
+          <button type="button" id="fMissing" aria-pressed="true">Fehlende</button>
+          <button type="button" id="fAll" aria-pressed="false">Alle</button>
         </div>
       </div>
-      <p class="note" id="ownedNote"></p>
-      <div class="tbl"><table>
-        <thead><tr><th class="chk">Im Hafen</th><th>Schiff</th><th class="num">Stufe</th><th class="num">Chance in deinem Plan</th></tr></thead>
-        <tbody id="shipBody"></tbody>
-      </table></div>
+      <p class="mini" id="ownedNote"></p>
+      <div class="toolbar">
+        <label class="visually-hidden" for="shipSearch">Schiff suchen</label>
+        <input type="search" id="shipSearch" placeholder="Schiff suchen" autocomplete="off" enterkeyhint="search">
+      </div>
+      <div class="groups" id="groups"></div>
     </div>
 
-    <div class="grid2">
-      <div class="panel">
-        <h2>Einzeln öffnen</h2>
+    <details class="more">
+      <summary><span>Einzeln öffnen <span class="mini">zum Ausprobieren</span></span></summary>
+      <div class="inner">
         <div class="row">
-          <label class="f" style="flex: 1 1 180px;">Container
+          <label class="f" style="flex: 1 1 200px;">Container
             <select id="rollSel"></select>
           </label>
           <button type="button" id="rollBtn">Öffnen</button>
@@ -424,16 +289,17 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
         <p class="note">Würfelt mit deinem Hafen. Gezogene Schiffe gelten danach als vorhanden, bis du zurücksetzt.</p>
         <div class="log" id="rollLog" aria-live="polite"></div>
       </div>
-      <div class="panel">
-        <h2>Drop-Tabellen</h2>
-        <div id="dropTables"></div>
-      </div>
-    </div>
+    </details>
+
+    <details class="more">
+      <summary><span>Drop-Tabellen <span class="mini">Chancen laut Devblog</span></span></summary>
+      <div class="inner" id="dropTables"></div>
+    </details>
   </section>
 
   <!-- ============ GEFECHTE ============ -->
-  <section class="view" id="v-gefechte" hidden>
-    <div class="readout" id="battleReadout"></div>
+  <section class="view" id="v-gefechte" hidden aria-label="Gefechte">
+    <div class="readout" id="battleReadout" aria-live="polite"></div>
     <div class="grid2">
       <div class="panel">
         <h2>Annahmen</h2>
@@ -441,14 +307,14 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
           <input id="avgXp" type="range" min="100" max="3200" step="50" value="800">
         </label>
         <label class="f">Gefechte pro Tag
-          <input id="perDay" type="number" min="1" step="1" value="8">
+          <input id="perDay" type="number" inputmode="numeric" min="1" step="1" value="8">
         </label>
-        <p class="note">Basis-EP sind die EP vor Signalen, Tarnungen und Premium. Modifikatoren beschleunigen die Schneeflocken deshalb nicht. Überschüssige EP auf einem Schiff verfallen, sobald seine Schneeflocke aktiviert ist.</p>
+        <p class="note">Basis-EP sind die EP vor Signalen, Tarnungen und Premium. Modifikatoren beschleunigen die Schneeflocken deshalb nicht.</p>
       </div>
       <div class="panel">
-        <h2>Wie gerechnet wird</h2>
-        <p>Jedes Schiff ab Stufe V hat eine Schneeflocke, die nach einer festen Menge Basis-EP auf diesem Schiff fällig wird. Zusätzlich aktivieren je 1.000 Basis-EP (alle Gefechte zusammen) weitere Schneeflocken auf beliebigen anderen Schiffen.</p>
-        <p><strong>Optimiert:</strong> Du spielst die Schiffe mit der niedrigsten EP-Hürde und lässt die Zusatz-Schneeflocken auf die teuersten fallen. <strong>Ungünstig:</strong> umgekehrt.</p>
+        <h2>So wird gerechnet</h2>
+        <p>Jedes Schiff ab Stufe V hat eine Schneeflocke, die nach einer festen Menge Basis-EP auf diesem Schiff fällig wird. Zusätzlich aktivieren je 1.000 Basis-EP (alle Gefechte zusammen) weitere Schneeflocken auf anderen Schiffen.</p>
+        <p><strong>Optimiert:</strong> Du spielst die Schiffe mit der niedrigsten EP-Hürde, die Zusatz-Schneeflocken fallen auf die teuersten. <strong>Ungünstig:</strong> umgekehrt.</p>
       </div>
     </div>
     <div class="panel chart">
@@ -457,774 +323,17 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
     </div>
   </section>
   </div>
+  </main>
 
   <footer>
-    <div>Drop-Raten und Regeln: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026. Die Angaben sind vorläufig, Wargaming kann sie bis zum Release noch ändern.</div>
-    <div>Logik nach <a href="https://github.com/Rukenshia/shipwhaling" target="_blank" rel="noopener">Rukenshia/shipwhaling</a> (GPL-3.0). Schiffsdaten: <span id="shipCount"></span> Einträge, Stand August 2026. Schiffe, die neuer sind, schlägt die Seite beim Laden in der Wargaming-Enzyklopädie nach.</div>
+    <div>Drop-Raten und Regeln: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026, vorläufig.</div>
+    <div>Logik nach <a href="https://github.com/Rukenshia/shipwhaling" target="_blank" rel="noopener">Rukenshia/shipwhaling</a> · <a href="https://github.com/DieDreiBeiden/crate-whaler" target="_blank" rel="noopener">Quelltext</a> (GPL-3.0) · Schiffsdaten: <span id="shipCount"></span> Einträge, neuere aus der Wargaming-Enzyklopädie.</div>
   </footer>
 </div>
-<script>
-// ===== Konfiguration =====
-// Wargaming Application ID von https://developers.wargaming.net/applications/
-const WG_APPLICATION_ID = "445aebe856370e69f1f98f7b7b743e22";
-</script>
-<script>
-const SHIPS_RAW = [[3248404240,"Statenland",8,"Cruiser",true],[3248437232,"North Carolina 2",8,"Battleship",true],[3249452400,"River Gambra",7,"Cruiser",true],[3249485808,"Colorado 2",7,"Battleship",true],[3256759600,"Södermanland",10,"Destroyer",true],[3256760112,"Lübeck",10,"Destroyer",true],[3256792528,"Petrozavodsk",10,"Cruiser",true],[3256792816,"Ravenna",10,"Cruiser",true],[3256792848,"Vrijheid",10,"Cruiser",true],[3256825168,"Comodoro",10,"Battleship",true],[3256825584,"Amerigo Vespucci",10,"Battleship",true],[3256825840,"Utah",10,"Battleship",true],[3256858064,"Admiral Orlov",10,"AirCarrier",true],[3256858416,"Otto Lilienthal",10,"AirCarrier",true],[3257874224,"Prinz Sigismund",9,"Battleship",true],[3258890000,"Admiraal",8,"Cruiser",true],[3267278288,"Vladimir Monomakh",10,"Cruiser",true],[3309254640,"Wisconsin Golden",10,"Battleship",false],[3315513040,"[Zaō]",10,"Cruiser",true],[3319740208,"Von Zuckerhoff",10,"Battleship",false],[3319740400,"Rhode Island B",10,"Battleship",false],[3321837360,"Eiserner Kanzler",8,"Battleship",false],[3330159920,"Oväsen",10,"Destroyer",false],[3330192848,"PTRPVLSK",10,"Cruiser",false],[3330193200,"Bremen Golden",10,"Cruiser",false],[3330193360,"Fearmaw",10,"Cruiser",true],[3330193392,"Hawaii Golden",10,"Cruiser",false],[3330225872,"Aki Golden",10,"Battleship",false],[3330225968,"Schlieffen",10,"Battleship",false],[3330226128,"Conqueror CLR",10,"Battleship",false],[3330226160,"Montana 2",10,"Battleship",true],[3330258640,"AL Shinano",10,"AirCarrier",false],[3330258928,"Piñatapolis",10,"AirCarrier",false],[3331208656,"AL Tashkent",9,"Destroyer",false],[3331274736,"Iowa 2",9,"Battleship",true],[3332289744,"AL Harbin",8,"Cruiser",false],[3332323024,"[Yamato]",10,"Battleship",true],[3332323120,"Sea Howl",8,"Battleship",true],[3332323312,"AL Massachusetts",8,"Battleship",false],[3333371888,"[Montana]",10,"Battleship",true],[3333404368,"[Hakuryū]",10,"AirCarrier",true],[3335501808,"[Midway]",10,"AirCarrier",true],[3337500656,"[Gearing]",10,"Destroyer",true],[3338548944,"[Shimakaze]",10,"Destroyer",true],[3340154864,"Balao 2",10,"Submarine",true],[3340645584,"Lüshun B",10,"Destroyer",false],[3340645840,"[Grozovoi]",10,"Destroyer",true],[3340646192,"Sharqi",10,"Destroyer",false],[3340678608,"[Moskva]",10,"Cruiser",true],[3340678960,"[Hindenburg]",10,"Cruiser",true],[3340679152,"Puerto Rico B",10,"Cruiser",false],[3340711728,"[Grosser Kurfürst]",10,"Battleship",true],[3340711888,"[Conqueror]",10,"Battleship",true],[3340744496,"Süsshofen",10,"AirCarrier",false],[3340744656,"[Audacious]",10,"AirCarrier",true],[3341694416,"Neustrashimy B",9,"Destroyer",false],[3341727696,"Cursed Fang",9,"Cruiser",false],[3341727728,"Fort Worth Golden",9,"Cruiser",false],[3341759696,"Xuan Ming",9,"Battleship",false],[3341759792,"Karl XIV Johan B",9,"Battleship",false],[3341759952,"Mahtaga",9,"Battleship",false],[3341760240,"AL Marco Polo",9,"Battleship",false],[3341760336,"Dark Corsair",9,"Battleship",true],[3341760496,"Bird Cry",9,"Battleship",false],[3342775504,"Piñatian",8,"Cruiser",false],[3342776048,"Mirage",8,"Cruiser",true],[3342776112,"Schill B",8,"Cruiser",false],[3342808816,"Roma Aeterna",8,"Battleship",false],[3342808880,"Wahnsinn",8,"Battleship",false],[3342808912,"AL Richelieu",8,"Battleship",false],[3342809072,"Kheper",8,"Battleship",false],[3343791408,"Scarlet Storm",7,"Destroyer",false],[3345921744,"Desert Falcon",5,"Cruiser",false],[3352180720,"Frank Friday",9,"Destroyer",true],[3352213296,"AL Ägir",9,"Cruiser",false],[3352246256,"Volunteer State",8,"Battleship",true],[3353294640,"AL Bismarck",8,"Battleship",false],[3353327600,"AL Hornet",8,"AirCarrier",false],[3354310384,"AL Gorizia",7,"Cruiser",false],[3361617616,"AL Shimakaze",10,"Destroyer",false],[3361650384,"Zaō CLR",10,"Cruiser",false],[3361650480,"AL Hindenburg",10,"Cruiser",false],[3362666192,"STAR Kitakaze",9,"Destroyer",false],[3362732016,"AL Kearsarge",9,"Battleship",false],[3363747792,"STAR Edinburgh",8,"Cruiser",false],[3363780304,"Ragnarok",8,"Battleship",false],[3374266064,"Ignis Purgatio",8,"Battleship",false],[3425613520,"Azuma B",9,"Cruiser",false],[3426694960,"Odin TE",8,"Battleship",true],[3434526416,"BA Arona's Whale",10,"Submarine",false],[3435018064,"Kléber TE",10,"Destroyer",true],[3435083760,"BA Montana",10,"Battleship",false],[3436066800,"GQ Johnny",9,"Destroyer",false],[3436099280,"BA Takahashi",9,"Cruiser",false],[3436099408,"BA Utnapishtim's Ship",9,"Cruiser",false],[3436131792,"BA Hovercraft",9,"Battleship",false],[3437147600,"Kiberpankov",8,"Cruiser",false],[3437180368,"Borodino TE",8,"Battleship",true],[3437180656,"BA Binah",8,"Battleship",false],[3437180720,"BA Tirpitz",8,"Battleship",false],[3437180912,"Alabama B",8,"Battleship",false],[3438196528,"München B",7,"Cruiser",false],[3445503824,"Kléber CLR",10,"Destroyer",false],[3445536112,"Brisbane B",10,"Cruiser",false],[3445536208,"Komissar",10,"Cruiser",false],[3445536720,"Defence",10,"Cruiser",false],[3445536752,"Austin",10,"Cruiser",false],[3445569264,"Tempesta Nera",10,"Battleship",false],[3445569488,"Cumberland",10,"Battleship",true],[3446585136,"Roon CLR",9,"Cruiser",false],[3447666672,"North Carolina CLR",8,"Battleship",false],[3499013840,"Suzuya VL",9,"Cruiser",false],[3509499600,"Suzuya Golden",9,"Cruiser",false],[3511629776,"Danu",7,"Battleship",false],[3519985360,"Suzuya",9,"Cruiser",false],[3519985392,"La Spezia",9,"Cruiser",true],[3520017872,"Sovetskaya Rossiya",9,"Battleship",true],[3522082512,"ARP Nachi",7,"Cruiser",false],[3522115536,"Royal Sovereign",7,"Battleship",false],[3529422032,"Taejong",10,"Cruiser",true],[3529422608,"Unie",10,"Cruiser",true],[3529422672,"Amiral Lartigue",10,"Cruiser",false],[3529455312,"Tōgasa",10,"Battleship",true],[3529455600,"Wisconsin",10,"Battleship",false],[3530470608,"Baotou",9,"Cruiser",false],[3530471120,"Chikuma II Golden",9,"Cruiser",false],[3530471152,"Messina",9,"Cruiser",false],[3530471216,"Blücher",9,"Cruiser",false],[3530471408,"Fort Worth",9,"Cruiser",false],[3530503632,"Respublika",9,"Battleship",true],[3530504176,"Georgia",9,"Battleship",false],[3531486416,"Datong",8,"Destroyer",true],[3531486928,"Shigure",8,"Destroyer",false],[3531519792,"Wiesbaden",8,"Cruiser",false],[3531519984,"Protector",8,"Cruiser",true],[3532568272,"Eastern Dragon",7,"Cruiser",false],[3539384016,"I-56 '44",10,"Submarine",false],[3539875632,"Georg Hoffmann Golden",10,"Destroyer",false],[3539875824,"Hull",10,"Destroyer",false],[3539907792,"Zhuge Liang",10,"Cruiser",false],[3539908304,"Kushiro",10,"Cruiser",false],[3539908368,"Prins van Oranje Golden",10,"Cruiser",false],[3539908400,"Bremen",10,"Cruiser",false],[3539908432,"Latouche-Tréville",10,"Cruiser",true],[3539908592,"Hawaii",10,"Cruiser",false],[3539940688,"Almirante Pérez Gacitúa",10,"Battleship",true],[3539941072,"Aki",10,"Battleship",false],[3539941104,"Conte Verde",10,"Battleship",false],[3539941360,"Rhode Island",10,"Battleship",false],[3540923600,"Nanning",9,"Destroyer",false],[3540923696,"Błyskawica '52",9,"Destroyer",false],[3540924112,"Minegumo",9,"Destroyer",false],[3540924208,"ZH-1",9,"Destroyer",false],[3540924368,"Barfleur",9,"Destroyer",false],[3540924400,"Johnston",9,"Destroyer",false],[3540956368,"Tianjin",9,"Cruiser",false],[3540956592,"Almirante Oquendo",9,"Cruiser",false],[3540956624,"Kozma Minin",9,"Cruiser",false],[3540956880,"Chikuma II",9,"Cruiser",false],[3540956912,"Ferrante Gonzaga",9,"Cruiser",false],[3540957008,"Le Havre",9,"Cruiser",false],[3540957136,"Aberdeen",9,"Cruiser",false],[3540957168,"Cambridge",9,"Cruiser",false],[3540989136,"Yimeng",9,"Battleship",false],[3540989232,"Niord",9,"Battleship",false],[3540989264,"Valparaíso",9,"Battleship",false],[3540989360,"Victoria",9,"Battleship",false],[3540989392,"Zarya Svobody",9,"Battleship",false],[3540989648,"Hotaka",9,"Battleship",true],[3540989680,"Pilus Posterior",9,"Battleship",false],[3540989744,"Friedrich Carl",9,"Battleship",true],[3540989936,"Indiana",9,"Battleship",false],[3541972176,"Ship Smasha",8,"Destroyer",false],[3541972432,"Provorny",8,"Destroyer",false],[3541972688,"AL Yukikaze",8,"Destroyer",false],[3541972816,"Hoche",8,"Destroyer",false],[3541972944,"Eskimo",8,"Destroyer",false],[3542004944,"Narai",8,"Cruiser",false],[3542005040,"Regele Carol I",8,"Cruiser",false],[3542005456,"ARP Maya",8,"Cruiser",false],[3542005552,"Cross of Dorn",8,"Cruiser",false],[3542005712,"Érne",8,"Cruiser",false],[3542005744,"AL Montpelier",8,"Cruiser",false],[3542037808,"Turgut Reis",8,"Battleship",false],[3542038256,"Marcantonio Colonna",8,"Battleship",false],[3542038512,"Tennessee",8,"Battleship",false],[3542071248,"Theseus",8,"AirCarrier",false],[3543020848,"Stord '43",7,"Destroyer",false],[3543021520,"Jupiter '42",7,"Destroyer",false],[3543053520,"Lanzhou",7,"Cruiser",false],[3543053680,"Gambia",7,"Cruiser",false],[3543054032,"Southern Dragon",7,"Cruiser",false],[3543054064,"Fiume",7,"Cruiser",false],[3543054128,"Nürnberg '44",7,"Cruiser",false],[3543086544,"Arkhangelsk",7,"Battleship",false],[3543086896,"Scharnhorst '43",7,"Battleship",false],[3543087056,"Rodney",7,"Battleship",false],[3543577808,"Xin Zhong Guo 14",6,"Submarine",false],[3544102736,"Montcalm",6,"Cruiser",false],[3544102864,"Orion '44",6,"Cruiser",false],[3545183952,"HSF Hiei",5,"Battleship",false],[3549869840,"Tonijn",10,"Submarine",false],[3549869904,"Surcouf",10,"Submarine",false],[3549870032,"Seal",10,"Submarine",false],[3549870064,"Archerfish",10,"Submarine",false],[3550360880,"Ragnar",10,"Destroyer",false],[3550360912,"La Pampa",10,"Destroyer",false],[3550361040,"Peredovoy",10,"Destroyer",true],[3550361296,"Fuyutsuki",10,"Destroyer",false],[3550361328,"Alberico da Barbiano",10,"Destroyer",false],[3550361392,"Georg Hoffmann",10,"Destroyer",false],[3550361424,"Châteaurenault",10,"Destroyer",false],[3550361584,"Laffey",10,"Destroyer",false],[3550393552,"Incheon",10,"Cruiser",false],[3550393648,"Svea",10,"Cruiser",false],[3550393680,"Almirante Irízar",10,"Cruiser",false],[3550393712,"Pioneer",10,"Cruiser",false],[3550393808,"Sevastopol",10,"Cruiser",false],[3550394064,"Yari",10,"Cruiser",true],[3550394096,"Varese",10,"Cruiser",true],[3550394128,"Prins van Oranje",10,"Cruiser",false],[3550394160,"Hildebrand",10,"Cruiser",false],[3550394192,"Brennus",10,"Cruiser",false],[3550394352,"Salem",10,"Cruiser",false],[3550426448,"Sete de Setembro",10,"Battleship",false],[3550426480,"Irresistible",10,"Battleship",false],[3550426576,"Sibir",10,"Battleship",false],[3550426832,"Yamato Kai",10,"Battleship",false],[3550426864,"Sicilia",10,"Battleship",false],[3550426896,"Willem de Eerste",10,"Battleship",false],[3550427120,"Oregon",10,"Battleship",true],[3550459216,"Independencia",10,"AirCarrier",false],[3550459600,"Shinano",10,"AirCarrier",false],[3550459856,"Ocean",10,"AirCarrier",false],[3551409520,"Cayuga",9,"Destroyer",false],[3551409616,"Neustrashimy",9,"Destroyer",false],[3551409968,"ZF-6 Golden",9,"Destroyer",false],[3551410160,"Black",9,"Destroyer",false],[3551442384,"Vyazma",9,"Cruiser",true],[3551442640,"ARP Haguro",7,"Cruiser",false],[3551474896,"Taihang",9,"Battleship",false],[3551475120,"Triunfante",9,"Battleship",false],[3551475152,"AL Sov. Rossiya",9,"Battleship",false],[3551475440,"Pilus Prior",9,"Battleship",false],[3551475536,"Roussillon",9,"Battleship",false],[3552457936,"Zhu Que",8,"Destroyer",false],[3552458032,"Błyskawica '44",8,"Destroyer",false],[3552458448,"HSF Harekaze",8,"Destroyer",false],[3552458512,"Philips van Almonde",8,"Destroyer",true],[3552490832,"Comandante Aguirre",8,"Cruiser",false],[3552491216,"ARP Takao",8,"Cruiser",false],[3552491280,"Vrijheid",8,"Cruiser",false],[3552491344,"Metz",8,"Cruiser",true],[3552491472,"Sinann",8,"Cruiser",false],[3552491504,"Bridgeport",8,"Cruiser",false],[3552523472,"Xuan Wu",9,"Battleship",false],[3552523984,"ARP Hiei",5,"Battleship",false],[3552524016,"AL Littorio",8,"Battleship",false],[3552524080,"Bismarck '41",8,"Battleship",false],[3552524240,"Prince of Wales",8,"Battleship",false],[3552524272,"Alabama ST",8,"Battleship",false],[3553539792,"ARP Ashigara",7,"Cruiser",false],[3553539824,"Optio",7,"Cruiser",false],[3553540048,"Bóinn",7,"Cruiser",false],[3553540080,"Flint",7,"Cruiser",false],[3553572048,"Teng She",7,"Battleship",false],[3553572144,"Lugdunum",7,"Battleship",false],[3553572560,"ARP Haruna",5,"Battleship",false],[3553572848,"California",7,"Battleship",false],[3554555600,"Shinonome",6,"Destroyer",false],[3554588464,"HSF Admiral Graf Spee",6,"Cruiser",false],[3554621136,"ARP Kirishima",5,"Battleship",false],[3555603760,"Kalmar",5,"Destroyer",false],[3555636944,"ARP Myōkō",7,"Cruiser",false],[3555669712,"ARP Kongō",5,"Battleship",false],[3555670000,"Texas",5,"Battleship",false],[3556653040,"DD 214",4,"Destroyer",false],[3560912592,"ARP Yamato",10,"Battleship",false],[3655218480,"Småland",10,"Destroyer",false],[3655218960,"Tromp",10,"Destroyer",false],[3655218992,"Z-42",10,"Destroyer",false],[3655219184,"Forrest Sherman",10,"Destroyer",false],[3655251408,"Smolensk",10,"Cruiser",false],[3655251664,"Kitakami",10,"Cruiser",false],[3655251920,"Gibraltar",10,"Cruiser",false],[3655251952,"Puerto Rico",10,"Cruiser",false],[3655284528,"Mecklenburg",10,"Battleship",false],[3655284688,"Incomparable",10,"Battleship",false],[3655317296,"Max Immelmann",10,"AirCarrier",false],[3656333264,"Scarlet Thunder",9,"Battleship",false],[3658397424,"Gorizia",7,"Cruiser",false],[3659445712,"Admiral Makarov",6,"Cruiser",false],[3666786288,"Alaska B",9,"Cruiser",false],[3666818864,"Pommern B",9,"Battleship",false],[3666818896,"Jean Bart B",9,"Battleship",false],[3666819056,"Kearsarge B",9,"Battleship",false],[3667801296,"Loyang B",8,"Destroyer",false],[3667801808,"Asashio B",8,"Destroyer",false],[3667802064,"Cossack B",8,"Destroyer",false],[3667834576,"Atago B",8,"Cruiser",false],[3667834672,"Mainz B",8,"Cruiser",false],[3667867440,"Tirpitz B",8,"Battleship",false],[3667867632,"Massachusetts B",8,"Battleship",false],[3667899856,"Chkalov B",8,"AirCarrier",false],[3667900112,"Kaga B",8,"AirCarrier",false],[3667900208,"Graf Zeppelin B",8,"AirCarrier",false],[3667900400,"Saipan B",8,"AirCarrier",false],[3668850672,"Sims B",7,"Destroyer",false],[3668883440,"Boise",7,"Cruiser",false],[3668916016,"Scharnhorst B",7,"Battleship",false],[3669898960,"Shinonome B",6,"Destroyer",false],[3669964624,"Dunkerque B",6,"Battleship",false],[3676223184,"Yoshino B",10,"Cruiser",false],[3676223216,"Napoli B",10,"Cruiser",false],[3679369200,"Atlanta B",7,"Cruiser",false],[3699291600,"Lazo B",7,"Cruiser",false],[3708761808,"Iwami B",9,"Battleship",false],[3709777360,"Dmitry Pozharsky",8,"Cruiser",false],[3709777872,"AL Cheshire",8,"Cruiser",false],[3719247568,"Tsurugi",9,"Battleship",false],[3720263120,"Bagration",8,"Cruiser",true],[3720263632,"Nottingham",8,"Cruiser",false],[3720263664,"San Diego",8,"Cruiser",false],[3720296272,"Picardie",8,"Battleship",false],[3721344976,"Renown '44",7,"Battleship",false],[3729732816,"Louchuan",9,"Battleship",false],[3729733328,"Daisen",9,"Battleship",false],[3729733616,"Illinois",9,"Battleship",false],[3730748880,"Pyotr Bagration",8,"Cruiser",false],[3730749392,"Hampshire",8,"Cruiser",false],[3730749424,"Rochester",8,"Cruiser",false],[3730782000,"Brandenburg B",8,"Battleship",false],[3730782032,"Flandre",8,"Battleship",false],[3730782192,"Constellation",8,"Battleship",false],[3730814960,"Hornet",8,"AirCarrier",false],[3731830736,"Collingwood",7,"Battleship",false],[3732879312,"Repulse B",6,"Battleship",false],[3739137488,"Smolensk B",10,"Cruiser",false],[3740153648,"ZF-6",9,"Destroyer",false],[3740153840,"Black B",9,"Destroyer",false],[3740185808,"Mengchong",9,"Cruiser",false],[3740186416,"Admiral Schröder",9,"Cruiser",false],[3740218576,"Sun Yat-Sen",9,"Battleship",false],[3740219088,"Iwami",9,"Battleship",false],[3741202128,"HSF Harekaze II",8,"Destroyer",false],[3741234640,"Ochakov",8,"Cruiser",false],[3741234992,"Schill",8,"Cruiser",false],[3741235152,"Belfast '43",8,"Cruiser",false],[3741235184,"Congress",8,"Cruiser",false],[3741267408,"Borodino",8,"Battleship",false],[3741267760,"Anhalt",8,"Battleship",false],[3741267792,"Champagne",8,"Battleship",false],[3741267952,"Alabama VL",8,"Battleship",false],[3741300688,"Colossus",8,"AirCarrier",false],[3741300720,"Saipan",8,"AirCarrier",false],[3742316496,"Duke of York",7,"Battleship",false],[3742316528,"West Virginia '44",7,"Battleship",false],[3743332304,"Dido",6,"Cruiser",false],[3743364816,"Ise",6,"Battleship",false],[3743365072,"Repulse",6,"Battleship",false],[3744380368,"Kirov",5,"Cruiser",false],[3746477520,"AL Avrora",3,"Cruiser",false],[3749623504,"Yoshino",10,"Cruiser",false],[3750638896,"Jäger",9,"Destroyer",false],[3750639408,"Z-44",9,"Destroyer",false],[3750639568,"Somme",9,"Destroyer",false],[3750639600,"Halford",9,"Destroyer",false],[3750672080,"AL Azuma",9,"Cruiser",false],[3750672112,"Michelangelo",9,"Cruiser",false],[3750672176,"Ägir",9,"Cruiser",false],[3750672368,"Tulsa",9,"Cruiser",false],[3750704336,"Wujing",9,"Battleship",false],[3750704848,"Hizen",9,"Battleship",false],[3750704880,"Giuseppe Verdi",9,"Battleship",false],[3750705136,"Kearsarge",9,"Battleship",false],[3751196368,"I-56",8,"Submarine",false],[3751687376,"Fenyang",8,"Destroyer",false],[3751687888,"Asashio",8,"Destroyer",false],[3751687984,"Z-35",8,"Destroyer",false],[3751720144,"Wukong",8,"Cruiser",false],[3751720400,"Lazo",7,"Cruiser",false],[3751720752,"Mainz",8,"Cruiser",false],[3751720912,"Tiger '59",8,"Cruiser",false],[3751720944,"Anchorage",8,"Cruiser",false],[3751753168,"Lenin",8,"Battleship",false],[3751753520,"Brandenburg",8,"Battleship",false],[3751753552,"Jean Bart",9,"Battleship",false],[3751753712,"Massachusetts",8,"Battleship",false],[3751786192,"Kaga",8,"AirCarrier",false],[3751786288,"Graf Zeppelin",8,"AirCarrier",false],[3751786448,"Ark Royal",6,"AirCarrier",false],[3751786480,"Enterprise",8,"AirCarrier",false],[3752736112,"Huron",7,"Destroyer",false],[3752736208,"Tashkent '39",7,"Destroyer",false],[3752736720,"Cossack",8,"Destroyer",false],[3752769232,"Maya",7,"Cruiser",false],[3752769264,"Francesco Ferruccio",7,"Cruiser",false],[3752769328,"Weimar",7,"Cruiser",false],[3752802000,"Hyūga",7,"Battleship",false],[3752802096,"AL Prinz Heinrich",7,"Battleship",false],[3752802256,"Nelson",7,"Battleship",false],[3752802288,"Florida",7,"Battleship",false],[3753785136,"Karl von Schönberg",6,"Destroyer",false],[3753817456,"Mysore",6,"Cruiser",false],[3753817904,"Leipzig",6,"Cruiser",false],[3753817936,"Dupleix",6,"Cruiser",false],[3753818064,"London",6,"Cruiser",false],[3753850320,"Novorossiysk",6,"Battleship",false],[3754866128,"Mikoyan",5,"Cruiser",false],[3756963280,"Varyag",3,"Cruiser",false],[3759585072,"U-4501",10,"Submarine",false],[3759585264,"Gato",10,"Submarine",false],[3760075984,"Lüshun",10,"Destroyer",false],[3760076080,"Friesland",9,"Destroyer",false],[3760076144,"Vampire II",10,"Destroyer",false],[3760076208,"Álvaro de Bazán",10,"Destroyer",false],[3760076496,"Hayate",10,"Destroyer",false],[3760076752,"Druid",10,"Destroyer",false],[3760076784,"Somers",10,"Destroyer",false],[3760108912,"Brisbane",10,"Cruiser",false],[3760109008,"Stalingrad",10,"Cruiser",false],[3760109264,"Azuma",9,"Cruiser",false],[3760109296,"Napoli",10,"Cruiser",false],[3760109392,"Colbert",10,"Cruiser",false],[3760109520,"Plymouth",10,"Cruiser",false],[3760109552,"Alaska",9,"Cruiser",false],[3760141776,"Slava",10,"Battleship",false],[3760142032,"Shikishima",10,"Battleship",false],[3760142064,"Ruggiero di Lauria",10,"Battleship",false],[3760142160,"Bourgogne",10,"Battleship",false],[3760142288,"Thunderer",10,"Battleship",false],[3760142320,"Ohio",10,"Battleship",false],[3760174896,"Werner Voss",10,"AirCarrier",true],[3760175056,"Malta",10,"AirCarrier",false],[3760175088,"Franklin D. Roosevelt",10,"AirCarrier",false],[3761124656,"Velos",9,"Destroyer",false],[3761125104,"Paolo Emilio",9,"Destroyer",false],[3761125136,"Groningen",9,"Destroyer",false],[3761125360,"Benham",9,"Destroyer",false],[3761157328,"Dalian",9,"Cruiser",false],[3761157488,"Hector",9,"Cruiser",false],[3761157584,"Kronshtadt",9,"Cruiser",false],[3761157904,"Van Speijk",9,"Cruiser",false],[3761157936,"Siegfried",9,"Cruiser",false],[3761157968,"Carnot",9,"Cruiser",false],[3761158128,"Vallejo",9,"Cruiser",false],[3761190096,"Bajie",9,"Battleship",false],[3761190192,"Karl XIV Johan",9,"Battleship",false],[3761190352,"Navarin",9,"Battleship",false],[3761190608,"Musashi",9,"Battleship",false],[3761190640,"Marco Polo",9,"Battleship",false],[3761190704,"Pommern",9,"Battleship",false],[3761190864,"Marlborough",9,"Battleship",false],[3761190896,"Missouri",9,"Battleship",false],[3761681872,"S-189",8,"Submarine",false],[3761682384,"Alliance",8,"Submarine",false],[3762173136,"Loyang",8,"Destroyer",false],[3762173232,"Orkan",8,"Destroyer",false],[3762173744,"Z-39",7,"Destroyer",false],[3762173776,"Le Terrible",8,"Destroyer",false],[3762173936,"Kidd",8,"Destroyer",false],[3762205904,"Irian",8,"Cruiser",false],[3762206032,"Almirante Grau",8,"Cruiser",false],[3762206128,"Numancia",8,"Cruiser",false],[3762206160,"Mikhail Kutuzov",8,"Cruiser",false],[3762206480,"De Zeven Provinciën",8,"Cruiser",false],[3762206512,"Prinz Eugen",8,"Cruiser",false],[3762206544,"Bayard",8,"Cruiser",false],[3762206672,"Cheshire",8,"Cruiser",false],[3762206704,"Wichita",8,"Cruiser",false],[3762238800,"Atlântico",8,"Battleship",false],[3762238928,"Poltava",7,"Battleship",false],[3762239184,"Kii",8,"Battleship",false],[3762239216,"Roma",8,"Battleship",false],[3762239280,"Odin",8,"Battleship",false],[3762239312,"Gascogne",8,"Battleship",false],[3762239440,"Vanguard",8,"Battleship",false],[3762239472,"Alabama",8,"Battleship",false],[3762271440,"Sanzang",8,"AirCarrier",false],[3762271696,"Chkalov",8,"AirCarrier",false],[3762271984,"Aquila",8,"AirCarrier",false],[3762272208,"Indomitable",8,"AirCarrier",false],[3763221872,"Haida",7,"Destroyer",false],[3763221968,"Leningrad",7,"Destroyer",false],[3763222224,"Yūdachi",7,"Destroyer",false],[3763222256,"FR25",7,"Destroyer",false],[3763254608,"Nueve de Julio",7,"Cruiser",false],[3763254992,"Tokachi",7,"Cruiser",false],[3763255024,"Duca degli Abruzzi",7,"Cruiser",false],[3763255088,"München",7,"Cruiser",false],[3763255120,"Toulon",7,"Cruiser",false],[3763255248,"Belfast",7,"Cruiser",false],[3763255280,"Indianapolis",7,"Cruiser",false],[3763287408,"Yukon",7,"Battleship",false],[3763287760,"Ashitaka",7,"Battleship",false],[3763287856,"Scharnhorst",7,"Battleship",false],[3763287888,"Strasbourg",7,"Battleship",false],[3763288016,"Hood",7,"Battleship",false],[3763288048,"W. Virginia '41",6,"Battleship",false],[3764270288,"Anshan",6,"Destroyer",false],[3764270416,"Juruá",6,"Destroyer",false],[3764270832,"Leone",6,"Destroyer",false],[3764270896,"T-61",6,"Destroyer",false],[3764270928,"Aigle",6,"Destroyer",false],[3764271056,"Gallant",6,"Destroyer",false],[3764271088,"Monaghan",6,"Destroyer",false],[3764303056,"Huanghe",6,"Cruiser",false],[3764303152,"Elli",6,"Cruiser",false],[3764303216,"Perth",6,"Cruiser",false],[3764303280,"Canarias",6,"Cruiser",false],[3764303312,"Molotov",6,"Cruiser",false],[3764303600,"Duca d'Aosta",6,"Cruiser",false],[3764303664,"Admiral Graf Spee",6,"Cruiser",false],[3764303696,"De Grasse",6,"Cruiser",false],[3764336336,"Mutsu",6,"Battleship",false],[3764336432,"Prinz Eitel Friedrich",6,"Battleship",false],[3764336464,"Dunkerque",6,"Battleship",false],[3764336624,"Arizona",6,"Battleship",false],[3764369200,"Erich Loewenhardt",6,"AirCarrier",false],[3764369232,"Béarn",6,"AirCarrier",false],[3765319120,"Okhotnik",5,"Destroyer",false],[3765319664,"Hill",5,"Destroyer",false],[3765351888,"Krasny Krym",5,"Cruiser",false],[3765352144,"Yahagi",5,"Cruiser",false],[3765352176,"Genova",5,"Cruiser",false],[3765352400,"Exeter",5,"Cruiser",false],[3765352432,"Rattlehead",5,"Cruiser",false],[3765384528,"Rio de Janeiro",5,"Battleship",false],[3765384656,"Oktyabrskaya Revolutsiya",5,"Battleship",false],[3765384944,"Giulio Cesare",5,"Battleship",false],[3765385168,"Agincourt",5,"Battleship",false],[3765385200,"Oklahoma",5,"Battleship",false],[3766368080,"Siroco",5,"Destroyer",false],[3766433072,"Viribus Unitis",5,"Battleship",false],[3767416176,"Vampire",3,"Destroyer",false],[3767416784,"Campbeltown",3,"Destroyer",false],[3767448784,"Ning Hai",3,"Cruiser",false],[3767449040,"Oleg",3,"Cruiser",false],[3767449296,"Katori",3,"Cruiser",false],[3767449584,"Charleston",3,"Cruiser",false],[3767482160,"König Albert",3,"Battleship",false],[3767482320,"Dreadnought",3,"Battleship",false],[3768465392,"Smith",2,"Destroyer",false],[3768497488,"Almirante Abreu",2,"Cruiser",false],[3768497968,"Emden",2,"Cruiser",false],[3769513264,"Błyskawica",7,"Destroyer",false],[3864933840,"Delny",10,"Destroyer",false],[3865982416,"Tashkent",9,"Destroyer",false],[3969824208,"Petropavlovsk",10,"Cruiser",false],[3969857328,"Preussen",10,"Battleship",false],[3971888592,"Kiev",8,"Destroyer",false],[4065212112,"Kitakaze",9,"Destroyer",false],[4069438928,"Kotovsky",5,"Cruiser",false],[4074157872,"U-2501",10,"Submarine",false],[4074158064,"Balao",10,"Submarine",false],[4074648880,"Gdańsk",10,"Destroyer",false],[4074649040,"Grozovoi",10,"Destroyer",false],[4074649296,"Harugumo",10,"Destroyer",false],[4074649392,"Elbing",10,"Destroyer",false],[4074649424,"Marceau",10,"Destroyer",false],[4074681808,"Alexander Nevsky",10,"Cruiser",false],[4074682064,"Yodo",10,"Cruiser",false],[4074682192,"Marseille",10,"Cruiser",false],[4074682320,"Goliath",10,"Cruiser",false],[4074682352,"Worcester",10,"Cruiser",false],[4074714832,"Bungo",10,"Battleship",false],[4074714928,"Schlieffen",10,"Battleship",false],[4074715088,"St. Vincent",10,"Battleship",false],[4074715120,"Louisiana",10,"Battleship",false],[4074747856,"Audacious",10,"AirCarrier",false],[4075697456,"Lambros Katsonis",9,"Destroyer",false],[4075697872,"Yūgumo",9,"Destroyer",false],[4075697968,"Felix Schultz",9,"Destroyer",false],[4075730384,"Riga",9,"Cruiser",false],[4075730640,"Takahashi",9,"Cruiser",false],[4075730768,"Brest",9,"Cruiser",false],[4075730896,"Drake",9,"Cruiser",false],[4075730928,"Seattle",9,"Cruiser",false],[4075763408,"Adatara",9,"Battleship",false],[4075763504,"Prinz Rupprecht",9,"Battleship",false],[4075763664,"Duncan",9,"Battleship",false],[4075763696,"Delaware",9,"Battleship",false],[4076255024,"U-190",8,"Submarine",false],[4076255216,"Salmon",8,"Submarine",false],[4076745936,"Siliwangi",8,"Destroyer",false],[4076746032,"Split",8,"Destroyer",false],[4076746192,"Ognevoi",8,"Destroyer",false],[4076746448,"Kagerō",8,"Destroyer",false],[4076746544,"Gustav-Julius Maerker",8,"Destroyer",false],[4076778960,"Tallinn",8,"Cruiser",false],[4076779216,"Shimanto",8,"Cruiser",false],[4076779344,"Cherbourg",8,"Cruiser",false],[4076779472,"Albemarle",8,"Cruiser",false],[4076779504,"Cleveland",8,"Cruiser",false],[4076811984,"Yumihari",8,"Battleship",false],[4076812080,"Zieten",8,"Battleship",false],[4076812240,"Hawke",8,"Battleship",false],[4076812272,"Nebraska",8,"Battleship",false],[4077794608,"Grom",7,"Destroyer",false],[4077794768,"Minsk",7,"Destroyer",false],[4077795024,"Shiratsuyu",7,"Destroyer",false],[4077795120,"Z-31",7,"Destroyer",false],[4077827792,"Omono",7,"Cruiser",false],[4077828048,"Surrey",7,"Cruiser",false],[4077828080,"Helena",7,"Cruiser",false],[4077860656,"Prinz Heinrich",7,"Battleship",false],[4077860816,"Rooke",7,"Battleship",false],[4078352176,"U-69",6,"Submarine",false],[4078352368,"Cachalot",6,"Submarine",false],[4078843184,"Stord",6,"Destroyer",false],[4078843344,"Gnevny",6,"Destroyer",false],[4078843600,"Hatsuharu",6,"Destroyer",false],[4078876368,"Gokase",6,"Cruiser",false],[4078876624,"Devonshire",6,"Cruiser",false],[4078876656,"Dallas",6,"Cruiser",false],[4078909232,"Mackensen",6,"Battleship",false],[4078909392,"Renown",6,"Battleship",false],[4079891760,"Muavenet",5,"Destroyer",false],[4079891920,"Podvoisky",5,"Destroyer",false],[4079924944,"Agano",5,"Cruiser",false],[4079925200,"Hawkins",5,"Cruiser",false],[4079957808,"Derfflinger",5,"Battleship",false],[4079957968,"Tiger",5,"Battleship",false],[4081006384,"Moltke",4,"Battleship",false],[4081006544,"Queen Mary",4,"Battleship",false],[4081039312,"Hermes",4,"AirCarrier",false],[4082054960,"Von der Tann",3,"Battleship",false],[4082055120,"Indefatigable",3,"Battleship",false],[4178457808,"Kunming",11,"Destroyer",false],[4178457904,"Dalarna",11,"Destroyer",false],[4178458064,"Zorkiy",11,"Destroyer",false],[4178458320,"Yamagiri",11,"Destroyer",false],[4178458416,"Z-57",11,"Destroyer",true],[4178458608,"Joshua Humphreys",11,"Destroyer",false],[4178490832,"Novosibirsk",11,"Cruiser",false],[4178491120,"Piemonte",11,"Cruiser",false],[4178491184,"Clausewitz",11,"Cruiser",false],[4178491216,"Condé",11,"Cruiser",false],[4178491344,"Edgar",11,"Cruiser",false],[4178491376,"Annapolis",11,"Cruiser",false],[4178523600,"Admiral Ushakov",11,"Battleship",false],[4178523856,"Satsuma",11,"Battleship",false],[4178523952,"Hannover",11,"Battleship",false],[4178523984,"Patrie",11,"Battleship",false],[4178524112,"Devastation",11,"Battleship",false],[4178524144,"Maine",11,"Battleship",false],[4178556624,"Sekiryu",11,"AirCarrier",false],[4178556880,"Eagle",11,"AirCarrier",false],[4178556912,"United States",11,"AirCarrier",false],[4179015120,"K-1",10,"Submarine",false],[4179015408,"Pietro Calvi",10,"Submarine",false],[4179015632,"Thrasher",10,"Submarine",false],[4179506384,"Yueyang",10,"Destroyer",false],[4179506480,"Halland",10,"Destroyer",false],[4179506640,"Khabarovsk",10,"Destroyer",false],[4179506928,"Attilio Regolo",10,"Destroyer",false],[4179506992,"Z-52",10,"Destroyer",false],[4179507024,"Kléber",10,"Destroyer",false],[4179507152,"Daring",10,"Destroyer",false],[4179539152,"Jinan",10,"Cruiser",false],[4179539280,"San Martín",10,"Cruiser",false],[4179539376,"Castilla",10,"Cruiser",false],[4179539408,"Moskva",10,"Cruiser",false],[4179539696,"Venezia",10,"Cruiser",false],[4179539728,"Gouden Leeuw",10,"Cruiser",false],[4179539760,"Hindenburg",10,"Cruiser",false],[4179539792,"Henri IV",10,"Cruiser",false],[4179539920,"Minotaur",10,"Cruiser",false],[4179572176,"Kremlin",10,"Battleship",false],[4179572464,"Cristoforo Colombo",10,"Battleship",false],[4179572528,"Grosser Kurfürst",10,"Battleship",false],[4179572560,"République",10,"Battleship",false],[4179572688,"Conqueror",10,"Battleship",false],[4179572720,"Vermont",10,"Battleship",false],[4179604944,"Admiral Nakhimov",10,"AirCarrier",false],[4179605200,"Hakuryū",10,"AirCarrier",false],[4179605296,"Manfred von Richthofen",10,"AirCarrier",false],[4179605488,"Midway",10,"AirCarrier",false],[4180554960,"Chung Mu",9,"Destroyer",false],[4180555056,"Östergötland",9,"Destroyer",false],[4180555504,"Adriatico",9,"Destroyer",false],[4180555568,"Z-46",9,"Destroyer",false],[4180555600,"Mogador",9,"Destroyer",false],[4180555728,"Jutland",9,"Destroyer",false],[4180587728,"Sejong",9,"Cruiser",false],[4180587856,"Santander",9,"Cruiser",false],[4180587952,"Andalucía",9,"Cruiser",false],[4180587984,"Dmitri Donskoi",9,"Cruiser",false],[4180588272,"Brindisi",9,"Cruiser",false],[4180588304,"Johan de Witt",9,"Cruiser",false],[4180588336,"Roon",9,"Cruiser",false],[4180588368,"Saint-Louis",9,"Cruiser",false],[4180588496,"Neptune",9,"Cruiser",false],[4180588528,"Buffalo",9,"Cruiser",false],[4180620752,"Sovetsky Soyuz",9,"Battleship",false],[4180621040,"Lepanto",9,"Battleship",false],[4180621104,"Friedrich der Grosse",9,"Battleship",false],[4180621136,"Alsace",9,"Battleship",false],[4180621264,"Lion",9,"Battleship",false],[4180621296,"Minnesota",9,"Battleship",false],[4181112272,"L-20",8,"Submarine",false],[4181112560,"Pietro Micca",8,"Submarine",false],[4181112784,"Sturdy",8,"Submarine",false],[4181603536,"Hsienyang",8,"Destroyer",false],[4181603632,"Öland",8,"Destroyer",false],[4181604048,"Akizuki",8,"Destroyer",false],[4181604080,"Vittorio Cuniberti",8,"Destroyer",false],[4181604144,"Z-23",8,"Destroyer",false],[4181604176,"Le Fantasque",8,"Destroyer",false],[4181604304,"Lightning",8,"Destroyer",false],[4181636304,"Harbin",8,"Cruiser",false],[4181636432,"Ignacio Allende",8,"Cruiser",false],[4181636528,"Cataluña",8,"Cruiser",false],[4181636560,"Chapayev",8,"Cruiser",false],[4181636848,"Amalfi",8,"Cruiser",false],[4181636880,"Haarlem",8,"Cruiser",false],[4181636912,"Admiral Hipper",8,"Cruiser",false],[4181636944,"Charles Martel",8,"Cruiser",false],[4181637072,"Edinburgh",8,"Cruiser",false],[4181637104,"Baltimore",8,"Cruiser",false],[4181669328,"Vladivostok",8,"Battleship",false],[4181669616,"Vittorio Veneto",8,"Battleship",false],[4181669680,"Bismarck",8,"Battleship",false],[4181669712,"Richelieu",8,"Battleship",false],[4181669840,"Monarch",8,"Battleship",false],[4181669872,"Kansas",8,"Battleship",false],[4181702096,"Pobeda",8,"AirCarrier",false],[4181702352,"Shōkaku",8,"AirCarrier",false],[4181702448,"August von Parseval",8,"AirCarrier",false],[4181702608,"Implacable",8,"AirCarrier",false],[4181702640,"Lexington",8,"AirCarrier",false],[4182652112,"Gadjah Mada",7,"Destroyer",false],[4182652208,"Skåne",7,"Destroyer",false],[4182652368,"Udaloi",9,"Destroyer",false],[4182652624,"Akatsuki",7,"Destroyer",false],[4182652656,"Luca Tarigo",7,"Destroyer",false],[4182652720,"Leberecht Maass",7,"Destroyer",false],[4182652752,"Vauquelin",7,"Destroyer",false],[4182652880,"Jervis",7,"Destroyer",false],[4182684880,"Chumphon",7,"Cruiser",false],[4182685008,"Coronel Bolognesi",7,"Cruiser",false],[4182685104,"Asturias",7,"Cruiser",false],[4182685136,"Shchors",7,"Cruiser",false],[4182685424,"Zara",7,"Cruiser",false],[4182685456,"Eendracht",7,"Cruiser",false],[4182685488,"Yorck",7,"Cruiser",false],[4182685520,"Algérie",7,"Cruiser",false],[4182685648,"Fiji",7,"Cruiser",false],[4182685680,"New Orleans",7,"Cruiser",false],[4182717904,"Sinop",7,"Battleship",false],[4182718192,"Francesco Caracciolo",7,"Battleship",false],[4182718256,"Gneisenau",7,"Battleship",false],[4182718288,"Lyon",7,"Battleship",false],[4182718416,"King George V",7,"Battleship",false],[4183209424,"S-1",6,"Submarine",false],[4183209712,"Foca",6,"Submarine",false],[4183209936,"Undine",6,"Submarine",false],[4183700688,"Fushun",6,"Destroyer",false],[4183700784,"Västerås",6,"Destroyer",false],[4183701200,"Fubuki",6,"Destroyer",false],[4183701232,"Aviere",6,"Destroyer",false],[4183701296,"Ernst Gaede",6,"Destroyer",false],[4183701328,"Guépard",6,"Destroyer",false],[4183701456,"Icarus",6,"Destroyer",false],[4183733456,"Rahmat",6,"Cruiser",false],[4183733584,"Almirante Cochrane",6,"Cruiser",false],[4183733680,"Baleares",6,"Cruiser",false],[4183733712,"Budyonny",6,"Cruiser",false],[4183734000,"Trento",6,"Cruiser",false],[4183734032,"Kijkduin",6,"Cruiser",false],[4183734064,"Nürnberg",6,"Cruiser",false],[4183734096,"La Galissonnière",6,"Cruiser",false],[4183734224,"Leander",6,"Cruiser",false],[4183734256,"Pensacola",6,"Cruiser",false],[4183766480,"Izmail",6,"Battleship",false],[4183766768,"Andrea Doria",6,"Battleship",false],[4183766832,"Bayern",6,"Battleship",false],[4183766864,"Normandie",6,"Battleship",false],[4183766992,"Queen Elizabeth",6,"Battleship",false],[4183799248,"Serov",6,"AirCarrier",false],[4183799504,"Ryūjō",6,"AirCarrier",false],[4183799600,"Weser",6,"AirCarrier",false],[4183799760,"Furious",6,"AirCarrier",false],[4183799792,"Ranger",6,"AirCarrier",false],[4184749264,"Jianwei",5,"Destroyer",false],[4184749360,"Visby",5,"Destroyer",false],[4184749776,"Mutsuki",5,"Destroyer",false],[4184749808,"Maestrale",5,"Destroyer",false],[4184749872,"T-22",5,"Destroyer",false],[4184749904,"Jaguar",5,"Destroyer",false],[4184750032,"Acasta",5,"Destroyer",false],[4184782032,"Chungking",5,"Cruiser",false],[4184782160,"La Argentina",5,"Cruiser",false],[4184782256,"Galicia",5,"Cruiser",false],[4184782576,"Raimondo Montecuccoli",5,"Cruiser",false],[4184782608,"Celebes",5,"Cruiser",false],[4184782640,"Königsberg",5,"Cruiser",false],[4184782672,"Émile Bertin",5,"Cruiser",false],[4184782800,"Emerald",5,"Cruiser",false],[4184815056,"Pyotr Velikiy",5,"Battleship",false],[4184815344,"Conte di Cavour",5,"Battleship",false],[4184815408,"König",5,"Battleship",false],[4184815440,"Bretagne",5,"Battleship",false],[4184815568,"Iron Duke",5,"Battleship",false],[4185797840,"Shenyang",4,"Destroyer",false],[4185797936,"Klas Horn",4,"Destroyer",false],[4185798096,"Izyaslav",4,"Destroyer",false],[4185798384,"Turbine",4,"Destroyer",false],[4185798448,"V-170",4,"Destroyer",false],[4185798480,"Bourrasque",4,"Destroyer",false],[4185798608,"Wakeful",4,"Destroyer",false],[4185830736,"Córdoba",4,"Cruiser",false],[4185830832,"Almirante Cervera",4,"Cruiser",false],[4185830864,"Svietlana",4,"Cruiser",false],[4185831152,"Alberto di Giussano",4,"Cruiser",false],[4185831184,"De Ruyter",4,"Cruiser",false],[4185831216,"Karlsruhe",4,"Cruiser",false],[4185831248,"Duguay-Trouin",4,"Cruiser",false],[4185831376,"Danae",4,"Cruiser",false],[4185863632,"Gangut",4,"Battleship",false],[4185863920,"Dante Alighieri",4,"Battleship",false],[4185863984,"Kaiser",4,"Battleship",false],[4185864016,"Courbet",4,"Battleship",false],[4185864144,"Orion",4,"Battleship",false],[4185896400,"Komsomolets",4,"AirCarrier",false],[4185896656,"Hōshō",4,"AirCarrier",false],[4185896752,"Rhein",4,"AirCarrier",false],[4185896944,"Langley",4,"AirCarrier",false],[4186846416,"Phra Ruang",3,"Destroyer",false],[4186846512,"Romulus",3,"Destroyer",false],[4186846672,"Derzki",3,"Destroyer",false],[4186846960,"Nazario Sauro",3,"Destroyer",false],[4186847024,"G-101",3,"Destroyer",false],[4186847056,"Fusilier",3,"Destroyer",false],[4186847184,"Valkyrie",3,"Destroyer",false],[4186879312,"Vicente Guerrero",3,"Cruiser",false],[4186879408,"Navarra",3,"Cruiser",false],[4186879440,"Bogatyr",3,"Cruiser",false],[4186879728,"Taranto",3,"Cruiser",false],[4186879760,"Java",3,"Cruiser",false],[4186879792,"Kolberg",3,"Cruiser",false],[4186879824,"Friant",3,"Cruiser",false],[4186879952,"Caledon",3,"Cruiser",false],[4186912208,"Knyaz Suvorov",3,"Battleship",false],[4186912560,"Nassau",3,"Battleship",false],[4186912592,"Turenne",3,"Battleship",false],[4186912720,"Bellerophon",3,"Battleship",false],[4187894992,"Longjiang",2,"Destroyer",false],[4187895088,"Tátra",2,"Destroyer",false],[4187895248,"Storozhevoi",2,"Destroyer",false],[4187895536,"Curtatone",2,"Destroyer",false],[4187895600,"V-25",2,"Destroyer",false],[4187895632,"Enseigne Gabolde",2,"Destroyer",false],[4187895760,"Medea",2,"Destroyer",false],[4187927888,"Almirante Barroso",2,"Cruiser",false],[4187927984,"Méndez Núñez",2,"Cruiser",false],[4187928016,"Novik",2,"Cruiser",false],[4187928304,"Nino Bixio",2,"Cruiser",false],[4187928336,"Gelderland",2,"Cruiser",false],[4187928400,"Jurien de la Gravière",2,"Cruiser",false],[4187928528,"Weymouth",2,"Cruiser",false],[4188976336,"Chengan",1,"Cruiser",false],[4188976432,"Gryf",1,"Cruiser",false],[4188976464,"Hércules",1,"Cruiser",false],[4188976560,"Júpiter",1,"Cruiser",false],[4188976592,"Orlan",1,"Cruiser",false],[4188976880,"Eritrea",1,"Cruiser",false],[4188976912,"Van Kinsbergen",1,"Cruiser",false],[4188976976,"Bougainville",1,"Cruiser",false],[4188977104,"Black Swan",1,"Cruiser",false],[4247697392,"Marblehead Lima",5,"Cruiser",false],[4248745968,"Marblehead",5,"Cruiser",false],[4252907504,"Burrows",10,"Destroyer",false],[4253956080,"Christopher",9,"Destroyer",false],[4255004656,"Osborne",8,"Destroyer",false],[4255037136,"Atago",8,"Cruiser",false],[4256053232,"Hughes",7,"Destroyer",false],[4256085712,"Hashidate",1,"Cruiser",false],[4258182864,"Chikuma",2,"Cruiser",false],[4259231440,"Zaō",10,"Cruiser",false],[4259264496,"New Mexico",6,"Battleship",false],[4264441840,"Sims",7,"Destroyer",false],[4265588720,"Yorktown",8,"AirCarrier",false],[4266538992,"Wickes",3,"Destroyer",false],[4267587280,"Kamikaze R",5,"Destroyer",false],[4267620048,"Iwaki Alpha",4,"Cruiser",false],[4267685872,"Independence",6,"AirCarrier",false],[4268635856,"Kamikaze",5,"Destroyer",false],[4269684432,"Wakatake",3,"Destroyer",false],[4269717488,"Phoenix",4,"Cruiser",false],[4272830448,"Fletcher",9,"Destroyer",false],[4272862928,"Kurama",11,"Cruiser",true],[4272895696,"Izumo",9,"Battleship",false],[4273911760,"Monmouth",10,"Cruiser",false],[4273911792,"Des Moines",10,"Cruiser",false],[4273977328,"Essex",10,"AirCarrier",false],[4274926928,"Nueva Esparta",9,"Destroyer",false],[4274927440,"Orage",9,"Destroyer",false],[4274927600,"Clemson",4,"Destroyer",false],[4274959728,"Encounter",9,"Cruiser",false],[4274960144,"Menno van Coehoorn",9,"Cruiser",false],[4274960176,"Manteuffel",9,"Cruiser",false],[4274992432,"Gustav den Store",9,"Battleship",false],[4274992464,"Los Andes",9,"Battleship",false],[4275975504,"Cuauhtémoc",8,"Destroyer",false],[4275976016,"L'Aventurier",8,"Destroyer",false],[4276008304,"Auckland",8,"Cruiser",false],[4276008656,"Tone",8,"Cruiser",false],[4276008720,"Jaarsveld",8,"Cruiser",false],[4276008752,"Knesebeck",8,"Cruiser",false],[4276041008,"Enigheten",8,"Battleship",false],[4276041040,"Ipiranga",8,"Battleship",false],[4276041424,"Yamato",10,"Battleship",false],[4276041712,"Iowa",9,"Battleship",false],[4277024080,"Marcílio Dias",7,"Destroyer",false],[4277024464,"Fūjin",5,"Destroyer",false],[4277024592,"Le Hardi",7,"Destroyer",false],[4277056880,"Uganda",7,"Cruiser",false],[4277057328,"Admiral Scheer",7,"Cruiser",false],[4277089584,"Chios",7,"Battleship",false],[4277090288,"Montana",10,"Battleship",false],[4278072656,"Cervantes",6,"Destroyer",false],[4278073168,"Duchaffault",6,"Destroyer",false],[4278105456,"Hobart",6,"Cruiser",false],[4278105904,"Deutschland",6,"Cruiser",false],[4278138160,"Laudon",6,"Battleship",false],[4279121232,"Antioquia",5,"Destroyer",false],[4279121744,"L'Adroit",5,"Destroyer",false],[4279154032,"Delhi",5,"Cruiser",false],[4279154384,"Tenryū",3,"Cruiser",false],[4279186736,"Tegetthoff",5,"Battleship",false],[4280169808,"Serrano",4,"Destroyer",false],[4280170192,"Tachibana Lima",2,"Destroyer",false],[4280170480,"Nicholas",5,"Destroyer",false],[4280202608,"Dunedin",4,"Cruiser",false],[4280235312,"Yavuz Sultan Selim",4,"Battleship",false],[4281218384,"Almirante Villar",3,"Destroyer",false],[4281219056,"Gearing",10,"Destroyer",false],[4281251184,"Caradoc",3,"Cruiser",false],[4281251536,"Kuma",4,"Cruiser",false],[4281284304,"Amagi",8,"Battleship",false],[4281284592,"Arkansas Beta",4,"Battleship",false],[4282267344,"Shimakaze",10,"Destroyer",false],[4282299760,"Port Jackson",2,"Cruiser",false],[4282300112,"Ibuki",9,"Cruiser",false],[4282333168,"North Carolina",8,"Battleship",false],[4283348976,"Jacksonville",11,"Cruiser",false],[4283381456,"Mikasa",2,"Battleship",false],[4283381488,"Affondatore",11,"Battleship",false],[4284364112,"20 de Julio",10,"Destroyer",false],[4284364624,"Cassard",10,"Destroyer",false],[4284396912,"Cerberus",10,"Cruiser",false],[4284397008,"Diana Lima",2,"Cruiser",false],[4284397328,"Utrecht",10,"Cruiser",false],[4284397360,"Prinz Adalbert",10,"Cruiser",false],[4284429616,"Thor",10,"Battleship",false],[4284429648,"Libertad",10,"Battleship",false],[4284430032,"Nagato",7,"Battleship",false],[4285445840,"Mogami",8,"Cruiser",false],[4286461936,"Benson",8,"Destroyer",false],[4286494416,"Myōkō",7,"Cruiser",false],[4286527184,"Ishizuchi",4,"Battleship",false],[4286527472,"Colorado",7,"Battleship",false],[4287542992,"Aoba",6,"Cruiser",false],[4287575760,"Kongō",5,"Battleship",false],[4288559088,"Mahan",7,"Destroyer",false],[4288591856,"Atlanta",7,"Cruiser",false],[4288624336,"Fusō",6,"Battleship",false],[4288624624,"New York",5,"Battleship",false],[4289607664,"Farragut",6,"Destroyer",false],[4289640144,"Furutaka",5,"Cruiser",false],[4289640432,"Omaha",5,"Cruiser",false],[4290655952,"Minekaze",5,"Destroyer",false],[4290688720,"Yūbari",4,"Cruiser",false],[4290689008,"St. Louis",3,"Cruiser",false],[4290721776,"Wyoming",4,"Battleship",false],[4291704528,"Isokaze",4,"Destroyer",false],[4291737040,"Murmansk",5,"Cruiser",false],[4291737584,"Albany",2,"Cruiser",false],[4291770064,"Myōgi",4,"Battleship",false],[4292753104,"Umikaze",2,"Destroyer",false],[4292753392,"Sampson",2,"Destroyer",false],[4292785616,"Diana",2,"Cruiser",false],[4292785968,"Dresden",2,"Cruiser",false],[4292786160,"Chester",2,"Cruiser",false],[4292818736,"Tirpitz",8,"Battleship",false],[4292818896,"Warspite",6,"Battleship",false],[4293801424,"Gremyashchy",5,"Destroyer",false],[4293801680,"Tachibana",2,"Destroyer",false],[4293834096,"Sutlej",1,"Cruiser",false],[4293834192,"Aurora",3,"Cruiser",false],[4293834544,"Hermelin",1,"Cruiser",false],[4293834736,"Erie",1,"Cruiser",false],[4293866960,"Imperator Nikolai I",4,"Battleship",false],[4293867216,"Kawachi",3,"Battleship",false],[4293867504,"South Carolina",3,"Battleship",false]]
-;
-// Drop-Tabellen Update 15.11 (Devblog "Closed Test 15.11", 29.10.2026, vorläufig)
-const SANTA_GROUPS = {
-  A: { label: "Schiffe Gruppe 1 (selten)", tiers: {
-    10: "Lüshun|Småland|La Pampa|Álvaro de Bazán|Smolensk|Hildebrand|Thunderer|Puerto Rico|Tonijn|Monmouth|Rhode Island|Conte Verde|Fuyutsuki|Almirante Irízar",
-    9: "Kronshtadt|Hizen|Musashi|Jean Bart|Benham|Błyskawica '52|Georgia|Indiana|Missouri",
-    8: "Odin|Lenin|Asashio|Colossus|Anchorage|Massachusetts|Enterprise|Mikhail Kutuzov",
-    7: "Z-39|Belfast|Nelson",
-    6: "T-61|Admiral Graf Spee|Erich Loewenhardt",
-    5: "Gremyashchy|Kamikaze R|Kamikaze|Fūjin|Giulio Cesare" } },
-  B: { label: "Schiffe Gruppe 2 (mittel)", tiers: {
-    9: "Dalian|Sun Yat-Sen|Velos|Victoria|Kozma Minin|Navarin|Minegumo|Suzuya|Tsurugi|Ferrante Gonzaga|Giuseppe Verdi|Marco Polo|Groningen|Z-44|Aberdeen|Scarlet Thunder|Halford|Cambridge|Tulsa|Baotou|Fort Worth|Cayuga|Triunfante|Friedrich Carl",
-    8: "Narai|Orkan|Turgut Reis|Regele Carol I|Comandante Aguirre|Almirante Grau|Numancia|S-189|Provorny|Pyotr Bagration|Ochakov|Borodino|Shigure|Tone|Marcantonio Colonna|Aquila|Z-35|Wiesbaden|Schill|Hoche|Flandre|Alliance|Eskimo|Hampshire|Tiger '59|Cheshire|Indomitable|Constellation|Prince of Wales" } },
-  C: { label: "Schiffe Gruppe 3 (häufig)", tiers: {
-    8: "Picardie|Theseus",
-    7: "Nueve de Julio|Yukon|Tashkent '39|Leningrad|Arkhangelsk|Poltava|Yūdachi|Maya|Tokachi|Hyūga|Ashitaka|FR25|Gorizia|Francesco Ferruccio|Duca degli Abruzzi|Weimar|München|Scharnhorst|Toulon|Strasbourg|Jupiter '42|Royal Sovereign|Rodney|Collingwood|Hood|Sims|Boise|Indianapolis|Atlanta|California|Florida",
-    6: "Xin Zhong Guo'14|Elli|Juruá|Mysore|Admiral Makarov|Ise|Mutsu|Béarn|Orion '44|Monaghan",
-    5: "Rio de Janeiro|Okhotnik|Krasny Krym|Exeter|Hill" } },
-  GR: { label: "Golden: neue Schiffe", tiers: { 10: "Latouche-Tréville|Tōgasa", 0: "Rodina" } },
-  GG: { label: "Golden: Gold-Versionen und Naval Legacy", tiers: { 10: "Tōgasa G|Somers G", 8: "Tywysog Cymru", 0: "Rodina G" } },
-  NJ: { label: "Battle Forged", tiers: { 0: "New Jersey BF" } }
-};
-const B = (p, res) => ({ p, res });
-const CONTAINER_DEFS = {
-  ultra: { label: "Santa's Ultra Gift", pity: 7, comp: { "Stahl": 1250 }, slots: [
-    [B(.05, { "Dublonen": 2500 }), B(.40, { "Kohle": 6000 }), { p: .20, give: "golden" }, B(.03, { "Premium-Tage": 180 }),
-     { p: .03, ship: "A" }, { p: .09, ship: "B" }, { p: .20, ship: "C" }],
-    [B(1, { "Booster episch (6×)": 1 })],
-    [B(.05, { "Dublonen": 2500 }), B(.81, { "Elite-Kommandanten-EP": 37500 }), B(.14, { "Kohle": 6000 })]
-  ] },
-  mega: { label: "Santa's Mega Gift", pity: 15, comp: { "Stahl": 1250 }, slots: [
-    [B(.05, { "Dublonen": 2500 }), B(.08, { "Kohle": 12500 }), { p: .10, give: "golden" }, B(.01, { "Premium-Tage": 180 }),
-     B(.10, { "Elite-Kommandanten-EP": 100000 }), B(.10, { "Credits": 2250000 }), B(.32, { "Booster selten (20×)": 1 }), B(.08, { "Booster episch (7×)": 1 }),
-     { p: .01, ship: "A" }, { p: .03, ship: "B" }, { p: .12, ship: "C" }]
-  ] },
-  santa: { label: "Santa's Gift", pity: 100, comp: { "Stahl": 250 }, slots: [
-    [B(.05, { "Dublonen": 500 }), { p: .01, give: "golden" }, B(.07, { "Kohle": 2500 }), B(.01, { "Premium-Tage": 30 }),
-     B(.10, { "Elite-Kommandanten-EP": 20000 }), B(.10, { "Credits": 400000 }), B(.055, { "Hafenplätze": 1 }),
-     B(.10, { "Booster selten (3×)": 1 }), B(.24, { "Booster ungewöhnlich (12×)": 1 }), B(.24, { "Signale (25×)": 1 }),
-     { p: .001, ship: "A" }, { p: .004, ship: "B" }, { p: .02, ship: "C" }]
-  ] },
-  golden: { label: "Golden Gift", pity: 10, golden: true, slots: [
-    [B(.60, { "Booster episch (7×)": 1 }), B(.20, { "Forschungspunkte": 3750 }), B(.10, { "Stahl": 3000 }),
-     { p: .09999, ship: "GR" }, { p: .00001, ship: "GG" }]
-  ] },
-  bf: { label: "Battle Forged Premium", pity: 3, comp: { "Stahl": 2500 }, slots: [
-    [B(1, { "Booster legendär (3×)": 1 })],
-    [B(.25, { "Forschungspunkte": 10000 }), B(.25, { "Stahl": 5000 }), { p: .50, ship: "NJ" }],
-    [B(1, { "Booster legendär (3×)": 1 })]
-  ] }
-};
-</script>
-<script>
-(() => {
-"use strict";
-const $ = (id) => document.getElementById(id);
-const fmt = new Intl.NumberFormat("de-DE");
-const fmt1 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
-const fmtP = (p) => (p * 100).toLocaleString("de-DE", { maximumFractionDigits: p > 0 && p < 0.001 ? 3 : p < 0.1 ? 2 : 1 }) + " %";
-const ROMAN = { 0: "?", 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "★" };
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const key = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const store = {
-  get(k, d) { try { const v = localStorage.getItem("santa26:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem("santa26:" + k, JSON.stringify(v)); } catch {} }
-};
-
-// ---------- Schiffsdaten ----------
-const SHIPS = new Map(SHIPS_RAW.map(([id, name, tier, type, demo]) => [id, { id, name, tier, type, demo }]));
-$("shipCount").textContent = fmt.format(SHIPS.size);
-
-// Container-Schiffe: Gruppe -> [{name, tier, key}]
-const GROUP_SHIPS = {};
-for (const [g, def] of Object.entries(SANTA_GROUPS)) {
-  GROUP_SHIPS[g] = [];
-  for (const [tier, list] of Object.entries(def.tiers)) for (const name of list.split("|")) GROUP_SHIPS[g].push({ name, tier: +tier, key: key(name), group: g });
-  GROUP_SHIPS[g].sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name, "de"));
-}
-const GROUP_ORDER = ["A", "B", "C", "GR", "GG", "NJ"];
-
-// ---------- Event-Regeln ----------
-const ADD_TIERS = "0:1, 25:2, 50:3, 100:4, 200:5, 400:6, 600:7";
-const PRESETS = {
-  xmas26: { rows: { 5: ["Kohle", 700, 200], 6: ["Kohle", 750, 250], 7: ["Kohle", 800, 300], 8: ["Stahl", 70, 400], 9: ["Stahl", 80, 500], 10: ["Festive Token", 1, 600], 11: ["Stahl", 200, 600] }, addXp: 1000, addTiers: ADD_TIERS },
-  ann26: { rows: { 5: ["Festive Token", 25, 200], 6: ["Festive Token", 35, 250], 7: ["Festive Token", 50, 300], 8: ["Festive Token", 75, 400], 9: ["Festive Token", 100, 500], 10: ["Festive Token", 125, 600], 11: ["Stahl", 200, 600] }, addXp: 1000, addTiers: ADD_TIERS }
-};
-const TIERS = [5, 6, 7, 8, 9, 10, 11];
-const EXAMPLE_COUNTS = { low: 22, 5: 8, 6: 11, 7: 14, 8: 31, 9: 17, 10: 24, 11: 2 };
-const PITY_DEFAULT = { santa: 100, mega: 15, ultra: 7, golden: 10, bf: 3 };
-
-const state = {
-  source: store.get("source", "import"),
-  counts: store.get("counts", null) || { ...EXAMPLE_COUNTS },
-  imported: store.get("imported", null),
-  preset: store.get("preset", "xmas26"),
-  rules: store.get("rules", null),
-  realm: store.get("realm", "eu"),
-  appId: store.get("appId", ""),
-  manual: store.get("manual", {}),          // Schiffs-Key -> true/false (Handeingabe übersteuert Import)
-  plan: store.get("plan", null),
-  pity: { ...PITY_DEFAULT, ...store.get("pity", {}) },
-  token: null
-};
-if (!state.rules || !PRESETS[state.preset]) { state.preset = "xmas26"; state.rules = structuredClone(PRESETS.xmas26); }
-
-// ---------- Hafen ----------
-function addUnlocks(portSize) {
-  let n = 0;
-  for (const part of String(state.rules.addTiers).split(",")) {
-    const m = part.trim().match(/^(\d+)\s*:\s*(\d+)$/);
-    if (m && portSize >= +m[1]) n = Math.max(n, +m[2]);
-  }
-  return n;
-}
-const hasImport = () => state.source === "import" && state.imported && state.imported.ids.length > 0;
-
-function portShips() {
-  if (state.source === "import" && !hasImport()) return { total: 0, eligible: [], unknown: 0, low: 0, demo: 0, list: null };
-  if (hasImport()) {
-    const eligible = [], list = []; let unknown = 0, low = 0, demo = 0;
-    for (const id of state.imported.ids) {
-      const s = SHIPS.get(id);
-      if (!s) { unknown++; continue; }
-      list.push(s);
-      if (s.demo) { demo++; continue; }
-      if (s.tier < 5) { low++; continue; }
-      eligible.push(s);
-    }
-    return { total: state.imported.ids.length, eligible, unknown, low, demo, list };
-  }
-  const eligible = [];
-  for (const t of TIERS) for (let i = 0; i < (+state.counts[t] || 0); i++) eligible.push({ tier: t });
-  const low = +state.counts.low || 0;
-  return { total: eligible.length + low, eligible, unknown: 0, low, demo: 0, list: null };
-}
-function rewardFor(tier) {
-  const r = state.rules.rows[tier];
-  return r ? { res: r[0], amount: +r[1] || 0, xp: +r[2] || 0 } : null;
-}
-function portSummary() {
-  const p = portShips();
-  const byTier = {}, byRes = {};
-  let totalXp = 0;
-  const reqs = [];
-  for (const s of p.eligible) {
-    const r = rewardFor(s.tier);
-    if (!r) continue;
-    const bt = byTier[s.tier] ||= { n: 0, res: r.res, sum: 0, xp: 0 };
-    bt.n++; bt.sum += r.amount; bt.xp += r.xp;
-    byRes[r.res] = (byRes[r.res] || 0) + r.amount;
-    totalXp += r.xp; reqs.push(r.xp);
-  }
-  return { ...p, byTier, byRes, totalXp, reqs, add: addUnlocks(p.total) };
-}
-const isExample = () => state.source === "manual" && TIERS.concat(["low"]).every((t) => (+state.counts[t] || 0) === EXAMPLE_COUNTS[t]);
-
-// Besitz der Container-Schiffe: Import (per Name) plus Handeingabe
-function importedKeys() {
-  const s = new Set();
-  if (hasImport()) for (const id of state.imported.ids) { const sh = SHIPS.get(id); if (sh) s.add(key(sh.name)); }
-  return s;
-}
-function ownedSet() {
-  const imp = importedKeys();
-  const s = new Set();
-  for (const g of GROUP_ORDER) for (const sh of GROUP_SHIPS[g]) {
-    const m = state.manual[sh.key];
-    if (m === true || (m !== false && imp.has(sh.key))) s.add(sh.key);
-  }
-  return s;
-}
-
-// ---------- Eingaben Hafen ----------
-function renderTierInputs() {
-  const box = $("tierInputs");
-  box.innerHTML = "";
-  const mk = (k, label) => {
-    const l = document.createElement("label");
-    l.innerHTML = `${label}<input type="number" min="0" step="1" id="cnt-${k}">`;
-    const inp = l.querySelector("input");
-    inp.value = state.counts[k] ?? 0;
-    inp.addEventListener("input", () => { state.counts[k] = Math.max(0, parseInt(inp.value, 10) || 0); store.set("counts", state.counts); changed(); });
-    box.appendChild(l);
-  };
-  mk("low", "I–IV");
-  for (const t of TIERS) mk(t, "Stufe " + ROMAN[t]);
-}
-function renderRules() {
-  const body = $("rulesBody");
-  body.innerHTML = "";
-  for (const t of TIERS) {
-    const r = state.rules.rows[t];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${ROMAN[t]}</td><td><input type="text" id="r-res-${t}"></td><td class="num"><input type="number" min="0" id="r-amt-${t}"></td><td class="num"><input type="number" min="1" step="50" id="r-xp-${t}"></td>`;
-    const [res, amt, xp] = tr.querySelectorAll("input");
-    res.value = r[0]; amt.value = r[1]; xp.value = r[2];
-    res.addEventListener("input", () => { r[0] = res.value; saveRules(); });
-    amt.addEventListener("input", () => { r[1] = Math.max(0, +amt.value || 0); saveRules(); });
-    xp.addEventListener("input", () => { r[2] = Math.max(1, +xp.value || 1); saveRules(); });
-    body.appendChild(tr);
-  }
-  $("addXp").value = state.rules.addXp;
-  $("addTiers").value = state.rules.addTiers;
-  $("preset").value = state.preset;
-}
-function saveRules() { store.set("rules", state.rules); changed(); }
-$("preset").addEventListener("change", (e) => {
-  state.preset = e.target.value; state.rules = structuredClone(PRESETS[state.preset]);
-  store.set("preset", state.preset); store.set("rules", state.rules);
-  renderRules(); changed();
-});
-$("addXp").addEventListener("input", (e) => { state.rules.addXp = Math.max(1, +e.target.value || 1); saveRules(); });
-$("addTiers").addEventListener("input", (e) => { state.rules.addTiers = e.target.value; saveRules(); });
-
-function setSource(src) {
-  state.source = src; store.set("source", src);
-  $("srcManual").setAttribute("aria-pressed", src === "manual");
-  $("srcImport").setAttribute("aria-pressed", src === "import");
-  $("manualBox").hidden = src !== "manual";
-  $("importBox").hidden = src !== "import";
-  renderAccount();
-  changed();
-}
-$("srcManual").addEventListener("click", () => setSource("manual"));
-$("srcImport").addEventListener("click", () => setSource("import"));
-
-// ---------- Wargaming-Login ----------
-// OpenID-Login von Wargaming: Rücksprung auf diese Seite mit ?status=ok&access_token=…&account_id=…&nickname=…&expires_at=…
-const REALM_LABEL = { eu: "EU", com: "NA", asia: "ASIA" };
-const appId = () => (WG_APPLICATION_ID || store.get("appId", "") || "").trim();
-const wowsApi = (realm, path) => `https://api.worldofwarships.${realm}/wows/${path}`;
-const selfUrl = () => location.origin + location.pathname;
-let session = store.get("session", null);   // { realm, token, account, nick, exp }
-
-function importMsg(text, kind) {
-  for (const id of ["importMsg", "gateMsg"]) { const m = $(id); m.className = "msg" + (kind ? " " + kind : ""); m.textContent = text; }
-}
-const sessionValid = () => session && session.token && (!session.exp || session.exp * 1000 > Date.now() + 60000);
-let pendingLogin = false;   // nach dem Rücksprung: Login-Seite zeigt "erfolgreich", bis der Hafen geladen ist
-
-// Wie in der Referenz: ohne gültige Anmeldung sieht man nur die Login-Seite (außer im manuellen Modus)
-function renderAccount() {
-  const logged = sessionValid();
-  const gate = state.source !== "manual" && (!logged || pendingLogin);
-  $("gate").hidden = !gate;
-  $("app").hidden = gate;
-  $("setupBox").hidden = !!WG_APPLICATION_ID || pendingLogin;
-  $("appId").value = store.get("appId", "");
-  $("realmButtons").hidden = pendingLogin;
-  $("skipLogin").hidden = pendingLogin;
-  $("gateTitle").textContent = pendingLogin ? "Anmeldung erfolgreich" : "Server wählen und anmelden";
-  $("gateSub").textContent = pendingLogin ? `Willkommen, ${session.nick || session.account}. Dein Hafen wird geladen …` : "Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.";
-  $("accountBox").hidden = !logged;
-  $("userbar").hidden = !logged || gate;
-  if (!logged) return;
-  const name = session.nick || session.account, realm = REALM_LABEL[session.realm] || session.realm;
-  $("accName").textContent = name; $("ubName").textContent = name;
-  $("accRealm").textContent = realm; $("ubRealm").textContent = realm;
-  const parts = [];
-  if (state.imported && state.imported.at) parts.push(`Hafen geladen am ${new Date(state.imported.at).toLocaleString("de-DE")}: ${fmt.format(state.imported.ids.length)} Schiffe`);
-  if (session.exp) parts.push(`Anmeldung gültig bis ${new Date(session.exp * 1000).toLocaleString("de-DE")}`);
-  $("accInfo").textContent = parts.join(" · ");
-  $("ubInfo").textContent = state.imported ? `${fmt.format(state.imported.ids.length)} Schiffe im Hafen` : "";
-}
-$("skipLogin").addEventListener("click", () => setSource("manual"));
-$("appId").addEventListener("input", (e) => { store.set("appId", e.target.value.trim()); renderAccount(); });
-
-document.querySelectorAll("[data-realm]").forEach((b) => b.addEventListener("click", () => {
-  if (!appId()) { importMsg("Für die Anmeldung fehlt noch die Wargaming Application ID. Trag sie oben ein (oder in index.html bei WG_APPLICATION_ID).", "err"); $("appId").focus(); return; }
-  const realm = b.dataset.realm;
-  const back = `${selfUrl()}?realm=${realm}`;
-  const exp = Math.floor(Date.now() / 1000) + 14 * 86400;
-  location.href = `https://api.worldoftanks.${realm}/wot/auth/login/?application_id=${encodeURIComponent(appId())}&expires_at=${exp}&redirect_uri=${encodeURIComponent(back)}`;
-}));
-
-// Rücksprung vom Login auswerten und Token sofort aus der Adresszeile entfernen
-function handleCallback() {
-  const q = new URLSearchParams(location.search);
-  if (!q.has("status")) return;
-  history.replaceState(null, "", selfUrl() + location.hash);
-  if (q.get("status") !== "ok") {
-    importMsg(`Login abgebrochen oder fehlgeschlagen (${q.get("message") || q.get("code") || q.get("status")}).`, "err");
-    return;
-  }
-  const realm = REALM_LABEL[q.get("realm")] ? q.get("realm") : "eu";
-  session = { realm, token: q.get("access_token"), account: q.get("account_id"), nick: q.get("nickname") || "", exp: +q.get("expires_at") || 0 };
-  if (!session.token || !session.account) { session = null; importMsg("Wargaming hat keinen Zugriffsschlüssel geliefert. Bitte erneut anmelden.", "err"); return; }
-  store.set("session", session);
-  pendingLogin = true;
-  setSource("import");
-  loadPort();
-}
-
-async function wgGet(realm, path, params) {
-  const u = new URL(wowsApi(realm, path));
-  u.searchParams.set("application_id", appId());
-  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
-  let res;
-  try { res = await fetch(u); } catch { throw new Error("Wargaming-API nicht erreichbar. Prüfe deine Verbindung oder versuche es später."); }
-  const j = await res.json().catch(() => null);
-  if (!j) throw new Error(`Unerwartete Antwort der Wargaming-API (HTTP ${res.status}).`);
-  if (j.status !== "ok") {
-    const msg = (j.error && j.error.message) || "unbekannt";
-    const e = new Error(msg === "INVALID_ACCESS_TOKEN" ? "Deine Anmeldung ist abgelaufen. Bitte neu anmelden." :
-      msg === "INVALID_APPLICATION_ID" ? "Die Application ID ist ungültig." :
-      msg === "REQUEST_LIMIT_EXCEEDED" ? "Zu viele Anfragen. Warte kurz und lade dann neu." : `Wargaming-API meldet: ${msg}`);
-    e.code = msg;
-    throw e;
-  }
-  return j.data;
-}
-
-// Unbekannte IDs (neuer als die eingebauten Schiffsdaten) und damalige Testschiffe in der Enzyklopädie nachschlagen
-async function resolveUnknown(realm, ids) {
-  const out = {};
-  const missing = ids.filter((id) => !SHIPS.has(id) || SHIPS.get(id).demo);
-  for (let i = 0; i < missing.length; i += 100) {
-    const data = await wgGet(realm, "encyclopedia/ships/", { ship_id: missing.slice(i, i + 100).join(","), fields: "name,tier,type,has_demo_profile" });
-    for (const [id, s] of Object.entries(data || {})) if (s) out[id] = [s.name, s.tier, s.type, !!s.has_demo_profile];
-  }
-  return out;
-}
-function applyExtra(extra) {
-  for (const [id, [name, tier, type, demo]] of Object.entries(extra || {})) SHIPS.set(+id, { id: +id, name, tier, type, demo });
-}
-
-let loading = false;
-async function loadPort() {
-  if (loading || !sessionValid()) return;
-  loading = true; $("reloadBtn").disabled = true;
-  importMsg("Lade Hafen von Wargaming …");
-  try {
-    const data = await wgGet(session.realm, "account/info/", { account_id: session.account, access_token: session.token, fields: "private.port", extra: "private.port" });
-    const acc = data && data[session.account];
-    if (!acc) throw new Error("Account nicht gefunden.");
-    if (!acc.private || !Array.isArray(acc.private.port)) throw new Error("Wargaming liefert keine Hafendaten. Bitte neu anmelden.");
-    const ids = [...new Set(acc.private.port.map(Number))];
-    let extra = {};
-    try { extra = await resolveUnknown(session.realm, ids); } catch { /* Enzyklopädie optional */ }
-    applyExtra(extra);
-    state.imported = { ids, kind: "port", at: Date.now(), extra };
-    store.set("imported", state.imported);
-    const found = [...importedKeys()].filter((k) => GROUP_ORDER.some((g) => GROUP_SHIPS[g].some((s) => s.key === k))).length;
-    importMsg(`${fmt.format(ids.length)} Schiffe geladen, davon ${fmt.format(found)} aus den Container-Listen.`, "ok");
-    changed();
-  } catch (err) {
-    if (err.code === "INVALID_ACCESS_TOKEN") { session = null; store.set("session", null); }
-    importMsg(err.message, "err");
-  } finally {
-    loading = false; $("reloadBtn").disabled = false;
-    pendingLogin = false;
-    renderAccount();
-  }
-}
-$("reloadBtn").addEventListener("click", loadPort);
-
-$("ubLogout").addEventListener("click", () => $("logoutBtn").click());
-$("logoutBtn").addEventListener("click", () => {
-  const s = session;
-  session = null; store.set("session", null);
-  state.imported = null; store.set("imported", null);
-  // Token auch bei Wargaming entwerten (best effort)
-  if (s && appId()) {
-    const body = new URLSearchParams({ application_id: appId(), access_token: s.token });
-    fetch(`https://api.worldoftanks.${s.realm}/wot/auth/logout/`, { method: "POST", body }).catch(() => {});
-  }
-  importMsg("Abgemeldet. Hafendaten aus diesem Browser gelöscht.");
-  renderAccount();
-  changed();
-});
-
-// ---------- Rendering Hafen ----------
-function readout(el, items) {
-  el.innerHTML = items.map((it) => `<div><span class="k">${esc(it.k)}</span><span class="v${it.accent ? " accent" : ""}">${it.v}</span>${it.s ? `<span class="s">${it.s}</span>` : ""}</div>`).join("");
-}
-function renderPort(sum) {
-  const items = [
-    { k: "Schiffe im Hafen", v: fmt.format(sum.total), s: state.source === "import" ? (state.imported ? "aus deinem Wargaming-Konto" : "nicht angemeldet") : (isExample() ? "Beispielwerte" : "manuell") },
-    { k: "Schneeflocken", v: fmt.format(sum.reqs.length), s: "Schiffe ab Stufe V" }
-  ];
-  for (const [res, n] of Object.entries(sum.byRes)) items.push({ k: res, v: fmt.format(n), s: "aus allen Schneeflocken", accent: true });
-  items.push({ k: "Zusatz je " + fmt.format(state.rules.addXp) + " EP", v: fmt.format(sum.add), s: "bei " + fmt.format(sum.total) + " Schiffen" });
-  readout($("portReadout"), items);
-  $("exampleTag").hidden = !isExample();
-
-  const rows = TIERS.filter((t) => sum.byTier[t]).map((t) => {
-    const b = sum.byTier[t];
-    return `<tr><td>${ROMAN[t]}</td><td class="num">${fmt.format(b.n)}</td><td>${esc(b.res)}</td><td class="num">${fmt.format(b.sum)}</td><td class="num">${fmt.format(b.xp)}</td></tr>`;
-  });
-  const extra = [];
-  if (sum.low) extra.push(`${fmt.format(sum.low)} Schiffe Stufe I–IV ohne Schneeflocke`);
-  if (sum.demo) extra.push(`${fmt.format(sum.demo)} Testschiffe ohne Schneeflocke`);
-  if (sum.unknown) extra.push(`<span style="color: var(--warn)">${fmt.format(sum.unknown)} unbekannte IDs</span> (neuer als die Schiffsdaten, nicht berechnet)`);
-  rows.push(`<tr><td colspan="4"><strong>Gesamt</strong>${extra.length ? `<div class="mini">${extra.join(" · ")}</div>` : ""}</td><td class="num"><strong>${fmt.format(sum.totalXp)}</strong></td></tr>`);
-  $("tierBody").innerHTML = rows.join("");
-
-  const det = $("shipDetails");
-  if (sum.list) {
-    det.hidden = false;
-    $("shipSummary").textContent = `Importierte Schiffe (${fmt.format(sum.list.length)} erkannt)`;
-    const sorted = [...sum.list].sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name, "de"));
-    $("shipList").innerHTML = sorted.map((s) => `<div><span class="t">${ROMAN[s.tier]}</span>${esc(s.name)}${s.demo ? " <span class='tag'>Test</span>" : ""}</div>`).join("");
-  } else det.hidden = true;
-}
-
-// ---------- Gefechte ----------
-function battlesNeeded(reqs, avgXp, addPer, addXp, order) {
-  if (!reqs.length || avgXp <= 0) return 0;
-  const r = [...reqs].sort((a, b) => a - b);
-  if (order === "worst") r.reverse();
-  let lo = 0, hi = r.length - 1, pending = 0, onShip = 0, acc = 0, battles = 0;
-  while (lo <= hi) {
-    if (onShip === 0 && pending > 0) { pending--; hi--; continue; }
-    battles++;
-    onShip += avgXp; acc += avgXp;
-    if (acc >= addXp) { pending += Math.floor(acc / addXp) * addPer; acc %= addXp; }
-    if (onShip >= r[lo]) { lo++; onShip = 0; }
-    if (battles > 1e6) break;
-  }
-  return battles;
-}
-function renderBattles(sum) {
-  const avg = +$("avgXp").value, perDay = Math.max(1, +$("perDay").value || 1);
-  $("xpVal").textContent = fmt.format(avg);
-  const best = battlesNeeded(sum.reqs, avg, sum.add, state.rules.addXp, "best");
-  const worst = battlesNeeded(sum.reqs, avg, sum.add, state.rules.addXp, "worst");
-  readout($("battleReadout"), [
-    { k: "Gefechte (optimiert)", v: fmt.format(best), s: `≈ ${fmt1.format(best / perDay)} Tage bei ${perDay}/Tag`, accent: true },
-    { k: "Gefechte (ungünstig)", v: fmt.format(worst), s: `≈ ${fmt1.format(worst / perDay)} Tage` },
-    { k: "Schneeflocken", v: fmt.format(sum.reqs.length), s: `${fmt.format(sum.totalXp)} Basis-EP ohne Zusatz` },
-    { k: "Zusatz-Schneeflocken", v: fmt.format(sum.add), s: `je ${fmt.format(state.rules.addXp)} Basis-EP` }
-  ]);
-  renderChart(sum, avg);
-}
-function renderChart(sum, cur) {
-  const W = 720, H = 260, L = 52, R = 14, T = 14, B = 34;
-  const xs = []; for (let x = 200; x <= 3200; x += 100) xs.push(x);
-  const best = xs.map((x) => battlesNeeded(sum.reqs, x, sum.add, state.rules.addXp, "best"));
-  const worst = xs.map((x) => battlesNeeded(sum.reqs, x, sum.add, state.rules.addXp, "worst"));
-  const maxY = Math.max(1, ...worst);
-  const raw = maxY / 4, p10 = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p10;
-  const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10, top = Math.ceil(maxY / step) * step;
-  const sx = (x) => L + (x - 200) / 3000 * (W - L - R);
-  const sy = (y) => T + (1 - y / top) * (H - T - B);
-  const line = (arr) => arr.map((y, i) => `${i ? "L" : "M"}${sx(xs[i]).toFixed(1)},${sy(y).toFixed(1)}`).join("");
-  let g = "";
-  for (let y = 0; y <= top; y += step) g += `<line x1="${L}" x2="${W - R}" y1="${sy(y)}" y2="${sy(y)}" stroke="var(--rule)" stroke-width="1"/><text x="${L - 6}" y="${sy(y) + 4}" text-anchor="end">${fmt.format(y)}</text>`;
-  for (const x of [200, 800, 1400, 2000, 2600, 3200]) g += `<text x="${sx(x)}" y="${H - 12}" text-anchor="middle">${fmt.format(x)}</text>`;
-  const area = line(worst) + xs.slice().reverse().map((x, i) => `L${sx(x).toFixed(1)},${sy(best[best.length - 1 - i]).toFixed(1)}`).join("") + "Z";
-  const cx = Math.min(3200, Math.max(200, cur));
-  const cb = battlesNeeded(sum.reqs, cx, sum.add, state.rules.addXp, "best");
-  $("battleChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gefechte in Abhängigkeit der Basis-EP pro Gefecht">
-    ${g}
-    <path d="${area}" fill="var(--brass-soft)" stroke="none"/>
-    <path d="${line(worst)}" fill="none" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <path d="${line(best)}" fill="none" stroke="var(--brass)" stroke-width="2.5"/>
-    <line x1="${sx(cx)}" x2="${sx(cx)}" y1="${T}" y2="${H - B}" stroke="var(--sea)" stroke-width="1"/>
-    <circle cx="${sx(cx)}" cy="${sy(cb)}" r="5" fill="var(--brass)" stroke="var(--sheet)" stroke-width="2"/>
-    <text x="${W - R}" y="${T + 12}" text-anchor="end">Linie: optimiert · gestrichelt: ungünstig · x: Basis-EP/Gefecht</text>
-  </svg>`;
-}
-$("avgXp").value = store.get("avgXp", 800);
-$("perDay").value = store.get("perDay", 8);
-$("avgXp").addEventListener("input", () => { store.set("avgXp", +$("avgXp").value); renderBattles(portSummary()); });
-$("perDay").addEventListener("input", () => { store.set("perDay", +$("perDay").value); renderBattles(portSummary()); });
-
-// ---------- Container-Simulation ----------
-// Ein Lauf hält eigenen Besitz (gezogene Schiffe sind danach "vorhanden") und eigene Pity-Zähler je Containertyp.
-function pickWeighted(entries, total) {
-  let r = Math.random() * total;
-  for (const e of entries) { r -= e.p; if (r < 0) return e; }
-  return entries[entries.length - 1];
-}
-function availIn(g, owned) { return GROUP_SHIPS[g].filter((s) => !owned.has(s.key)); }
-
-function openContainer(type, ctx) {
-  const def = CONTAINER_DEFS[type];
-  const out = { ships: [], res: {}, give: [], comp: false, forced: false };
-  const addRes = (res) => { for (const [k, v] of Object.entries(res)) out.res[k] = (out.res[k] || 0) + v; };
-  for (const slot of def.slots) {
-    const shipEntries = slot.filter((e) => e.ship);
-    if (!shipEntries.length) { const e = pickWeighted(slot, 1); if (e.res) addRes(e.res); if (e.give) out.give.push(e.give); continue; }
-
-    // Golden: gehören alle neuen Schiffe dir, wandert deren Chance auf die Gold-Gruppe.
-    let entries = slot;
-    if (def.golden && availIn("GR", ctx.owned).length === 0) {
-      const shipP = shipEntries.reduce((a, e) => a + e.p, 0);
-      entries = slot.filter((e) => !e.ship).concat([{ p: shipP, ship: "GG" }]);
-    }
-    const pity = ctx.pity[type] || 0;
-    const N = state.pity[type];
-    const forced = N > 0 && pity + 1 >= N;
-    const pool = forced ? entries.filter((e) => e.ship) : entries;
-    const e = pickWeighted(pool, pool.reduce((a, x) => a + x.p, 0));
-    if (!e.ship) { ctx.pity[type] = pity + 1; if (e.res) addRes(e.res); if (e.give) out.give.push(e.give); continue; }
-
-    ctx.pity[type] = 0;
-    out.forced = forced;
-    let cand = availIn(e.ship, ctx.owned);
-    if (def.golden && !cand.length) {
-      cand = availIn("GR", ctx.owned);
-      if (!cand.length) cand = availIn("GG", ctx.owned);
-      if (!cand.length) { out.give.push("bf"); continue; }
-    }
-    // Leere Gruppe: der Schiffs-Drop geht an eine andere Gruppe dieses Containers (gewichtet nach deren Chance).
-    // Stahl gibt es erst, wenn alle Schiffe des Containers im Hafen sind.
-    if (!cand.length) {
-      const others = shipEntries.filter((x) => x.ship !== e.ship && availIn(x.ship, ctx.owned).length);
-      if (!others.length) { out.comp = true; addRes(def.comp); continue; }
-      cand = availIn(pickWeighted(others, others.reduce((a, x) => a + x.p, 0)).ship, ctx.owned);
-    }
-    const s = cand[Math.floor(Math.random() * cand.length)];
-    ctx.owned.add(s.key);
-    out.ships.push(s);
-  }
-  return out;
-}
-
-function readPlan() {
-  const n = (id) => Math.max(0, parseInt($(id).value, 10) || 0);
-  return { free: n("c-free"), pass: n("c-pass"), tokens: n("c-tokens"), tokenUse: $("c-tokenUse").value, santa: n("c-santa"), mega: n("c-mega"), ultra: n("c-ultra"), golden: n("c-golden"), tokensAuto: state.plan ? state.plan.tokensAuto : true };
-}
-function planCounts(p) {
-  const fromTokens = p.tokenUse === "santa" ? { santa: p.tokens, mega: 0 } : p.tokenUse === "mega" ? { santa: 0, mega: Math.floor(p.tokens / 5) } : { santa: 0, mega: 0 };
-  return { ultra: p.ultra, mega: p.mega + fromTokens.mega, santa: p.free + p.pass + p.santa + fromTokens.santa, golden: p.golden };
-}
-
-function simulate() {
-  const plan = readPlan();
-  const cnt = planCounts(plan);
-  const runs = Math.min(20000, Math.max(200, parseInt($("runs").value, 10) || 200));
-  const base = ownedSet();
-  const shipHits = new Map(), groupHits = {}, hist = new Map(), resSum = {};
-  let total = 0, goldenOpened = 0, bfOpened = 0, comps = 0;
-  for (let r = 0; r < runs; r++) {
-    const ctx = { owned: new Set(base), pity: {} };
-    let ships = 0, golden = cnt.golden, bf = 0;
-    const take = (o) => {
-      for (const s of o.ships) { ships++; shipHits.set(s.key, (shipHits.get(s.key) || 0) + 1); groupHits[s.group] = (groupHits[s.group] || 0) + 1; }
-      for (const [k, v] of Object.entries(o.res)) resSum[k] = (resSum[k] || 0) + v;
-      for (const g of o.give) { if (g === "golden") golden++; else if (g === "bf") bf++; }
-      if (o.comp) comps++;
-    };
-    for (let i = 0; i < cnt.ultra; i++) take(openContainer("ultra", ctx));
-    for (let i = 0; i < cnt.mega; i++) take(openContainer("mega", ctx));
-    for (let i = 0; i < cnt.santa; i++) take(openContainer("santa", ctx));
-    for (let i = 0; i < golden; i++) take(openContainer("golden", ctx));
-    goldenOpened += golden;
-    for (let i = 0; i < bf; i++) take(openContainer("bf", ctx));
-    bfOpened += bf;
-    total += ships;
-    hist.set(ships, (hist.get(ships) || 0) + 1);
-  }
-  const missing = {}; for (const g of GROUP_ORDER) missing[g] = availIn(g, base).length;
-  return { runs, cnt, shipHits, groupHits, missing, hist, resSum, mean: total / runs, golden: goldenOpened / runs, bf: bfOpened / runs, comps: comps / runs, ownedCount: base.size };
-}
-
-// ---------- Rendering Container ----------
-let lastSim = null;
-function renderContainerInputs(sum) {
-  const auto = sum.byRes["Festive Token"] || 0;
-  $("tokenSrc").innerHTML = `aus Hafen: ${fmt.format(auto)}` + (state.plan && !state.plan.tokensAuto ? ` · <button type="button" class="ghost sm" id="tokReset">Hafenwert nehmen</button>` : "");
-  if (!state.plan || state.plan.tokensAuto) $("c-tokens").value = auto;
-  const p = readPlan(), c = planCounts(p);
-  const rest = p.tokenUse === "mega" ? p.tokens % 5 : 0;
-  $("tokenHint").textContent = p.tokenUse === "mega" ? `${fmt.format(Math.floor(p.tokens / 5))} Mega${rest ? `, ${rest} Token übrig` : ""}` : p.tokenUse === "santa" ? `${fmt.format(p.tokens)} Santa's Gift` : `${fmt.format(p.tokens * 375000)} Credits`;
-  const parts = [];
-  if (c.santa) parts.push(`${fmt.format(c.santa)} Santa's Gift`);
-  if (c.mega) parts.push(`${fmt.format(c.mega)} Mega`);
-  if (c.ultra) parts.push(`${fmt.format(c.ultra)} Ultra`);
-  if (c.golden) parts.push(`${fmt.format(c.golden)} Golden`);
-  $("totalNote").textContent = parts.length ? `Wird geöffnet: ${parts.join(", ")}. Golden und Battle Forged aus den Drops öffnet die Simulation automatisch mit.` : "Noch keine Container eingetragen.";
-}
-
-function renderSim(sim) {
-  const atLeast1 = 1 - (sim.hist.get(0) || 0) / sim.runs;
-  const nj = (sim.shipHits.get(key("New Jersey BF")) || 0) / sim.runs;
-  const items = [
-    { k: "Ø neue Schiffe", v: fmt1.format(sim.mean), s: `${fmt.format(sim.runs)} Simulationsläufe`, accent: true },
-    { k: "Mind. 1 Schiff", v: fmtP(atLeast1), s: "Wahrscheinlichkeit" },
-    { k: "Ø Golden Gift", v: fmt1.format(sim.golden), s: "geöffnet, inkl. vorhandene" },
-    { k: "New Jersey BF", v: fmtP(nj), s: sim.bf > 0 ? `Ø ${fmt1.format(sim.bf)} Battle Forged Container` : "nur wenn alle Golden-Schiffe da sind" }
-  ];
-  readout($("contReadout"), items);
-
-  const keys = [...sim.hist.keys()].sort((a, b) => a - b);
-  const rows = [];
-  for (let k = keys[0]; k <= keys[keys.length - 1]; k++) rows.push([k, sim.hist.get(k) || 0]);
-  const maxV = Math.max(...rows.map((r) => r[1]));
-  let cum = 0, median = 0;
-  for (const [k, v] of rows) { cum += v; if (cum >= sim.runs / 2) { median = k; break; } }
-  $("histNote").textContent = `Anzahl neuer Schiffe aus deinem Plan. Median ${fmt.format(median)}.` + (sim.comps > 0.005 ? ` Ø ${fmt1.format(sim.comps)}× Stahl statt Schiff, weil alle Schiffe eines Containers in deinem Hafen sind.` : "");
-  $("hist").innerHTML = rows.slice(0, 25).map(([k, v]) => `<div class="b"><span>${k} Schiff${k === 1 ? "" : "e"}</span><span class="bar${k === 0 ? " zero" : ""}" style="width:${(v / maxV * 100).toFixed(1)}%"></span><span style="text-align:right">${fmtP(v / sim.runs)}</span></div>`).join("") + (rows.length > 25 ? `<div class="mini">… weitere Werte bis ${keys[keys.length - 1]}</div>` : "");
-
-  const ORDER = ["Stahl", "Kohle", "Dublonen", "Credits", "Elite-Kommandanten-EP", "Forschungspunkte", "Premium-Tage", "Hafenplätze", "Signale (25×)"];
-  const res = Object.entries(sim.resSum).sort((a, b) => {
-    const ia = ORDER.indexOf(a[0]), ib = ORDER.indexOf(b[0]);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a[0].localeCompare(b[0], "de");
-  });
-  $("resBody").innerHTML = res.length ? res.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${(v / sim.runs) >= 100 ? fmt.format(Math.round(v / sim.runs)) : fmt1.format(v / sim.runs)}</td></tr>`).join("") : `<tr><td colspan="2" class="mini">Keine Container im Plan.</td></tr>`;
-}
-
-function renderShipTable() {
-  const tierByKey = new Map(); for (const sh of SHIPS.values()) tierByKey.set(key(sh.name), sh.tier);
-  const owned = ownedSet(), imp = importedKeys();
-  const only = $("onlyMissing").checked, q = key($("shipSearch").value);
-  let html = "", ownedTotal = 0, all = 0;
-  for (const g of GROUP_ORDER) {
-    const list = GROUP_SHIPS[g];
-    const og = list.filter((s) => owned.has(s.key)).length;
-    ownedTotal += og; all += list.length;
-    const shown = list.filter((s) => (!only || !owned.has(s.key)) && (!q || s.key.includes(q)));
-    html += `<tr class="grp"><td class="chk"></td><td colspan="2">${esc(SANTA_GROUPS[g].label)} <span class="mini">${og} von ${list.length} im Hafen</span></td><td class="num"><button type="button" class="ghost sm" data-all="${g}">alle</button> <button type="button" class="ghost sm" data-none="${g}">keine</button></td></tr>`;
-    for (const s of shown) {
-      const has = owned.has(s.key);
-      // Innerhalb einer Gruppe wird gleichverteilt unter fehlenden Schiffen gezogen: P(Schiff) = Ø Drops der Gruppe / fehlende Schiffe der Gruppe
-      const p = lastSim && lastSim.missing[g] ? Math.min(1, (lastSim.groupHits[g] || 0) / lastSim.runs / lastSim.missing[g]) : lastSim ? 0 : null;
-      const pTxt = has ? "–" : p == null ? "" : `<span class="pbar" style="width:${Math.max(1, Math.min(60, Math.sqrt(p) * 60)).toFixed(0)}px"></span>${fmtP(p)}`;
-      const src = state.manual[s.key] !== undefined ? " <span class='mini'>(Hand)</span>" : imp.has(s.key) ? " <span class='mini'>(Import)</span>" : "";
-      html += `<tr class="${has ? "owned" : ""}"><td class="chk"><input type="checkbox" data-ship="${esc(s.key)}" ${has ? "checked" : ""} aria-label="${esc(s.name)} im Hafen"></td><td>${esc(s.name)}${src}</td><td class="num">${ROMAN[s.tier || tierByKey.get(s.key) || 0]}</td><td class="num">${pTxt}</td></tr>`;
-    }
-  }
-  $("shipBody").innerHTML = html;
-  $("ownedNote").textContent = `${fmt.format(ownedTotal)} von ${fmt.format(all)} Container-Schiffen im Hafen. ` +
-    (hasImport() ? "Vom Import erkannt und per Hand korrigierbar." : "Kein Import aktiv: hake die Schiffe ab, die du hast, oder lies den Hafen im Reiter Hafen ein.") +
-    " Die Chance gilt für deinen ganzen Plan, inklusive Golden und Battle Forged aus Drops.";
-}
-$("shipBody").addEventListener("change", (e) => {
-  const k = e.target.dataset && e.target.dataset.ship;
-  if (!k) return;
-  const imp = importedKeys().has(k);
-  if (e.target.checked === imp) delete state.manual[k]; else state.manual[k] = e.target.checked;
-  store.set("manual", state.manual);
-  rollOwned = null;
-  scheduleSim();
-});
-$("shipBody").addEventListener("click", (e) => {
-  const g = e.target.dataset && (e.target.dataset.all || e.target.dataset.none);
-  if (!g) return;
-  const val = !!e.target.dataset.all;
-  const imp = importedKeys();
-  for (const s of GROUP_SHIPS[g]) { if (imp.has(s.key) === val) delete state.manual[s.key]; else state.manual[s.key] = val; }
-  store.set("manual", state.manual);
-  rollOwned = null;
-  scheduleSim();
-});
-$("onlyMissing").addEventListener("change", renderShipTable);
-$("shipSearch").addEventListener("input", renderShipTable);
-
-function renderDropTables() {
-  const ORDER = ["santa", "mega", "ultra", "golden", "bf"];
-  const label = (e) => {
-    if (e.ship) return `${esc(SANTA_GROUPS[e.ship].label)} (${GROUP_SHIPS[e.ship].length})`;
-    if (e.give === "golden") return "1× Golden Gift";
-    return Object.entries(e.res).map(([k, v]) => `${fmt.format(v)} ${esc(k)}`).join(", ");
-  };
-  $("dropTables").innerHTML = ORDER.map((t) => {
-    const d = CONTAINER_DEFS[t];
-    const shipP = d.slots.flat().filter((e) => e.ship).reduce((a, e) => a + e.p, 0);
-    const N = state.pity[t];
-    const avgFirst = N ? (1 - Math.pow(1 - shipP, N)) / shipP : 1 / shipP;
-    const slots = d.slots.map((s, i) => `${d.slots.length > 1 ? `<tr class="grp"><td colspan="2">Platz ${i + 1}</td></tr>` : ""}` + s.map((e) => `<tr${e.ship ? ' class="ship"' : ""}><td>${label(e)}</td><td class="num">${fmtP(e.p)}</td></tr>`).join("")).join("");
-    const comp = d.golden ? "Hast du alle drei neuen Schiffe, steigt die Gold-Gruppe auf 10 %. Hast du alle sieben, gibt es stattdessen einen Battle Forged Premium Container." : `Ist die gezogene Schiffsgruppe komplett in deinem Hafen, kommt das Schiff aus einer anderen Gruppe (gewichtet nach deren Chance), das gilt auch für die Garantie. Erst wenn du alle Schiffe des Containers hast: ${fmt.format(d.comp["Stahl"])} Stahl.`;
-    return `<details><summary>${esc(d.label)} <span class="mini">Schiff ${fmtP(shipP)} · Garantie nach ${N} · Ø ${fmt1.format(avgFirst)} bis zum ersten Schiff</span></summary>
-      <div class="tbl" style="margin-top: 6px;"><table><tbody>${slots}</tbody></table></div><p class="note" style="margin-top: 6px;">${comp}</p></details>`;
-  }).join("");
-}
-
-// Pity-Eingaben
-for (const t of Object.keys(PITY_DEFAULT)) {
-  const inp = $("p-" + t);
-  inp.value = state.pity[t];
-  inp.addEventListener("change", () => { state.pity[t] = Math.max(1, parseInt(inp.value, 10) || PITY_DEFAULT[t]); inp.value = state.pity[t]; store.set("pity", state.pity); renderDropTables(); scheduleSim(); });
-}
-
-// Plan-Eingaben
-const PLAN_IDS = { free: "c-free", pass: "c-pass", tokens: "c-tokens", tokenUse: "c-tokenUse", santa: "c-santa", mega: "c-mega", ultra: "c-ultra", golden: "c-golden" };
-if (state.plan) for (const [k, id] of Object.entries(PLAN_IDS)) if (state.plan[k] !== undefined) $(id).value = state.plan[k];
-for (const [k, id] of Object.entries(PLAN_IDS)) {
-  $(id).addEventListener(id === "c-tokenUse" ? "change" : "input", () => {
-    const p = readPlan();
-    if (k === "tokens") p.tokensAuto = false;
-    state.plan = p; store.set("plan", p);
-    renderContainerInputs(portSummary());
-    scheduleSim();
-  });
-}
-
-$("tokenSrc").addEventListener("click", (e) => {
-  if (e.target.id !== "tokReset") return;
-  state.plan = { ...readPlan(), tokensAuto: true }; store.set("plan", state.plan);
-  renderContainerInputs(portSummary()); scheduleSim();
-});
-
-let simTimer = 0;
-function scheduleSim() {
-  clearTimeout(simTimer);
-  simTimer = setTimeout(() => { lastSim = simulate(); renderSim(lastSim); renderShipTable(); }, 120);
-}
-$("simBtn").addEventListener("click", () => { lastSim = simulate(); renderSim(lastSim); renderShipTable(); });
-$("runs").addEventListener("change", scheduleSim);
-
-// ---------- Einzeln öffnen ----------
-let rollOwned = null, rollCtx = null, rollNo = 0;
-for (const t of ["santa", "mega", "ultra", "golden", "bf"]) {
-  const o = document.createElement("option"); o.value = t; o.textContent = CONTAINER_DEFS[t].label; $("rollSel").appendChild(o);
-}
-$("rollBtn").addEventListener("click", () => {
-  if (!rollOwned) { rollOwned = ownedSet(); rollCtx = { owned: rollOwned, pity: {} }; rollNo = 0; }
-  const t = $("rollSel").value;
-  const o = openContainer(t, rollCtx);
-  rollNo++;
-  const parts = [];
-  for (const s of o.ships) parts.push(`${s.name} (${ROMAN[s.tier]})`);
-  for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${k}`);
-  for (const g of o.give) parts.push(g === "golden" ? "1× Golden Gift" : "1× Battle Forged Container");
-  const line = document.createElement("div");
-  if (o.ships.length) line.className = "ship";
-  line.textContent = `#${rollNo} ${CONTAINER_DEFS[t].label}: ${parts.join(" + ")}${o.forced ? " (Garantie)" : ""}${o.comp ? " (Kompensation)" : ""}`;
-  $("rollLog").prepend(line);
-});
-$("rollReset").addEventListener("click", () => { rollOwned = null; $("rollLog").innerHTML = ""; });
-
-// ---------- Ansichten ----------
-const VIEWS = ["hafen", "container", "gefechte"];
-function showView() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "hafen";
-  for (const id of VIEWS) $("v-" + id).hidden = id !== v;
-  document.querySelectorAll("nav.tabs a").forEach((a) => a.setAttribute("aria-current", a.dataset.view === v ? "page" : "false"));
-}
-window.addEventListener("hashchange", showView);
-
-function changed() {
-  const sum = portSummary();
-  renderPort(sum);
-  renderBattles(sum);
-  renderContainerInputs(sum);
-  rollOwned = null;
-  renderShipTable();
-  scheduleSim();
-}
-
-renderTierInputs();
-renderRules();
-if (state.imported) applyExtra(state.imported.extra);
-renderDropTables();
-// Abgelaufene Anmeldung verwerfen, wie in der Referenz zurück zur Login-Seite
-if (session && !sessionValid()) { session = null; store.set("session", null); importMsg("Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an."); }
-setSource(state.source === "manual" ? "manual" : "import");
-renderAccount();
-handleCallback();
-if (sessionValid() && !state.imported) loadPort();
-showView();
-})();
-</script>
+<script src="assets/js/ships.js" defer></script>
+<script src="assets/js/santa2026.js" defer></script>
+<script src="assets/js/sim.js" defer></script>
+<script src="assets/js/app.js" defer></script>
 </body>
 </html>
