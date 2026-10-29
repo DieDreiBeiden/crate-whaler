@@ -6,7 +6,7 @@
 <title>WoWs Santa-Rechner</title>
 <meta name="description" content="Santa-Event 15.11: Hafen per Wargaming-Login einlesen, Schneeflocken planen, Santa's, Golden und Battle Forged Container simulieren.">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kHfLBsVMoFwT+iEtKmvGOKWSnrjwfOakjm6499wzUnk=' 'sha256-tTJ8wJw2iZGP8AD04exMCIw32Md3xRhoBSCo4VYlTQI=' 'sha256-boPyFc5rZSv0H3XWWQVAKGYTo0rqffKmiqYJK40r6oo='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kHfLBsVMoFwT+iEtKmvGOKWSnrjwfOakjm6499wzUnk=' 'sha256-tTJ8wJw2iZGP8AD04exMCIw32Md3xRhoBSCo4VYlTQI=' 'sha256-gK/iFZu0ZVPygnEtER6TNT8BoUKaM9TlA67QwRJd8Rw='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
 <style>
 /* Schriften lokal (SIL Open Font License, siehe fonts/), keine Anfragen an Google */
 @font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/barlow-condensed-500-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
@@ -36,6 +36,7 @@
   --brass: #a8701a;
   --brass-soft: #f1e3c6;
   --good: #2f7a4b;
+  --eu: #0e7490; --na: #be123c; --asia: #b45309;
   --warn: #a5481f;
   --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -44,13 +45,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #0d1922; --sheet: #13232f; --ink: #dbe5ea; --ink-soft: #93a7b4; --rule: #29404f;
-    --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --warn: #ef8a5c;
+    --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --warn: #ef8a5c;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #0d1922; --sheet: #13232f; --ink: #dbe5ea; --ink-soft: #93a7b4; --rule: #29404f;
-  --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --warn: #ef8a5c;
+  --sea: #5fb3d1; --brass: #e2ac4a; --brass-soft: #3a2f1a; --good: #6cc48d; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --warn: #ef8a5c;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -173,6 +174,12 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
 .acct { display: grid; gap: 4px; border-left: 3px solid var(--good); padding-left: 10px; }
 .acct .k { font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); margin-right: 8px; }
 .split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.userbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 14px; }
+.gate { display: grid; gap: 20px; max-width: 640px; width: 100%; justify-self: center; }
+.gate-card { gap: 16px; }
+.realms button.realm { aspect-ratio: 1 / 1; max-height: 150px; font-family: var(--display); font-size: clamp(24px, 6vw, 34px); letter-spacing: .08em; color: var(--ink); border: 2px solid var(--rc); background: color-mix(in srgb, var(--rc) 16%, var(--sheet)); }
+.realms button.realm:hover:not(:disabled) { background: color-mix(in srgb, var(--rc) 32%, var(--sheet)); }
+.realm.eu { --rc: var(--eu); } .realm.na { --rc: var(--na); } .realm.asia { --rc: var(--asia); }
 </style>
 
 <div class="wrap">
@@ -180,8 +187,63 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
     <div class="eyebrow">World of Warships · Update 15.11 · Weihnachten 2026</div>
     <h1>WoWs <span>Santa-Rechner</span></h1>
     <p class="lede">Hafen einlesen, Schneeflocken-Belohnungen planen und durchrechnen, was dir Santa's Gift, Golden Gift und Battle Forged Container bringen. Schiffe, die du schon hast, fallen aus den Drops heraus.</p>
+    <div class="userbar" id="userbar" hidden>
+      <span>Angemeldet als <strong id="ubName"></strong></span>
+      <span class="tag" id="ubRealm"></span>
+      <span class="mini" id="ubInfo"></span>
+      <button type="button" class="ghost sm" id="ubLogout">Abmelden</button>
+    </div>
   </header>
 
+  <!-- ============ ANMELDUNG ============ -->
+  <section class="gate" id="gate" hidden>
+    <div class="panel gate-card">
+      <div style="display: grid; gap: 4px;">
+        <h2 id="gateTitle">Server wählen und anmelden</h2>
+        <p class="lede" id="gateSub">Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.</p>
+      </div>
+
+      <div id="setupBox" hidden style="display: grid; gap: 8px;">
+        <p class="note warn">Für diese Seite ist noch keine Wargaming Application ID hinterlegt. Trage sie in <code>index.html</code> bei <code>WG_APPLICATION_ID</code> ein. Zum Testen kannst du sie auch hier eingeben, sie bleibt dann nur in diesem Browser.</p>
+        <label class="f">Application ID
+          <input id="appId" type="text" autocomplete="off" spellcheck="false" placeholder="aus developers.wargaming.net">
+        </label>
+      </div>
+
+      <div class="realms" id="realmButtons">
+        <button type="button" class="realm eu" data-realm="eu">EU</button>
+        <button type="button" class="realm na" data-realm="com">NA</button>
+        <button type="button" class="realm asia" data-realm="asia">ASIA</button>
+      </div>
+      <div class="msg" id="gateMsg" role="status"></div>
+      <button type="button" class="ghost" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter (Hafen von Hand eingeben)</button>
+    </div>
+
+    <div class="panel gate-card">
+      <div style="display: grid; gap: 6px;">
+        <h3>Über diese Seite</h3>
+        <p>Der Santa-Rechner plant das Weihnachts-Event in Update 15.11. Um die Schiffe in deinem Hafen zu sehen, meldest du dich mit deinem Wargaming-Konto an.</p>
+      </div>
+      <div style="display: grid; gap: 6px;">
+        <h3>Datenschutz</h3>
+        <p>Die Anmeldung läuft direkt bei Wargaming, diese Seite sieht dein Passwort nie. Sie erhält nur einen Zugriffsschlüssel, mit dem sie deine Kontodaten lesen, aber nichts ändern kann. Schlüssel und Hafendaten bleiben in deinem Browser und gehen an keinen anderen Server. „Abmelden“ löscht beides und macht den Schlüssel bei Wargaming ungültig.</p>
+      </div>
+      <details>
+        <summary>Welche Daten liest die Seite?</summary>
+        <p class="note" style="margin-top: 6px;">Nur die Liste der Schiffe in deinem Hafen (<code>private.port</code>). Für Schiffe, die neuer als die eingebauten Daten sind, fragt sie Name und Stufe in der öffentlichen Wargaming-Enzyklopädie ab.</p>
+      </details>
+      <details>
+        <summary>Wie lange bleibe ich angemeldet?</summary>
+        <p class="note" style="margin-top: 6px;">Bis zu 14 Tage oder bis du dich abmeldest. Danach fragt die Seite erneut nach der Anmeldung.</p>
+      </details>
+      <details>
+        <summary>Die Anmeldung klappt nicht. Was tun?</summary>
+        <p class="note" style="margin-top: 6px;">Prüfe, ob du den richtigen Server gewählt hast: EU, NA und ASIA sind getrennte Konten. Bleibt es beim Fehler, nutze „Ohne Anmeldung weiter“ und trag deine Schiffe von Hand ein.</p>
+      </details>
+    </div>
+  </section>
+
+  <div id="app" style="display: grid; gap: 20px;">
   <nav class="tabs" aria-label="Bereiche">
     <a href="#hafen" data-view="hafen"><span class="n">01</span>Hafen</a>
     <a href="#container" data-view="container"><span class="n">02</span>Container</a>
@@ -203,23 +265,6 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
         </div>
 
         <div id="importBox" style="display: grid; gap: 12px;">
-          <div id="setupBox" hidden style="display: grid; gap: 8px;">
-            <p class="note warn">Für diese Seite ist noch keine Wargaming Application ID hinterlegt. Trage sie in <code>index.html</code> bei <code>WG_APPLICATION_ID</code> ein. Zum Testen kannst du sie auch hier eingeben, sie bleibt dann nur in diesem Browser.</p>
-            <label class="f">Application ID
-              <input id="appId" type="text" autocomplete="off" spellcheck="false" placeholder="aus developers.wargaming.net">
-            </label>
-          </div>
-
-          <div id="loginBox" style="display: grid; gap: 10px;">
-            <p>Melde dich bei Wargaming an. Danach lädt die Seite die Schiffe in deinem Hafen automatisch.</p>
-            <div class="realms">
-              <button type="button" data-realm="eu">EU</button>
-              <button type="button" data-realm="com">NA</button>
-              <button type="button" data-realm="asia">ASIA</button>
-            </div>
-            <p class="note">Die Anmeldung läuft direkt bei Wargaming, diese Seite sieht dein Passwort nie. Sie erhält nur einen Zugriffsschlüssel für deine Kontodaten. Er wird nur in deinem Browser gespeichert und an keinen anderen Server geschickt.</p>
-          </div>
-
           <div id="accountBox" hidden style="display: grid; gap: 10px;">
             <div class="acct">
               <div><span class="k">Angemeldet</span><strong id="accName"></strong> <span class="tag" id="accRealm"></span></div>
@@ -411,6 +456,7 @@ tr.owned td:not(.chk) { color: var(--ink-soft); }
       <div id="battleChart"></div>
     </div>
   </section>
+  </div>
 
   <footer>
     <div>Drop-Raten und Regeln: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026. Die Angaben sind vorläufig, Wargaming kann sie bis zum Release noch ändern.</div>
@@ -645,6 +691,7 @@ function setSource(src) {
   $("srcImport").setAttribute("aria-pressed", src === "import");
   $("manualBox").hidden = src !== "manual";
   $("importBox").hidden = src !== "import";
+  renderAccount();
   changed();
 }
 $("srcManual").addEventListener("click", () => setSource("manual"));
@@ -658,25 +705,38 @@ const wowsApi = (realm, path) => `https://api.worldofwarships.${realm}/wows/${pa
 const selfUrl = () => location.origin + location.pathname;
 let session = store.get("session", null);   // { realm, token, account, nick, exp }
 
-function importMsg(text, kind) { const m = $("importMsg"); m.className = "msg" + (kind ? " " + kind : ""); m.textContent = text; }
+function importMsg(text, kind) {
+  for (const id of ["importMsg", "gateMsg"]) { const m = $(id); m.className = "msg" + (kind ? " " + kind : ""); m.textContent = text; }
+}
 const sessionValid = () => session && session.token && (!session.exp || session.exp * 1000 > Date.now() + 60000);
+let pendingLogin = false;   // nach dem Rücksprung: Login-Seite zeigt "erfolgreich", bis der Hafen geladen ist
 
+// Wie in der Referenz: ohne gültige Anmeldung sieht man nur die Login-Seite (außer im manuellen Modus)
 function renderAccount() {
-  const needSetup = !WG_APPLICATION_ID;
-  $("setupBox").hidden = !needSetup;
-  $("appId").value = store.get("appId", "");
   const logged = sessionValid();
-  $("loginBox").hidden = logged;
-  $("accountBox").hidden = !logged;
+  const gate = state.source !== "manual" && (!logged || pendingLogin);
+  $("gate").hidden = !gate;
+  $("app").hidden = gate;
+  $("setupBox").hidden = !!WG_APPLICATION_ID || pendingLogin;
+  $("appId").value = store.get("appId", "");
+  $("realmButtons").hidden = pendingLogin;
+  $("skipLogin").hidden = pendingLogin;
+  $("gateTitle").textContent = pendingLogin ? "Anmeldung erfolgreich" : "Server wählen und anmelden";
+  $("gateSub").textContent = pendingLogin ? `Willkommen, ${session.nick || session.account}. Dein Hafen wird geladen …` : "Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach lädt die Seite die Schiffe in deinem Hafen.";
   document.querySelectorAll("[data-realm]").forEach((b) => { b.disabled = !appId(); });
+  $("accountBox").hidden = !logged;
+  $("userbar").hidden = !logged || gate;
   if (!logged) return;
-  $("accName").textContent = session.nick || session.account;
-  $("accRealm").textContent = REALM_LABEL[session.realm] || session.realm;
+  const name = session.nick || session.account, realm = REALM_LABEL[session.realm] || session.realm;
+  $("accName").textContent = name; $("ubName").textContent = name;
+  $("accRealm").textContent = realm; $("ubRealm").textContent = realm;
   const parts = [];
   if (state.imported && state.imported.at) parts.push(`Hafen geladen am ${new Date(state.imported.at).toLocaleString("de-DE")}: ${fmt.format(state.imported.ids.length)} Schiffe`);
   if (session.exp) parts.push(`Anmeldung gültig bis ${new Date(session.exp * 1000).toLocaleString("de-DE")}`);
   $("accInfo").textContent = parts.join(" · ");
+  $("ubInfo").textContent = state.imported ? `${fmt.format(state.imported.ids.length)} Schiffe im Hafen` : "";
 }
+$("skipLogin").addEventListener("click", () => setSource("manual"));
 $("appId").addEventListener("input", (e) => { store.set("appId", e.target.value.trim()); renderAccount(); });
 
 document.querySelectorAll("[data-realm]").forEach((b) => b.addEventListener("click", () => {
@@ -700,6 +760,7 @@ function handleCallback() {
   session = { realm, token: q.get("access_token"), account: q.get("account_id"), nick: q.get("nickname") || "", exp: +q.get("expires_at") || 0 };
   if (!session.token || !session.account) { session = null; importMsg("Wargaming hat keinen Zugriffsschlüssel geliefert. Bitte erneut anmelden.", "err"); return; }
   store.set("session", session);
+  pendingLogin = true;
   setSource("import");
   loadPort();
 }
@@ -761,11 +822,13 @@ async function loadPort() {
     importMsg(err.message, "err");
   } finally {
     loading = false; $("reloadBtn").disabled = false;
+    pendingLogin = false;
     renderAccount();
   }
 }
 $("reloadBtn").addEventListener("click", loadPort);
 
+$("ubLogout").addEventListener("click", () => $("logoutBtn").click());
 $("logoutBtn").addEventListener("click", () => {
   const s = session;
   session = null; store.set("session", null);
@@ -1155,6 +1218,8 @@ renderTierInputs();
 renderRules();
 if (state.imported) applyExtra(state.imported.extra);
 renderDropTables();
+// Abgelaufene Anmeldung verwerfen, wie in der Referenz zurück zur Login-Seite
+if (session && !sessionValid()) { session = null; store.set("session", null); importMsg("Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an."); }
 setSource(state.source === "manual" ? "manual" : "import");
 renderAccount();
 handleCallback();
