@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src https://api.worldofwarships.eu https://api.worldofwarships.com https://api.worldofwarships.asia https://api.worldoftanks.eu https://api.worldoftanks.com https://api.worldoftanks.asia; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>WoWs Santa-Rechner</title>
-<meta name="description" content="Wie viele Santa's Gift Container brauchst du für ein neues Schiff? Hafen per Wargaming-Login einlesen und Santa's, Golden und Battle Forged Container durchrechnen.">
+<meta name="description" content="Wie viele Santa's Gift Container brauchst du für ein neues Schiff? How many Santa's Gifts do you need for a new ship? Container calculator for World of Warships update 15.11.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#eef2f1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1922" media="(prefers-color-scheme: dark)">
@@ -16,6 +16,7 @@
 <meta property="og:url" content="https://whaling.starbane.de/">
 <meta property="og:image" content="https://whaling.starbane.de/assets/img/og.png">
 <meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_GB">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/img/icon-192.png" sizes="192x192" type="image/png">
@@ -28,23 +29,24 @@
 <script src="assets/js/boot.js"></script>
 </head>
 <body>
-<a class="skip" href="#main">Zum Inhalt springen</a>
+<a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
       <div class="eyebrow">World of Warships · Update 15.11</div>
-      <h1>WoWs <span>Santa-Rechner</span></h1>
+      <h1>WoWs <span data-i18n="brand.name">Santa-Rechner</span></h1>
     </div>
     <div class="top-actions">
       <div class="account" id="userbar" hidden>
-        <span class="visually-hidden">Angemeldet als</span>
+        <span class="visually-hidden" data-i18n="ub.as">Angemeldet als</span>
         <strong id="ubName"></strong>
         <span class="tag" id="ubRealm"></span>
-        <button type="button" class="ghost sm" id="ubReload" title="Hafen neu laden">Neu laden</button>
-        <button type="button" class="ghost sm" id="ubLogout">Abmelden</button>
+        <button type="button" class="ghost sm" id="ubReload" data-i18n="ub.reload" data-i18n-attr="title:ub.reloadTitle">Neu laden</button>
+        <button type="button" class="ghost sm" id="ubLogout" data-i18n="ub.logout">Abmelden</button>
       </div>
-      <button type="button" class="ghost sm" id="ubLogin" hidden>Mit Wargaming anmelden</button>
-      <button type="button" class="ghost icon-btn" id="themeBtn" aria-label="Farbschema wechseln">
+      <button type="button" class="ghost sm" id="ubLogin" hidden data-i18n="ub.login">Mit Wargaming anmelden</button>
+      <button type="button" class="ghost lang-btn" id="langBtn" data-i18n-attr="aria-label:lang.aria">DE</button>
+      <button type="button" class="ghost icon-btn" id="themeBtn">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 7a5 5 0 0 0 0 10z" fill="currentColor"/></svg>
         <span id="themeLabel">Auto</span>
       </button>
@@ -57,39 +59,39 @@
     <div class="panel">
       <div class="stack" style="gap: 4px;">
         <h2 id="gateTitle">Server wählen und anmelden</h2>
-        <p class="lede" id="gateSub">Du wirst zur Anmeldung bei Wargaming weitergeleitet. Danach weiß der Rechner, welche Schiffe du schon hast.</p>
+        <p class="lede" id="gateSub"></p>
       </div>
       <div id="setupBox" hidden class="stack">
-        <p class="note warn">Für diese Seite ist keine Wargaming Application ID hinterlegt. Trage sie in <code>assets/js/boot.js</code> ein. Zum Testen geht sie auch hier, sie bleibt dann nur in diesem Browser.</p>
+        <p class="note warn" data-i18n-html="gate.setup"></p>
         <label class="f">Application ID
-          <input id="appId" type="text" autocomplete="off" spellcheck="false" placeholder="aus developers.wargaming.net">
+          <input id="appId" type="text" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:gate.appIdPh">
         </label>
       </div>
-      <div class="realms" id="realmButtons" role="group" aria-label="Server">
+      <div class="realms" id="realmButtons" role="group" data-i18n-attr="aria-label:gate.servers">
         <button type="button" class="realm eu" data-realm="eu">EU</button>
         <button type="button" class="realm na" data-realm="com">NA</button>
         <button type="button" class="realm asia" data-realm="asia">ASIA</button>
       </div>
       <div class="msg" id="gateMsg" role="status" aria-live="polite"></div>
-      <button type="button" class="link" id="skipLogin" style="justify-self: start;">Ohne Anmeldung weiter und Schiffe von Hand abhaken</button>
+      <button type="button" class="link" id="skipLogin" style="justify-self: start;" data-i18n="gate.skip">Ohne Anmeldung weiter und Schiffe von Hand abhaken</button>
     </div>
 
     <div class="panel">
       <div class="stack" style="gap: 6px;">
-        <h3>Datenschutz</h3>
-        <p>Die Anmeldung läuft direkt bei Wargaming, diese Seite sieht dein Passwort nie. Sie erhält nur einen Zugriffsschlüssel, mit dem sie deine Schiffsliste lesen, aber nichts an deinem Konto ändern kann. Schlüssel und Hafendaten bleiben in deinem Browser. „Abmelden“ löscht beides und macht den Schlüssel bei Wargaming ungültig.</p>
+        <h3 data-i18n="gate.privacy">Datenschutz</h3>
+        <p data-i18n="gate.privacyText"></p>
       </div>
       <details class="plain">
-        <summary>Welche Daten liest die Seite?</summary>
-        <p class="note">Nur die Liste der Schiffe in deinem Hafen. Für Schiffe, die neuer als die eingebauten Daten sind, fragt sie Name und Stufe in der öffentlichen Wargaming-Enzyklopädie ab.</p>
+        <summary data-i18n="gate.faq1">Welche Daten liest die Seite?</summary>
+        <p class="note" data-i18n="gate.faq1a"></p>
       </details>
       <details class="plain">
-        <summary>Wie lange bleibe ich angemeldet?</summary>
-        <p class="note">Bis zu 14 Tage oder bis du dich abmeldest.</p>
+        <summary data-i18n="gate.faq2">Wie lange bleibe ich angemeldet?</summary>
+        <p class="note" data-i18n="gate.faq2a"></p>
       </details>
       <details class="plain">
-        <summary>Die Anmeldung klappt nicht. Was tun?</summary>
-        <p class="note">Prüfe den Server: EU, NA und ASIA sind getrennte Konten. Hilft das nicht, nutze „Ohne Anmeldung weiter“ und hake deine Schiffe von Hand ab.</p>
+        <summary data-i18n="gate.faq3">Die Anmeldung klappt nicht. Was tun?</summary>
+        <p class="note" data-i18n="gate.faq3a"></p>
       </details>
     </div>
   </section>
@@ -100,8 +102,8 @@
   <!-- ============ BENÖTIGTE CONTAINER ============ -->
   <section class="panel needs" aria-labelledby="needsTitle">
     <div class="panel-head">
-      <h2 id="needsTitle">Wie viele Container brauchst du?</h2>
-      <div class="seg" role="group" aria-label="Container">
+      <h2 id="needsTitle" data-i18n="needs.title">Wie viele Container brauchst du?</h2>
+      <div class="seg" role="group" data-i18n-attr="aria-label:needs.ctype">
         <button type="button" data-ctype="santa" aria-pressed="true">Santa's</button>
         <button type="button" data-ctype="mega" aria-pressed="false">Mega</button>
         <button type="button" data-ctype="ultra" aria-pressed="false">Ultra</button>
@@ -110,11 +112,11 @@
     <p class="lede" id="needsLede"></p>
     <div class="tbl"><table class="needs-table">
       <thead><tr>
-        <th scope="col">Neues Schiff</th>
-        <th scope="col" class="num col-miss">Fehlen dir</th>
-        <th scope="col" class="num">50 % Chance</th>
-        <th scope="col" class="num">90 % Chance</th>
-        <th scope="col" class="bar-col"><span class="visually-hidden">Vergleich</span></th>
+        <th scope="col" data-i18n="needs.colShip">Neues Schiff</th>
+        <th scope="col" class="num col-miss" data-i18n="needs.colMiss">Fehlen dir</th>
+        <th scope="col" class="num" data-i18n="needs.col50">50 % Chance</th>
+        <th scope="col" class="num" data-i18n="needs.col90">90 % Chance</th>
+        <th scope="col" class="bar-col"><span class="visually-hidden" data-i18n="needs.colBar">Vergleich</span></th>
       </tr></thead>
       <tbody id="needsBody"></tbody>
     </table></div>
@@ -124,96 +126,97 @@
   <!-- ============ KAUFPLAN ============ -->
   <section class="panel" aria-labelledby="buyTitle">
     <div class="panel-head">
-      <h2 id="buyTitle">Kaufplan in Paketen</h2>
+      <h2 id="buyTitle" data-i18n="buy.title">Kaufplan in Paketen</h2>
       <span class="calc-state" id="buyState" role="status"></span>
     </div>
-    <p class="lede">Wie viele Pakete du bis zu jedem Ziel brauchst, mit deinem Hafen. Golden Gift und Battle Forged aus den Drops werden sofort geöffnet.</p>
+    <p class="lede" data-i18n="buy.lede"></p>
     <div class="fields">
-      <label class="f">Container
+      <label class="f"><span data-i18n="buy.type">Container</span>
         <select id="b-type">
           <option value="ultra">Ultra Gift</option>
           <option value="mega">Mega Gift</option>
           <option value="santa">Santa's Gift</option>
         </select>
       </label>
-      <label class="f">Container je Paket <input type="number" inputmode="numeric" min="1" id="b-pack" value="20"></label>
-      <label class="f">Preis je Paket (€) <input type="number" inputmode="decimal" min="0" step="0.01" id="b-price" value="123"></label>
+      <label class="f"><span data-i18n="buy.pack">Container je Paket</span> <input type="number" inputmode="numeric" min="1" id="b-pack" value="20"></label>
+      <label class="f"><span data-i18n="buy.price">Preis je Paket (€)</span> <input type="number" inputmode="decimal" min="0" step="0.01" id="b-price" value="123"></label>
     </div>
-    <label class="check"><input type="checkbox" id="b-bfpity" checked> Golden-Gift-Garantie gilt auch für den Battle Forged Container</label>
+    <label class="check"><input type="checkbox" id="b-bfpity" checked aria-describedby="bfPityHelp"> <span data-i18n="buy.bfPity"></span></label>
+    <p class="help" id="bfPityHelp" data-i18n="buy.bfPityHelp"></p>
 
     <div class="tbl"><table class="buy-table">
       <thead><tr>
-        <th scope="col">Ziel</th>
-        <th scope="col" class="num col-miss">Ø Container</th>
-        <th scope="col" class="num">50 % Chance</th>
-        <th scope="col" class="num">90 % Chance</th>
+        <th scope="col" data-i18n="buy.colGoal">Ziel</th>
+        <th scope="col" class="num col-miss" data-i18n="buy.colMean">Ø Container</th>
+        <th scope="col" class="num" data-i18n="needs.col50">50 % Chance</th>
+        <th scope="col" class="num" data-i18n="needs.col90">90 % Chance</th>
       </tr></thead>
       <tbody id="buyBody"></tbody>
     </table></div>
-    <p class="mini">Die Ziele bauen aufeinander auf: Jedes spätere schließt die früheren ein, die Kosten werden nicht addiert.</p>
+    <p class="mini" data-i18n="buy.goalsNote"></p>
 
     <details class="plain">
-      <summary>Ertrag je Paket</summary>
+      <summary data-i18n="buy.yield">Ertrag je Paket</summary>
       <div class="tbl" style="margin-top: 6px;"><table>
-        <thead><tr><th scope="col">Paket</th><th scope="col" class="num">Ø neue Schiffe</th><th scope="col" class="num">€ je neuem Schiff</th></tr></thead>
+        <thead><tr><th scope="col" data-i18n="buy.colPack">Paket</th><th scope="col" class="num" data-i18n="buy.colShips">Ø neue Schiffe</th><th scope="col" class="num" data-i18n="buy.colEurShip">€ je neuem Schiff</th></tr></thead>
         <tbody id="yieldBody"></tbody>
       </table></div>
     </details>
 
     <div class="pity-box">
-      <h3>Noch ein Paket kaufen?</h3>
+      <h3 data-i18n="buy.more">Noch ein Paket kaufen?</h3>
       <div class="row">
-        <label class="f" style="flex: 0 1 260px;">Golden Gifts seit dem letzten Golden-Gift-Schiff
+        <label class="f" style="flex: 0 1 260px;"><span data-i18n="buy.counter">Golden Gifts seit dem letzten Golden-Gift-Schiff</span>
           <input type="number" inputmode="numeric" min="0" id="b-counter" value="0">
         </label>
         <p class="pity-verdict" id="pityVerdict" role="status"></p>
       </div>
-      <div class="pitygrid" id="pityGrid" aria-label="Chance auf ein Golden-Gift-Schiff im nächsten Paket je Zählerstand"></div>
+      <div class="pitygrid" id="pityGrid" data-i18n-attr="aria-label:buy.gridAria"></div>
       <p class="mini" id="pityNote"></p>
     </div>
   </section>
 
   <!-- ============ PLAN ============ -->
-  <section class="stack" style="gap: 20px;" aria-label="Dein Plan">
+  <section class="stack" style="gap: 20px;" data-i18n-attr="aria-label:plan.aria">
     <div class="readout" id="contReadout" aria-live="polite"></div>
     <div class="grid2">
       <div class="panel">
         <div class="panel-head">
-          <h2>Dein Plan</h2>
+          <h2 data-i18n="plan.title">Dein Plan</h2>
           <span class="calc-state" id="calcState" role="status"></span>
         </div>
         <fieldset>
-          <legend>Kostenlos</legend>
+          <legend data-i18n="plan.free">Kostenlos</legend>
           <div class="fields">
-            <label class="f">Santa's Gift gratis
+            <label class="f"><span data-i18n="plan.freeSanta">Santa's Gift gratis</span>
               <input type="number" inputmode="numeric" min="0" id="c-free" value="8">
-              <span class="hint">2 Neujahrsgeschenk + 6 Login-Kalender</span>
+              <span class="hint" data-i18n="plan.freeHint"></span>
             </label>
-            <label class="f">Santa's Gift aus Event-Pässen
+            <label class="f"><span data-i18n="plan.pass">Santa's Gift aus Event-Pässen</span>
               <input type="number" inputmode="numeric" min="0" id="c-pass" value="0">
-              <span class="hint">Anzahl noch nicht bekannt</span>
+              <span class="hint" data-i18n="plan.passHint"></span>
             </label>
           </div>
         </fieldset>
         <fieldset>
           <legend>Festive Tokens</legend>
           <div class="fields">
-            <label class="f">Anzahl Tokens
+            <label class="f"><span data-i18n="plan.tokens">Anzahl Tokens</span>
               <input type="number" inputmode="numeric" min="0" id="c-tokens" value="0">
-              <span class="hint">1 Token je Schneeflocke auf Stufe X</span>
+              <span class="hint" data-i18n="plan.tokensHint"></span>
             </label>
-            <label class="f">Eintauschen gegen
+            <label class="f"><span data-i18n="plan.tokenUse">Eintauschen gegen</span>
               <select id="c-tokenUse">
                 <option value="santa">Santa's Gift</option>
                 <option value="mega">Mega Gift</option>
-                <option value="none">Credits</option>
+                <option value="none" data-i18n="opt.credits">Credits</option>
               </select>
               <span class="hint" id="tokenHint"></span>
             </label>
           </div>
         </fieldset>
         <fieldset>
-          <legend>Gekauft</legend>
+          <legend data-i18n="plan.bought">Gekauft</legend>
           <div class="fields">
             <label class="f">Santa's Gift <input type="number" inputmode="numeric" min="0" id="c-santa" value="0"></label>
             <label class="f">Mega Gift <input type="number" inputmode="numeric" min="0" id="c-mega" value="0"></label>
@@ -221,38 +224,38 @@
           </div>
         </fieldset>
         <fieldset>
-          <legend>Bereits vorhanden</legend>
+          <legend data-i18n="plan.have">Bereits vorhanden</legend>
           <div class="fields">
             <label class="f">Golden Gift
               <input type="number" inputmode="numeric" min="0" id="c-golden" value="0">
-              <span class="hint">Alte werden mit 15.10 automatisch geöffnet</span>
+              <span class="hint" data-i18n="plan.goldenHint"></span>
             </label>
           </div>
         </fieldset>
         <p class="note" id="totalNote"></p>
         <details class="plain">
-          <summary>Annahmen und Genauigkeit</summary>
+          <summary data-i18n="plan.assume">Annahmen und Genauigkeit</summary>
           <div class="stack" style="margin-top: 8px;">
-            <p class="note">Der Devblog nennt nur die Garantie für Battle Forged (3. Öffnung). Die übrigen Werte stammen aus dem Event 2025. Der Zähler startet bei 0.</p>
-            <div class="fields">
-              <label class="f">Garantie Santa's <input type="number" inputmode="numeric" min="1" id="p-santa"></label>
-              <label class="f">Garantie Mega <input type="number" inputmode="numeric" min="1" id="p-mega"></label>
-              <label class="f">Garantie Ultra <input type="number" inputmode="numeric" min="1" id="p-ultra"></label>
-              <label class="f">Garantie Golden <input type="number" inputmode="numeric" min="1" id="p-golden"></label>
-              <label class="f">Garantie Battle Forged <input type="number" inputmode="numeric" min="1" id="p-bf"></label>
-              <label class="f">Simulationsläufe <input id="runs" type="number" inputmode="numeric" min="200" max="20000" step="500" value="3000"></label>
+            <p class="note" data-i18n="plan.assumeNote"></p>
+            <div class="fields" id="pityFields">
+              <label class="f"><span data-pity-label="Santa's"></span> <input type="number" inputmode="numeric" min="1" id="p-santa"></label>
+              <label class="f"><span data-pity-label="Mega"></span> <input type="number" inputmode="numeric" min="1" id="p-mega"></label>
+              <label class="f"><span data-pity-label="Ultra"></span> <input type="number" inputmode="numeric" min="1" id="p-ultra"></label>
+              <label class="f"><span data-pity-label="Golden"></span> <input type="number" inputmode="numeric" min="1" id="p-golden"></label>
+              <label class="f"><span data-pity-label="Battle Forged"></span> <input type="number" inputmode="numeric" min="1" id="p-bf"></label>
+              <label class="f"><span data-i18n="plan.runs">Simulationsläufe</span> <input id="runs" type="number" inputmode="numeric" min="200" max="20000" step="500" value="3000"></label>
             </div>
           </div>
         </details>
       </div>
 
       <div class="panel">
-        <h2>Ergebnis deines Plans</h2>
+        <h2 data-i18n="plan.result">Ergebnis deines Plans</h2>
         <p class="mini" id="histNote"></p>
-        <div class="hist" id="hist" role="img" aria-label="Verteilung der Anzahl neuer Schiffe"></div>
-        <h3>Erwartete Ressourcen</h3>
+        <div class="hist" id="hist" role="img" data-i18n-attr="aria-label:plan.histAria"></div>
+        <h3 data-i18n="plan.resTitle">Erwartete Ressourcen</h3>
         <div class="tbl"><table>
-          <thead><tr><th scope="col">Ressource</th><th scope="col" class="num">Ø gesamt</th></tr></thead>
+          <thead><tr><th scope="col" data-i18n="plan.colRes">Ressource</th><th scope="col" class="num" data-i18n="plan.colTotal">Ø gesamt</th></tr></thead>
           <tbody id="resBody"></tbody>
         </table></div>
       </div>
@@ -262,51 +265,52 @@
   <!-- ============ SCHIFFE ============ -->
   <section class="panel" aria-labelledby="shipsTitle">
     <div class="panel-head">
-      <h2 id="shipsTitle">Container-Schiffe</h2>
-      <div class="seg" role="group" aria-label="Anzeige">
-        <button type="button" id="fMissing" aria-pressed="true">Fehlende</button>
-        <button type="button" id="fAll" aria-pressed="false">Alle</button>
+      <h2 id="shipsTitle" data-i18n="ships.title">Container-Schiffe</h2>
+      <div class="seg" role="group" data-i18n-attr="aria-label:ships.view">
+        <button type="button" id="fMissing" aria-pressed="true" data-i18n="ships.missing">Fehlende</button>
+        <button type="button" id="fAll" aria-pressed="false" data-i18n="ships.all">Alle</button>
       </div>
     </div>
     <p class="mini" id="ownedNote"></p>
     <div class="toolbar">
-      <label class="visually-hidden" for="shipSearch">Schiff suchen</label>
-      <input type="search" id="shipSearch" placeholder="Schiff suchen" autocomplete="off" enterkeyhint="search">
+      <label class="visually-hidden" for="shipSearch" data-i18n="ships.search">Schiff suchen</label>
+      <input type="search" id="shipSearch" autocomplete="off" enterkeyhint="search" data-i18n-attr="placeholder:ships.search">
     </div>
     <div class="groups" id="groups"></div>
   </section>
 
   <details class="more">
-    <summary><span>Einzeln öffnen <span class="mini">zum Ausprobieren</span></span></summary>
+    <summary><span><span data-i18n="roll.title">Einzeln öffnen</span> <span class="mini" data-i18n="roll.sub">zum Ausprobieren</span></span></summary>
     <div class="inner">
       <div class="row">
-        <label class="f" style="flex: 1 1 200px;">Container
+        <label class="f" style="flex: 1 1 200px;"><span data-i18n="buy.type">Container</span>
           <select id="rollSel"></select>
         </label>
-        <button type="button" id="rollBtn">Öffnen</button>
-        <button type="button" class="ghost" id="rollReset">Zurücksetzen</button>
+        <button type="button" id="rollBtn" data-i18n="roll.open">Öffnen</button>
+        <button type="button" class="ghost" id="rollReset" data-i18n="roll.reset">Zurücksetzen</button>
       </div>
-      <p class="note">Würfelt mit deinem Hafen. Gezogene Schiffe gelten danach als vorhanden, bis du zurücksetzt.</p>
+      <p class="note" data-i18n="roll.note"></p>
       <div class="log" id="rollLog" aria-live="polite"></div>
     </div>
   </details>
 
   <details class="more">
-    <summary><span>Drop-Tabellen <span class="mini">Chancen laut Devblog</span></span></summary>
+    <summary><span><span data-i18n="drops.title">Drop-Tabellen</span> <span class="mini" data-i18n="drops.sub">Chancen laut Devblog</span></span></summary>
     <div class="inner" id="dropTables"></div>
   </details>
   </div>
   </main>
 
   <footer>
-    <div>Drop-Raten: <a href="https://blog.worldofwarships.com/blog/closed-test-1511-new-year-celebrations-santas-gifts-and-the-ice-station-port" target="_blank" rel="noopener">Devblog Closed Test 15.11</a> vom 29.10.2026, vorläufig.</div>
-    <div>Logik nach <a href="https://github.com/Rukenshia/shipwhaling" target="_blank" rel="noopener">Rukenshia/shipwhaling</a> · <a href="https://github.com/DieDreiBeiden/crate-whaler" target="_blank" rel="noopener">Quelltext</a> (GPL-3.0) · Schiffsdaten: <span id="shipCount"></span> Einträge, neuere aus der Wargaming-Enzyklopädie.</div>
+    <div data-i18n-html="foot.drops"></div>
+    <div data-i18n-html="foot.src"></div>
   </footer>
 </div>
 
 <script src="assets/js/ships.js" defer></script>
 <script src="assets/js/santa2026.js" defer></script>
 <script src="assets/js/sim.js" defer></script>
+<script src="assets/js/i18n.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>

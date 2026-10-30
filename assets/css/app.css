@@ -282,3 +282,8 @@ label.check { display: flex; align-items: center; gap: 10px; min-height: var(--t
   .buy-table .packs { font-size: 20px; }
 }
 @media (max-width: 560px) { .buy-table .col-miss { display: none; } }
+
+/* Sprache: bis i18n.js die Texte gesetzt hat */
+html.i18n-pending body { visibility: hidden; }
+.lang-btn { font-family: var(--mono); font-weight: 500; letter-spacing: .06em; }
+.help { font-size: 13px; color: var(--ink-soft); margin-top: -6px; padding-left: 30px; }

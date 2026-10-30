@@ -15,7 +15,8 @@ Dann http://localhost:8000 öffnen.
 | Datei | Inhalt |
 |---|---|
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
-| `assets/js/boot.js` | Wargaming Application ID, Farbschema vor dem ersten Zeichnen |
+| `assets/js/boot.js` | Wargaming Application ID, Sprache und Farbschema vor dem ersten Zeichnen |
+| `assets/js/i18n.js` | Alle Texte auf Deutsch und Englisch (`t()`), Übersetzung der Ressourcen |
 | `assets/js/app.js` | Seitenlogik: Login, Tabelle „Wie viele Container“, Kaufplan in Paketen, Plan, Schiffsliste |
 | `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`), Container je Stufe (`runNeeds`), Meilensteine je Paket (`runMilestones`), Golden-Gift-Zähler (`runPityTable`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
@@ -68,3 +69,7 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 - Ein leerer Pool gibt seinen Anteil gewichtet an die übrigen Pools ab, erst ohne fehlende Schiffe gibt es Stahl.
 - Golden Gift: erst die 3 regulären Schiffe, dann die 4 Gold-Schiffe, danach ersetzt der Battle Forged Container den Schiffsplatz. Ob die Golden-Gift-Garantie auch für den Battle Forged Container gilt, ist offen und auf der Seite umschaltbar.
 - Unterschied zu `santa_sim.py`: Die Seite lässt die Container-Garantie weiterlaufen, wenn dem Container keine Schiffe mehr fehlen (dann Stahl statt Golden-Gift-Chance). Das macht die Golden-Gift-Ziele rund 3 % teurer.
+
+## Sprachen
+
+Deutsch und Englisch. Ohne gespeicherte Wahl richtet sich die Sprache nach dem Browser (`de…` → Deutsch, sonst Englisch), der Knopf DE/EN oben speichert die Wahl. Neue Texte kommen in `assets/js/i18n.js` in beide Wörterbücher; im HTML werden sie mit `data-i18n`, `data-i18n-html` oder `data-i18n-attr` eingebunden.
