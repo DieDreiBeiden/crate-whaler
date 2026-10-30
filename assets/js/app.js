@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 const WORKER_URL = "assets/js/sim-worker.js" + (document.currentScript ? new URL(document.currentScript.src).search : "");
 const fmt = new Intl.NumberFormat(LOCALE);
 const fmt1 = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 });
-const fmtP = (p) => (p * 100).toLocaleString(LOCALE, { maximumFractionDigits: p > 0 && p < 0.001 ? 3 : p < 0.1 ? 2 : 1 }) + (LANG === "de" ? " %" : "%");
+const fmtP = (p) => (p * 100).toLocaleString(LOCALE, { maximumFractionDigits: p > 0 && p < 0.001 ? 3 : p < 0.1 ? 2 : 1 }) + (LANG === "de" ? "\u00a0%" : "%");
 const ROMAN = { 0: "?", 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "★" };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const debounce = (fn, ms) => { let t = 0; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -16,7 +16,7 @@ const store = {
 };
 
 // ---------- Farbschema ----------
-const THEMES = ["auto", "light", "dark"];
+const THEMES = ["dark", "light", "auto"];
 applyI18n();
 $("langBtn").textContent = LANG.toUpperCase();
 $("langBtn").addEventListener("click", () => { store.set("lang", LANG === "de" ? "en" : "de"); location.reload(); });
@@ -26,13 +26,13 @@ function applyTheme(th) {
   $("themeLabel").textContent = name;
   $("themeBtn").setAttribute("aria-label", t("theme.aria", { name }));
   const bg = getComputedStyle(document.body).backgroundColor;
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = th === "auto" ? (m.media.includes("dark") ? "#0d1922" : "#eef2f1") : bg; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = th === "auto" ? (m.media.includes("dark") ? "#08141c" : "#e6edf0") : bg; });
 }
-let theme = store.get("theme", "auto");
-if (!THEMES.includes(theme)) theme = "auto";
+let theme = store.get("theme", "dark");
+if (!THEMES.includes(theme)) theme = "dark";
 $("themeBtn").addEventListener("click", () => {
   theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
-  store.set("theme", theme === "auto" ? null : theme);
+  store.set("theme", theme);
   applyTheme(theme);
 });
 applyTheme(theme);
@@ -265,6 +265,7 @@ function renderNeeds() {
   const type = state.ctype;
   document.querySelectorAll("[data-ctype]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ctype === type));
   $("needsLede").textContent = t("needs.lede", { c: SHORT[type], n: state.pity[type] });
+  document.querySelectorAll("[data-box-pity]").forEach((el) => { el.textContent = t("needs.boxPity", { n: fmt.format(state.pity[el.dataset.boxPity]) }); });
   const hit = needsCache.get(needsKey());
   if (hit) { drawNeeds(hit.result); setNeedsNote(hit.runs); } else { drawNeeds(null); setNeedsNote(NEED_STAGES[0]); }
   requestNeeds();
@@ -294,15 +295,26 @@ function requestNeeds() {
 
 // result = null zeichnet die Tabelle mit Platzhaltern, solange gerechnet wird
 function drawNeeds(result) {
-  const missing = missingByRow(ownedSet());
+  const missing = missingByRow(ownedSet()), total = missingByRow(new Set());
   const num = (n) => (Number.isFinite(n) ? fmt.format(n) : `> ${fmt.format(NEED_CAP)}`);
+  // Zeile 0 („irgendein Schiff“) ist die Kennzahl oben, die Stufen stehen in der Tabelle
+  const any = result && result.r0;
+  $("heroP50").textContent = !missing[0] ? "–" : any ? num(any.p50) : "…";
+  $("heroP90").textContent = !missing[0] ? "–" : any ? num(any.p90) : "…";
+  $("heroSub").textContent = missing[0] ? t("needs.heroMiss", { n: fmt.format(missing[0]), c: SHORT[state.ctype] }) : t("needs.heroDone");
+  $("needsHero").classList.toggle("wait", !!missing[0] && !any);
   $("needsBody").innerHTML = NEED_ROWS.map((row, i) => {
-    const head = `<th scope="row">${esc(row.label)}<span class="miss-inline">${t("needs.missInline", { n: fmt.format(missing[i]) })}</span></th><td class="num col-miss">${fmt.format(missing[i])}</td>`;
+    if (row.tier == null) return "";
+    // Striche: Anteil der Schiffe dieser Stufe, die dir noch fehlen
+    const on = total[i] ? Math.round(missing[i] / total[i] * 10) : 0;
+    const pips = `<span class="pips" aria-hidden="true">${Array.from({ length: 10 }, (_, k) => `<i${k < on ? ' class="on"' : ""}></i>`).join("")}</span>`;
+    const head = `<th scope="row"><span class="visually-hidden">${esc(row.label)}</span><span class="roman" aria-hidden="true">${ROMAN[row.tier]}</span></th>` +
+      `<td><span class="miss-c">${pips}<span>${t("needs.missInline", { n: fmt.format(missing[i]) })}</span></span></td>`;
     if (!missing[i]) return `<tr class="done">${head}<td colspan="2" class="mini">${t("needs.allOwned")}</td></tr>`;
     const r = result && result["r" + i];
-    const cls = row.tier == null ? "any" : row.tier === curveTier ? "sel" : "";
-    if (!r) return `<tr class="${cls}">${head}<td class="num big wait">…</td><td class="num big wait">…</td></tr>`;
-    return `<tr class="${cls}" data-tier="${row.tier ?? ""}">${head}<td class="num big">${num(r.p50)}</td><td class="num big">${num(r.p90)}</td></tr>`;
+    const cls = row.tier === curveTier ? "sel" : "";
+    if (!r) return `<tr class="${cls}" data-tier="${row.tier}">${head}<td class="num big wait">…</td><td class="num big p90 wait">…</td></tr>`;
+    return `<tr class="${cls}" data-tier="${row.tier}">${head}<td class="num big">${num(r.p50)}</td><td class="num big p90">${num(r.p90)}</td></tr>`;
   }).join("");
   $("needsTitle").setAttribute("aria-busy", result ? "false" : "true");
   if (result) lastNeeds = result;
@@ -337,9 +349,12 @@ function drawCurve() {
   const sx = (x) => L + Math.log10(Math.max(1, x)) / Math.log10(xMax) * (W - L - R);
   const sy = (p) => T + (1 - p) * (H - T - B);
   let g = "";
-  for (const p of [0, 0.25, 0.5, 0.75, 1]) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${sy(p)}" y2="${sy(p)}"/><text x="${L - 6}" y="${sy(p) + 4}" text-anchor="end">${fmt.format(p * 100)} %</text>`;
+  for (const p of [0, 0.25, 0.5, 0.75, 1]) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${sy(p)}" y2="${sy(p)}"/><text x="${L - 6}" y="${sy(p) + 4}" text-anchor="end">${fmtP(p)}</text>`;
   for (const p of [0.5, 0.9]) g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${sy(p)}" y2="${sy(p)}"/>`;
-  for (let x = 1; x <= xMax; x *= 10) g += `<line class="grid" x1="${sx(x)}" x2="${sx(x)}" y1="${T}" y2="${H - B}"/><text x="${sx(x)}" y="${H - B + 16}" text-anchor="${x === 1 ? "start" : x === xMax ? "end" : "middle"}">${fmt.format(x)}</text>`;
+  // Schmale Kurve: große Werte kürzen (1k, 10k), damit sich die Beschriftungen nicht überlappen
+  const narrow = (W - L - R) / Math.log10(xMax) < 80;
+  const xl = (x) => (narrow && x >= 1000 ? `${fmt.format(x / 1000)}k` : fmt.format(x));
+  for (let x = 1; x <= xMax; x *= 10) g += `<line class="grid" x1="${sx(x)}" x2="${sx(x)}" y1="${T}" y2="${H - B}"/><text x="${sx(x)}" y="${H - B + 16}" text-anchor="${x === 1 ? "start" : x === xMax ? "end" : "middle"}">${xl(x)}</text>`;
   g += `<text class="axis-title" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${esc(t("curve.xAxis"))}</text>`;
   const path = (qs) => {
     const pts = [[sx(1), sy(0)]];

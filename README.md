@@ -93,6 +93,10 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 - Golden Gift: erst die 3 regulären Schiffe, dann die 4 Gold-Schiffe, danach ersetzt der Battle Forged Container den Schiffsplatz. Ob die Golden-Gift-Garantie auch für den Battle Forged Container gilt, ist offen und auf der Seite umschaltbar.
 - Unterschied zu `santa_sim.py`: Die Seite lässt die Container-Garantie weiterlaufen, wenn dem Container keine Schiffe mehr fehlen (dann Stahl statt Golden-Gift-Chance). Das macht die Golden-Gift-Ziele rund 3 % teurer.
 
+## Gestaltung
+
+Hafen-Stil, angelehnt an die Oberfläche im Spiel: dunkle Flächen, Cyan als Akzent, Gold für Stufe X. Standard ist Dunkel; Hell und Automatisch (Systemeinstellung) sind über den Knopf oben wählbar. Alle Farben stehen als Tokens am Anfang von `assets/css/app.css`. Die Kurvenfarben (Gold und Blau) sind auf beiden Hintergründen auf Farbsehschwäche geprüft. Bewusst ohne Logos, Grafiken oder Schriften von Wargaming.
+
 ## Sprachen
 
 Deutsch und Englisch. Ohne gespeicherte Wahl richtet sich die Sprache nach dem Browser (`de…` → Deutsch, sonst Englisch), der Knopf DE/EN oben speichert die Wahl. Neue Texte kommen in `assets/js/i18n.js` in beide Wörterbücher; im HTML werden sie mit `data-i18n`, `data-i18n-html` oder `data-i18n-attr` eingebunden.

@@ -20,8 +20,8 @@ if (LANG !== "de") {
 }
 
 // Gespeichertes Farbschema sofort setzen, damit die Seite nicht kurz im falschen Modus aufblitzt.
-// "light" / "dark" = feste Wahl, nichts gespeichert = Systemeinstellung.
+// Standard ist Dunkel wie im Spiel-Hafen; "light" = Hell, "auto" = Systemeinstellung.
 (() => {
   const t = readPref("theme");
-  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  if (t !== "auto") document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
 })();

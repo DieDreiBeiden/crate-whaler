@@ -4,9 +4,11 @@ import { guard, openManual } from "./helpers.mjs";
 test("Stufen-Tabelle und Kurve werden ohne Fehler aufgebaut", async ({ page }) => {
   const errors = await guard(page);
   await openManual(page);
-  // Zeile „irgendein Schiff“ plus die Stufen
-  await expect(page.locator("#needsBody tr")).toHaveCount(7);
-  await expect(page.locator("#needsBody tr.any td").nth(1)).toHaveText(/\d/);
+  // Kennzahl „irgendein Schiff“ oben, die sechs Stufen in der Tabelle
+  await expect(page.locator("#needsBody tr")).toHaveCount(6);
+  await expect(page.locator("#heroP50")).toHaveText(/\d/);
+  await expect(page.locator("#heroP90")).toHaveText(/\d/);
+  await expect(page.locator('[data-box-pity="santa"]')).toHaveText(/100/);
   await expect(page.locator("#curvePlot svg path.line, #curvePlot svg path").first()).toBeVisible();
   // Klick auf eine Stufe hebt die Kurve hervor
   const row = page.locator("#needsBody tr[data-tier]").nth(1);
@@ -55,7 +57,7 @@ test("Sprache umschalten bleibt nach dem Neuladen erhalten", async ({ page }) =>
   expect(errors).toEqual([]);
 });
 
-test("Farbschema läuft Automatisch → Hell → Dunkel und wird gespeichert", async ({ page }) => {
+test("Farbschema: Standard Dunkel, dann Hell und Automatisch, Wahl bleibt gespeichert", async ({ page }) => {
   await guard(page);
   await openManual(page);
   const html = page.locator("html");
@@ -102,7 +104,7 @@ test("Tabelle wird im Hintergrund auf 5000 Läufe verfeinert, veraltete Rechnung
   // Schneller Wechsel während der Verfeinerung: der neue Typ muss trotzdem zügig sein schnelles Ergebnis zeigen
   await page.locator('[data-ctype="ultra"]').click();
   await expect(page.locator("#needsNote")).toContainText("Durchläufen", { timeout: 5_000 });
-  await expect(page.locator("#needsBody tr.any td").nth(1)).toHaveText(/\d/, { timeout: 5_000 });
+  await expect(page.locator("#heroP50")).toHaveText(/\d/, { timeout: 5_000 });
   await expect(page.locator("#needsNote")).toContainText("5.000 Durchläufen", { timeout: 30_000 });
   await expect(page.locator("#needsNote")).not.toContainText("Genauere Rechnung");
   // Zurück zum vorigen Typ: das schnelle Ergebnis kommt aus dem Cache, danach wird verfeinert
