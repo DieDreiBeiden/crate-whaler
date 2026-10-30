@@ -10,6 +10,24 @@ python3 -m http.server 8000
 
 Dann http://localhost:8000 öffnen.
 
+## Tests
+
+```bash
+npm ci
+```
+
+```bash
+npx playwright install chromium
+```
+
+```bash
+npm test
+```
+
+- `tests/unit/`: Rechenmodell gegen feste Szenarien (Drop-Chancen ergeben 100 %, Umleitung leerer Gruppen, Golden-Gift-Kette, Battle-Forged-Garantie, Kaufguide-Meilensteine) und Datenprüfungen (DE/EN haben dieselben Texte, jedes Container-Schiff hat ein Icon).
+- `tests/e2e/`: Seite im Browser (Desktop Deutsch, Handy Englisch) mit nachgebauter Wargaming-API: Login mit Einmal-Code, abgewiesener fremder Login-Link, Hafen-Import, Abmelden, Reiter, Sprache, Farbschema, kein horizontales Scrollen bei 320 px, axe-Prüfung nach WCAG 2.2 AA hell und dunkel. Jeder Test schlägt bei Konsolenfehlern oder unerwarteten Anfragen nach außen fehl.
+- GitHub Actions führt alles bei jedem Push auf `main` und bei Pull Requests aus (`.github/workflows/test.yml`).
+
 ## Aufbau
 
 | Datei | Inhalt |
@@ -17,13 +35,15 @@ Dann http://localhost:8000 öffnen.
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
 | `assets/js/boot.js` | Wargaming Application ID, Sprache und Farbschema vor dem ersten Zeichnen |
 | `assets/js/i18n.js` | Alle Texte auf Deutsch und Englisch (`t()`), Übersetzung der Ressourcen |
-| `assets/js/app.js` | Seitenlogik: Login, Tabelle „Wie viele Container“, Kaufplan in Paketen, Plan, Schiffsliste |
+| `assets/js/app.js` | Seitenlogik: Login, vier Reiter (Pro Stufe mit Tabelle und Kurve, Kaufplan in Paketen mit Einzeln öffnen, Mein Plan, Schiffe) |
 | `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`), Container je Stufe (`runNeeds`), Meilensteine je Paket (`runMilestones`), Golden-Gift-Zähler (`runPityTable`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
 | `assets/js/santa2026.js` | Drop-Tabellen und Schiffslisten des Events |
 | `assets/js/ships.js` | Schiffsdaten (ID, Name, Stufe, Typ, Testschiff) |
 | `assets/css/` | Styles und lokale Schriften |
-| `assets/img/`, `manifest.webmanifest` | Icons, Vorschaubild, App-Manifest |
+| `assets/img/`, `manifest.webmanifest` | Icons, Schiffs-Icons, Vorschaubild, App-Manifest |
+| `tests/`, `playwright.config.mjs`, `package.json` | Automatische Tests (nur für die Entwicklung, die Seite braucht sie nicht) |
+| `RELEASE-CHECKLIST.md` | Ablauf, wenn die finalen Drop-Raten erscheinen |
 
 ## Application ID
 
@@ -50,11 +70,14 @@ Ohne Login lässt sich der Hafen auch von Hand eingeben.
 
 - Drop-Raten: `assets/js/santa2026.js`. Quelle ist der Devblog „Closed Test 15.11“ vom 29.10.2026. Die Werte sind vorläufig, vor dem Release mit der finalen Wargaming-Seite abgleichen.
 - Garantie-Werte für Santa's, Mega, Ultra und Golden sind vom Event 2025 übernommen. Auf der Seite lassen sie sich ändern.
+- Bei jeder Änderung an Scripts oder Styles die Version `?v=` in `index.html` erhöhen, sonst mischen Browser bis zu 10 Minuten alte und neue Dateien. Der Ablauf für die finalen Raten steht in `RELEASE-CHECKLIST.md`.
 
 ## Sicherheit und Datenschutz
 
 - Die Content-Security-Policy in `index.html` erlaubt nur Scripts von dieser Seite und Verbindungen zur Wargaming-API. Inline-Scripts gibt es keine, deshalb ist bei Änderungen nichts nachzurechnen.
 - `no-referrer` verhindert, dass die Adresse an andere Server geht.
+- Login mit Einmal-Code: Vor der Weiterleitung legt die Seite einen Zufallswert in `sessionStorage` ab und hängt ihn an die Rücksprung-Adresse. Ein Rücksprung ohne passenden Wert wird abgewiesen, so lässt sich niemandem per Link ein fremdes Konto unterschieben.
+- Gespeicherte Eingaben (z. B. Garantie-Werte) werden beim Laden auf gültige Zahlen geprüft.
 - Schriften liegen lokal in `fonts/` (SIL Open Font License). Die Seite stellt keine Anfragen an Google.
 
 ## Lizenz

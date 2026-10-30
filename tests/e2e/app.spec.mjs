@@ -1,0 +1,95 @@
+import { test, expect } from "@playwright/test";
+import { guard, openManual } from "./helpers.mjs";
+
+test("Stufen-Tabelle und Kurve werden ohne Fehler aufgebaut", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page);
+  // Zeile „irgendein Schiff“ plus die Stufen
+  await expect(page.locator("#needsBody tr")).toHaveCount(7);
+  await expect(page.locator("#needsBody tr.any td").nth(1)).toHaveText(/\d/);
+  await expect(page.locator("#curvePlot svg path.line, #curvePlot svg path").first()).toBeVisible();
+  // Klick auf eine Stufe hebt die Kurve hervor
+  const row = page.locator("#needsBody tr[data-tier]").nth(1);
+  await row.click();
+  await expect(row).toHaveClass(/sel/);
+  expect(errors).toEqual([]);
+});
+
+test("Reiter wechseln die Ansicht und landen in der Adresse", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page);
+  for (const v of ["kaufplan", "plan", "schiffe", "stufen"]) {
+    await page.locator(`nav.tabs a[data-view="${v}"]`).click();
+    await expect(page).toHaveURL(new RegExp(`#${v}$`));
+    await expect(page.locator(`#v-${v}`)).toBeVisible();
+    await expect(page.locator(".view:not([hidden])")).toHaveCount(1);
+  }
+  // Kaufplan rechnet im Worker
+  await page.goto("/#kaufplan");
+  await expect(page.locator("#buyBody tr").first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("Einzeln öffnen schreibt ins Protokoll", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page);
+  await page.goto("/#kaufplan");
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await page.locator("#rollBtn").click();
+  await page.locator("#rollBtn").click();
+  await expect(page.locator("#rollLog > div")).toHaveCount(2);
+  expect(errors).toEqual([]);
+});
+
+test("Sprache umschalten bleibt nach dem Neuladen erhalten", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  await expect(page.locator("#needsTitle")).toHaveText("Wie viele Container brauchst du?");
+  await page.locator("#langBtn").click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("#langBtn")).toHaveText("EN");
+  await expect(page.locator("#needsTitle")).not.toHaveText("Wie viele Container brauchst du?");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  expect(errors).toEqual([]);
+});
+
+test("Farbschema läuft Automatisch → Hell → Dunkel und wird gespeichert", async ({ page }) => {
+  await guard(page);
+  await openManual(page);
+  const html = page.locator("html");
+  const seen = [];
+  for (let i = 0; i < 3; i++) {
+    seen.push(await html.getAttribute("data-theme"));
+    await page.locator("#themeBtn").click();
+  }
+  expect(new Set(seen)).toEqual(new Set([null, "light", "dark"]));
+  await page.locator("#themeBtn").click(); // eins weiter, dann neu laden
+  const before = await html.getAttribute("data-theme");
+  await page.reload();
+  expect(await html.getAttribute("data-theme")).toBe(before);
+});
+
+test("Kein horizontales Scrollen bei 320 px", async ({ page }) => {
+  await guard(page);
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openManual(page);
+  for (const v of ["stufen", "kaufplan", "plan", "schiffe"]) {
+    await page.goto(`/#${v}`);
+    await page.waitForTimeout(150);
+    const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(over, `Reiter ${v}`).toBeLessThanOrEqual(0);
+  }
+});
+
+test("Alle Scripts und Styles tragen dieselbe Versionsnummer, auch im Worker", async ({ page }) => {
+  await guard(page);
+  const urls = [];
+  page.on("request", (r) => { if (/\/assets\/(js|css)\//.test(r.url())) urls.push(new URL(r.url())); });
+  await openManual(page);
+  await expect.poll(() => urls.filter((u) => u.pathname.endsWith("/sim.js")).length).toBeGreaterThan(1); // Seite + Worker
+  const versions = new Set(urls.map((u) => u.searchParams.get("v")));
+  expect([...versions]).toHaveLength(1);
+  expect([...versions][0]).toMatch(/^\d{8}$/);
+});
