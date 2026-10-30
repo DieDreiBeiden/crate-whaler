@@ -112,3 +112,24 @@ test("Tabelle wird im Hintergrund auf 5000 Läufe verfeinert, veraltete Rechnung
   await expect(page.locator("#needsNote")).toContainText("5.000 Durchläufen", { timeout: 45_000 });
   expect(errors).toEqual([]);
 });
+
+test("Beute-Übersicht summiert geöffnete Container und Ressourcen, Zurücksetzen leert sie", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await page.goto("/#kaufplan");
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await expect(page.locator("#rollLoot")).toBeHidden();
+  await page.selectOption("#rollSel", "ultra");
+  for (let i = 0; i < 5; i++) await page.locator("#rollBtn").click();
+  await expect(page.locator("#rollLoot")).toBeVisible();
+  await expect(page.locator("#lootReadout .v").first()).toHaveText("5");
+  // Jeder Ultra hat drei Plätze, also mindestens Booster und EP/Kohle/Dublonen in der Tabelle
+  expect(await page.locator("#lootBody tr").count()).toBeGreaterThanOrEqual(2);
+  // Platz 2 jedes Ultra: 6 epische Booster, also 5 Drops = 30 Stück
+  const booster = page.locator("#lootBody tr", { hasText: "Booster" }).first().locator("td");
+  await expect(booster.last()).toHaveText("5×");
+  await expect(booster.first()).toHaveText("30");
+  await page.locator("#rollReset").click();
+  await expect(page.locator("#rollLoot")).toBeHidden();
+  expect(errors).toEqual([]);
+});

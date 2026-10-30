@@ -12,6 +12,7 @@
   --sea: #0a6b82;
   --brass: #8a5a0c;
   --brass-soft: #f1e3c6;
+  --on-brass: #ffffff;
   --good: #2f7a4b;
   --warn: #a5481f;
   --eu: #0e7490; --na: #be123c; --asia: #b45309;
@@ -27,14 +28,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #08141c; --sheet: #0d1f2b; --raised: #12293a; --sunk: #0b1822; --ink: #e3eef2; --ink-soft: #9db4c0;
-    --rule: #1f3a4a; --rule-strong: #2c4d60; --sea: #7fe3f5; --brass: #e8b44a; --brass-soft: #3a2f17;
+    --rule: #1f3a4a; --rule-strong: #2c4d60; --sea: #7fe3f5; --brass: #e8b44a; --brass-soft: #3a2f17; --on-brass: #1b1305;
     --good: #6cc48d; --warn: #ef8a5c; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --shadow: none;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #08141c; --sheet: #0d1f2b; --raised: #12293a; --sunk: #0b1822; --ink: #e3eef2; --ink-soft: #9db4c0;
-  --rule: #1f3a4a; --rule-strong: #2c4d60; --sea: #7fe3f5; --brass: #e8b44a; --brass-soft: #3a2f17;
+  --rule: #1f3a4a; --rule-strong: #2c4d60; --sea: #7fe3f5; --brass: #e8b44a; --brass-soft: #3a2f17; --on-brass: #1b1305;
   --good: #6cc48d; --warn: #ef8a5c; --eu: #45bad6; --na: #f2708e; --asia: #f0a24a; --shadow: none;
   color-scheme: dark;
 }
@@ -332,7 +333,7 @@ html.i18n-pending body { visibility: hidden; }
 
 /* ---------- Einzeln öffnen ---------- */
 .inv { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; background: var(--brass-soft); border: 1px solid var(--brass); }
-.gold-btn { background: var(--brass); border-color: var(--brass); color: #1b1305; }
+.gold-btn { background: var(--brass); border-color: var(--brass); color: var(--on-brass); }
 .gold-btn.bf { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .gold-btn .count { display: inline-block; min-width: 1.6em; margin-left: 6px; padding: 0 6px; background: rgba(0, 0, 0, .18); font-family: var(--mono); font-size: 13px; }
 .pool-notice { border: 1px solid var(--good); border-left-width: 4px; background: color-mix(in srgb, var(--good) 10%, var(--sheet)); padding: 10px 14px; display: grid; gap: 4px; }
@@ -449,3 +450,17 @@ nav.tabs a { min-width: 0; text-align: center; overflow-wrap: anywhere; }
 .trk-mg.done strong { color: var(--ink-soft); }
 .trk-names { font-size: 14px; }
 .trk-log td { vertical-align: top; }
+
+/* ---------- Beute (Einzeln öffnen) ---------- */
+.loot { display: grid; gap: 10px; border: 1px solid var(--rule-strong); background: var(--raised); padding: 12px 14px; }
+.loot h3 { color: var(--ink); }
+.loot-ships { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.loot-ships:empty { display: none; }
+.loot-ship { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.loot-ship .sicon { width: 48px; }
+.loot-table th[scope="row"] { font-family: var(--body); font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink); border-bottom: 1px solid var(--rule); }
+@media (max-width: 480px) {
+  .loot { padding: 10px; }
+  .loot-table th, .loot-table td { padding: 6px 4px; font-size: 13px; }
+  .loot-table th[scope="row"] { font-size: 13px; }
+}

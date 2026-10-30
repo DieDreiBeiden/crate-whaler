@@ -38,3 +38,23 @@ test("Login-Seite ohne Verstöße", async ({ page }) => {
   const res = await page.evaluate(() => window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] } }));
   expect(res.violations.map((x) => x.id)).toEqual([]);
 });
+
+// Elemente, die erst nach dem Öffnen erscheinen (Beute, Golden-Gift-Knopf), in beiden Modi prüfen
+for (const theme of ["light", "dark"]) {
+  test(`axe: Einzeln öffnen mit Beute und Golden-Gift-Knopf (${theme})`, async ({ page }) => {
+    await openManual(page, { theme });
+    await page.goto("/#kaufplan");
+    await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+    await page.selectOption("#rollSel", "ultra");
+    for (let i = 0; i < 40 && !(await page.isVisible("#openGolden")); i++) await page.locator("#rollBtn").click();
+    await expect(page.locator("#openGolden")).toBeVisible();
+    await expect(page.locator("#rollLoot")).toBeVisible();
+    await page.addScriptTag({ content: axeSource });
+    const res = await page.evaluate((disabled) => window.axe.run(document, {
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
+      rules: Object.fromEntries(disabled.map((r) => [r, { enabled: false }]))
+    }), DISABLED);
+    expect(res.violations.map((x) => `${x.id}: ${x.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(", ")}`)).toEqual([]);
+  });
+}
+

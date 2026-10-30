@@ -763,13 +763,15 @@ for (const ct of ["santa", "mega", "ultra"]) {
 }
 function ensureRollCtx() {
   if (rollCtx) return;
-  rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity }, bfPity: buy.bfPity, inv: { golden: 0, bf: 0 }, mainOpened: 0, poolShown: false, goldShown: false };
+  rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity }, bfPity: buy.bfPity, inv: { golden: 0, bf: 0 }, mainOpened: 0, poolShown: false, goldShown: false,
+    loot: { opened: {}, ships: [], res: {}, times: {}, got: { golden: 0, bf: 0 } } };
   rollNo = 0;
   checkNotices(true);
 }
 function resetRoll() {
   rollCtx = null;
   $("rollLog").innerHTML = "";
+  renderLoot();
   for (const id of ["poolNotice", "goldNotice"]) { $(id).hidden = true; $(id).innerHTML = ""; }
   renderRollState();
 }
@@ -820,6 +822,12 @@ function rollOpen(ct) {
   line.innerHTML = o.ships.map((s) => shipIcon(s)).join("") + esc(`#${rollNo} ${CONTAINER_DEFS[ct].label}: ${parts.join(" + ") || "–"}${o.forced ? t("roll.forced") : ""}${o.comp ? t("roll.comp") : ""}`);
   $("rollLog").prepend(line);
   // Erhaltene Golden Gifts und Battle Forged Container eigens hervorheben
+  // Beute aufsummieren
+  const L = rollCtx.loot;
+  L.opened[ct] = (L.opened[ct] || 0) + 1;
+  L.ships.push(...o.ships);
+  for (const [k, v] of Object.entries(o.res)) { L.res[k] = (L.res[k] || 0) + v; L.times[k] = (L.times[k] || 0) + 1; }
+  for (const g of o.give) L.got[g]++;
   for (const g of o.give) {
     rollCtx.inv[g]++;
     const extra = document.createElement("div");
@@ -829,6 +837,36 @@ function rollOpen(ct) {
   }
   checkNotices(false);
   renderRollState();
+  renderLoot();
+}
+
+// Beute-Übersicht: alles, was seit dem letzten Zurücksetzen geöffnet und erhalten wurde
+const LOOT_ORDER = ["Dublonen", "Premium-Tage", "Stahl", "Kohle", "Forschungspunkte", "Elite-Kommandanten-EP", "Credits", "Hafenplätze"];
+function renderLoot() {
+  const L = rollCtx && rollCtx.loot;
+  const total = L ? Object.values(L.opened).reduce((a, b) => a + b, 0) : 0;
+  $("rollLoot").hidden = !total;
+  if (!total) return;
+  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
+  const opened = ["ultra", "mega", "santa", "golden", "bf"].filter((ct) => L.opened[ct]).map((ct) => `${fmt.format(L.opened[ct])} ${label[ct]}`).join(" · ");
+  const left = (g) => (rollCtx.inv[g] ? t("loot.notOpened", { n: fmt.format(rollCtx.inv[g]) }) : "");
+  $("lootReadout").innerHTML = [
+    [t("loot.opened"), total, opened], [t("loot.ships"), L.ships.length, ""],
+    [t("loot.golden"), L.got.golden, left("golden")], [t("loot.bf"), L.got.bf, left("bf")]
+  ].map(([k, v, sub]) => `<div><span class="k">${esc(k)}</span><span class="v">${fmt.format(v)}</span><span class="s">${esc(sub)}</span></div>`).join("");
+  $("lootShips").innerHTML = L.ships.map((sh) => `<span class="loot-ship">${shipIcon(sh)}<span>${esc(sh.name)} <span class="mini">${ROMAN[tierOf(sh)] || ""}</span></span></span>`).join("");
+  // „Booster episch (6×)“ = 6 Stück je Drop: in die Menge einrechnen und gleiche Arten zusammenfassen
+  const rows = new Map();
+  for (const [k, v] of Object.entries(L.res)) {
+    const m = /\s*\((\d+)×\)$/.exec(k), base = m ? k.slice(0, m.index) : k, name = resName(k).replace(/\s*\(\d+×\)$/, "");
+    const r = rows.get(name) || { base, name, amount: 0, times: 0 };
+    r.amount += v * (m ? +m[1] : 1); r.times += L.times[k];
+    rows.set(name, r);
+  }
+  const rank = (r) => { const i = LOOT_ORDER.indexOf(r.base); return i < 0 ? LOOT_ORDER.length : i; };
+  const list = [...rows.values()].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, LOCALE));
+  $("lootBody").innerHTML = list.length ? list.map((r) => `<tr><th scope="row">${esc(r.name)}</th><td class="num">${fmt.format(r.amount)}</td><td class="num">${fmt.format(r.times)}×</td></tr>`).join("")
+    : `<tr><td colspan="3" class="mini">${esc(t("loot.none"))}</td></tr>`;
 }
 $("rollBtn").addEventListener("click", () => rollOpen($("rollSel").value));
 $("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
