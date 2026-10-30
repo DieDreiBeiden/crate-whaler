@@ -467,6 +467,14 @@ function readout(el, items) {
 }
 
 // ---------- Schiffsliste ----------
+// Icons liegen lokal unter assets/img/ships/<schlüssel>.webp (aus der Wargaming-Enzyklopädie, 128 × 75 px).
+// Noch nicht veröffentlichte Schiffe zeigen vorläufig das Icon ihres Basisschiffs.
+const ICON_ALIAS = { rodinag: "rodina", somersg: "somers", togasag: "togasa", tywysogcymru: "princeofwales", newjerseybf: "newjersey" };
+function shipIcon(s) {
+  const alias = ICON_ALIAS[s.key];
+  return `<img class="sicon${alias ? " ph" : ""}" src="assets/img/ships/${alias || s.key}.webp" width="64" height="38" loading="lazy" decoding="async" alt=""${alias ? ` title="${esc(t("ships.iconPh"))}"` : ""}>`;
+}
+
 function shipChance(g) {
   return lastSim && lastSim.missing[g] ? Math.min(1, (lastSim.groupHits[g] || 0) / lastSim.runs / lastSim.missing[g]) : 0;
 }
@@ -515,7 +523,7 @@ function renderGroups() {
     const rows = shown.map((s) => {
       const has = owned.has(s.key);
       const src = state.manual[s.key] !== undefined ? t("ships.srcHand") : imp.has(s.key) ? t("ships.srcImport") : "";
-      return `<label class="ship${has ? " owned" : ""}"><input type="checkbox" data-ship="${esc(s.key)}" ${has ? "checked" : ""}><span class="nm">${esc(s.name)}${src ? ` <span class="src">${src}</span>` : ""}</span><span class="tier">${ROMAN[tierOf(s)]}</span><span class="p">${has ? t("ships.inPort") : lastSim ? fmtP(p) : ""}</span></label>`;
+      return `<label class="ship${has ? " owned" : ""}"><input type="checkbox" data-ship="${esc(s.key)}" ${has ? "checked" : ""}>${shipIcon(s)}<span class="nm">${esc(s.name)}${src ? ` <span class="src">${src}</span>` : ""}</span><span class="tier">${ROMAN[tierOf(s)]}</span><span class="p">${has ? t("ships.inPort") : lastSim ? fmtP(p) : ""}</span></label>`;
     }).join("");
     html += `<details class="grp" data-group="${g}"${open ? " open" : ""}>
       <summary><span class="gname">${esc(t("group." + g))}</span><span class="gstat">${og}/${list.length}</span><span class="gsub">${groupSub(g, owned)}</span></summary>
@@ -641,7 +649,7 @@ function rollOpen(ct) {
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${resName(k)}`);
   const line = document.createElement("div");
   if (o.ships.length) line.className = "hit";
-  line.textContent = `#${rollNo} ${CONTAINER_DEFS[ct].label}: ${parts.join(" + ") || "–"}${o.forced ? t("roll.forced") : ""}${o.comp ? t("roll.comp") : ""}`;
+  line.innerHTML = o.ships.map((s) => shipIcon(s)).join("") + esc(`#${rollNo} ${CONTAINER_DEFS[ct].label}: ${parts.join(" + ") || "–"}${o.forced ? t("roll.forced") : ""}${o.comp ? t("roll.comp") : ""}`);
   $("rollLog").prepend(line);
   // Erhaltene Golden Gifts und Battle Forged Container eigens hervorheben
   for (const g of o.give) {

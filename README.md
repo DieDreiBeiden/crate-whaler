@@ -73,3 +73,9 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 ## Sprachen
 
 Deutsch und Englisch. Ohne gespeicherte Wahl richtet sich die Sprache nach dem Browser (`de…` → Deutsch, sonst Englisch), der Knopf DE/EN oben speichert die Wahl. Neue Texte kommen in `assets/js/i18n.js` in beide Wörterbücher; im HTML werden sie mit `data-i18n`, `data-i18n-html` oder `data-i18n-attr` eingebunden.
+
+## Schiffs-Icons
+
+`assets/img/ships/<schlüssel>.webp`, 128 × 75 px, aus `images.small` der Wargaming-Enzyklopädie (`encyclopedia/ships`), Stand 30.10.2026. Der Schlüssel ist `shipKey(name)` aus `sim.js`, z. B. `tōgasa` → `togasa`. Die Icons liegen lokal, damit die Seite ohne Anmeldung keine Anfragen an Dritte stellt.
+
+Noch nicht veröffentlichte Schiffe (Rodina G, Somers G, Tōgasa G, Tywysog Cymru, New Jersey BF) zeigen vorläufig das Icon ihres Basisschiffs (`ICON_ALIAS` in `app.js`, gestrichelt markiert). Sobald Wargaming sie in der Enzyklopädie führt: Icon laden, als `<schlüssel>.webp` speichern und den Eintrag aus `ICON_ALIAS` entfernen. Bilder und Schiffsnamen sind Eigentum von Wargaming.

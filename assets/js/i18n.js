@@ -139,6 +139,7 @@ const I18N = {
     "ships.emptyMissing": "Du hast alle Schiffe dieser Gruppe.",
     "ships.emptyHits": "Keine Treffer.",
     "ships.none": "Kein Schiff gefunden.",
+    "ships.iconPh": "Vorläufiges Icon: Das Schiff ist noch nicht veröffentlicht, gezeigt wird das Basisschiff.",
 
     "roll.title": "Einzeln öffnen", "roll.sub": "zum Ausprobieren",
     "roll.open": "Öffnen", "roll.reset": "Zurücksetzen",
@@ -309,6 +310,7 @@ const I18N = {
     "ships.emptyMissing": "You own every ship in this group.",
     "ships.emptyHits": "No matches.",
     "ships.none": "No ship found.",
+    "ships.iconPh": "Provisional icon: the ship is not released yet, showing the base ship.",
 
     "roll.title": "Open one by one", "roll.sub": "try it out",
     "roll.open": "Open", "roll.reset": "Reset",

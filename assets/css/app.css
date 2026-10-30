@@ -212,8 +212,8 @@ details.grp > summary .gstat { font-family: var(--mono); font-size: 13px; text-a
 details.grp > summary .gsub { grid-column: 1 / -1; font-size: 13px; color: var(--ink-soft); }
 details.grp[open] > summary { border-bottom: 1px solid var(--rule); }
 .grp-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px 0; }
-.ships { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 0 16px; padding: 6px 14px 12px; }
-.ship { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; min-height: var(--tap); padding: 4px 0; border-bottom: 1px solid var(--rule); cursor: pointer; }
+.ships { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 0 16px; padding: 6px 14px 12px; }
+.ship { display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 10px; min-height: var(--tap); padding: 4px 0; border-bottom: 1px solid var(--rule); cursor: pointer; }
 .ship .tier { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); min-width: 2.6em; text-align: right; }
 .ship .p { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 4.4em; text-align: right; }
 .ship .src { font-size: 12px; color: var(--ink-soft); }
@@ -300,3 +300,11 @@ html.i18n-pending body { visibility: hidden; }
 .log .gold { color: var(--brass); font-weight: 500; }
 .log .gold::before { content: "★ "; }
 .log .bfline { color: var(--sea); font-weight: 500; }
+
+/* Schiffs-Icons */
+.sicon { width: 64px; height: auto; aspect-ratio: 128 / 75; flex: none; display: block; }
+.sicon.ph { outline: 1px dashed var(--brass); outline-offset: 1px; opacity: .85; }
+.ship.owned .sicon { opacity: .45; filter: grayscale(1); }
+.log div { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.log .sicon { width: 48px; }
+@media (max-width: 420px) { .sicon { width: 52px; } }
