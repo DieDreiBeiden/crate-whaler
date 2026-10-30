@@ -91,5 +91,22 @@ test("Alle Scripts und Styles tragen dieselbe Versionsnummer, auch im Worker", a
   await expect.poll(() => urls.filter((u) => u.pathname.endsWith("/sim.js")).length).toBeGreaterThan(1); // Seite + Worker
   const versions = new Set(urls.map((u) => u.searchParams.get("v")));
   expect([...versions]).toHaveLength(1);
-  expect([...versions][0]).toMatch(/^\d{8}$/);
+  expect([...versions][0]).toMatch(/^\d{8}(-\d+)?$/);
+});
+
+test("Tabelle wird im Hintergrund auf 5000 Läufe verfeinert, veraltete Rechnungen werden abgebrochen", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await expect(page.locator("#needsNote")).toContainText("1.000 Durchläufen");
+  await expect(page.locator("#needsNote")).toContainText("Genauere Rechnung");
+  // Schneller Wechsel während der Verfeinerung: der neue Typ muss trotzdem zügig sein schnelles Ergebnis zeigen
+  await page.locator('[data-ctype="ultra"]').click();
+  await expect(page.locator("#needsNote")).toContainText("Durchläufen", { timeout: 5_000 });
+  await expect(page.locator("#needsBody tr.any td").nth(1)).toHaveText(/\d/, { timeout: 5_000 });
+  await expect(page.locator("#needsNote")).toContainText("5.000 Durchläufen", { timeout: 30_000 });
+  await expect(page.locator("#needsNote")).not.toContainText("Genauere Rechnung");
+  // Zurück zum vorigen Typ: das schnelle Ergebnis kommt aus dem Cache, danach wird verfeinert
+  await page.locator('[data-ctype="santa"]').click();
+  await expect(page.locator("#needsNote")).toContainText("5.000 Durchläufen", { timeout: 45_000 });
+  expect(errors).toEqual([]);
 });

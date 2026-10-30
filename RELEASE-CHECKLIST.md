@@ -52,7 +52,7 @@ npm test
 
 GitHub Pages liefert Dateien mit `max-age=600` aus. Ohne neue Version können Browser bis zu 10 Minuten alte Drop-Raten mit der neuen Seite mischen.
 
-- [ ] In `index.html` bei allen `?v=` das Datum auf den Release-Tag setzen (z. B. `?v=20261112`). Der Worker übernimmt die Version automatisch.
+- [ ] In `index.html` bei allen `?v=` das Datum auf den Release-Tag setzen (z. B. `?v=20261112`, bei mehreren Releases am selben Tag `?v=20261112-2`). Der Worker übernimmt die Version automatisch.
 
 ## 6. Ausrollen
 

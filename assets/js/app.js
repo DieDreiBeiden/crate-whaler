@@ -227,17 +227,27 @@ $("ubLogout").addEventListener("click", () => {
 const NEED_ROWS = [{ label: t("needs.any"), tier: null }].concat([10, 9, 8, 7, 6, 5].map((n) => ({ label: t("needs.tier", { t: ROMAN[n] }), tier: n })));
 const SHORT = { santa: "Santa's Gift", mega: "Mega Gift", ultra: "Ultra Gift" };
 
-const NEED_RUNS = 1000, NEED_CAP = 20000;
+// Erst schnell mit wenigen Läufen, dann im Hintergrund genauer (1000 Läufe: ±4 %, 5000: ±2 %)
+const NEED_STAGES = [1000, 5000], NEED_CAP = 20000;
 
 // Eigener Worker, damit die Tabelle nicht hinter der Plan-Simulation warten muss
-let needsWorker = null, needsId = 0;
-const needsCache = new Map();   // Schlüssel: Typ + Garantie + Besitz -> Ergebnis
-try {
-  needsWorker = new Worker(WORKER_URL);
-  needsWorker.onmessage = (e) => { const job = needsJobs.get(e.data.id); if (job) { needsJobs.delete(e.data.id); needsCache.set(job, e.data.result); if (job === needsKey()) drawNeeds(e.data.result); } };
-  needsWorker.onerror = () => { needsWorker = null; };
-} catch { needsWorker = null; }
-const needsJobs = new Map();
+let needsWorker = null, needsId = 0, needsPending = null;
+const needsCache = new Map();   // Schlüssel: Typ + Garantie + Besitz -> { result, runs }
+const needsFinal = () => NEED_STAGES[NEED_STAGES.length - 1];
+function startNeedsWorker() {
+  try {
+    needsWorker = new Worker(WORKER_URL);
+    needsWorker.onmessage = (e) => {
+      if (!needsPending || needsPending.id !== e.data.id) return;
+      const { key, runs } = needsPending;
+      needsPending = null;
+      needsCache.set(key, { result: e.data.result, runs });
+      if (key === needsKey()) { drawNeeds(e.data.result); setNeedsNote(runs); requestNeeds(); }
+    };
+    needsWorker.onerror = () => { needsWorker = null; needsPending = null; };
+  } catch { needsWorker = null; }
+}
+startNeedsWorker();
 
 function needsKey() { return `${state.ctype}|${state.pity[state.ctype]}|${state.pity.golden}|${[...ownedSet()].sort().join(",")}`; }
 function missingByRow(owned) {
@@ -245,24 +255,41 @@ function missingByRow(owned) {
   const groups = [...new Set(def.slots.flat().filter((e) => e.ship).map((e) => e.ship))].concat(["GR", "GG"]);
   return NEED_ROWS.map((row) => groups.reduce((a, g) => a + availIn(g, owned).filter((s) => row.tier == null || tierOf(s) === row.tier).length, 0));
 }
+function setNeedsNote(runs) {
+  $("needsNote").textContent = t("needs.note", { runs: fmt.format(runs) }) +
+    (needsWorker && runs < needsFinal() ? t("needs.refining", { runs: fmt.format(needsFinal()) }) : "") +
+    (!hasImport() && !Object.keys(state.manual).length ? t("needs.noLogin") : "");
+}
 
 function renderNeeds() {
   const type = state.ctype;
   document.querySelectorAll("[data-ctype]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ctype === type));
   $("needsLede").textContent = t("needs.lede", { c: SHORT[type], n: state.pity[type] });
-  $("needsNote").textContent = t("needs.note", { runs: fmt.format(NEED_RUNS) }) +
-    (!hasImport() && !Object.keys(state.manual).length ? t("needs.noLogin") : "");
-  const key = needsKey();
-  if (needsCache.has(key)) { drawNeeds(needsCache.get(key)); return; }
-  drawNeeds(null);
+  const hit = needsCache.get(needsKey());
+  if (hit) { drawNeeds(hit.result); setNeedsNote(hit.runs); } else { drawNeeds(null); setNeedsNote(NEED_STAGES[0]); }
+  requestNeeds();
+}
+// Nächste Stufe für den aktuellen Stand anfordern. Ein Job für einen veralteten Stand wird abgebrochen,
+// damit eine lange Rechnung nicht vor der neuen Eingabe in der Warteschlange steht.
+function requestNeeds() {
+  const key = needsKey(), hit = needsCache.get(key);
+  const runs = NEED_STAGES.find((n) => !hit || n > hit.runs);
+  if (!runs || (hit && !needsWorker)) return;
+  if (needsPending) {
+    if (needsPending.key === key) return;
+    needsWorker.terminate(); needsPending = null; startNeedsWorker();
+  }
   const tiers = {};
   for (const g of GROUP_ORDER) for (const s of GROUP_SHIPS[g]) if (!s.tier) tiers[s.key] = tierOf(s);
-  const params = { ownedKeys: [...ownedSet()], type, pityCfg: { ...state.pity }, runs: NEED_RUNS, cap: NEED_CAP,
+  const params = { ownedKeys: [...ownedSet()], type: state.ctype, pityCfg: { ...state.pity }, runs, cap: NEED_CAP,
     targets: NEED_ROWS.map((r, i) => ({ id: "r" + i, tier: r.tier })), tiers };
-  const id = ++needsId;
-  needsJobs.set(id, key);
-  if (needsWorker) needsWorker.postMessage({ id, kind: "needs", params });
-  else setTimeout(() => { const res = runNeeds({ ...params, runs: 400 }); needsCache.set(key, res); if (key === needsKey()) drawNeeds(res); }, 0);
+  if (needsWorker) {
+    needsPending = { id: ++needsId, key, runs };
+    needsWorker.postMessage({ id: needsPending.id, kind: "needs", params });
+  } else if (!hit) {
+    // Ohne Worker nur eine kleine Rechnung im Hauptthread, damit die Seite bedienbar bleibt
+    setTimeout(() => { const res = runNeeds({ ...params, runs: 400 }); needsCache.set(key, { result: res, runs: 400 }); if (key === needsKey()) { drawNeeds(res); setNeedsNote(400); } }, 0);
+  }
 }
 
 // result = null zeichnet die Tabelle mit Platzhaltern, solange gerechnet wird
@@ -386,7 +413,7 @@ window.addEventListener("resize", debounce(() => { const w = $("curvePlot").clie
 
 // ---------- Kaufplan in Paketen ----------
 const fmtEur = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-const BUY_RUNS = { ultra: 1000, mega: 600, santa: 200 }, BUY_CAP = 30000, BUY_MAX_PACKS = 15, PITY_RUNS = 2000;
+const BUY_RUNS = { ultra: 1000, mega: 600, santa: 500 }, BUY_CAP = 30000, BUY_MAX_PACKS = 15, PITY_RUNS = 2000;
 const GOALS = [
   { id: "pool", label: (c) => t("buy.goalPool", { c: SHORT[c] }) },
   { id: "reg3", label: () => "Latouche-Tréville, Rodina, Tōgasa" },
