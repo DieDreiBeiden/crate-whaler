@@ -287,3 +287,16 @@ label.check { display: flex; align-items: center; gap: 10px; min-height: var(--t
 html.i18n-pending body { visibility: hidden; }
 .lang-btn { font-family: var(--mono); font-weight: 500; letter-spacing: .06em; }
 .help { font-size: 13px; color: var(--ink-soft); margin-top: -6px; padding-left: 30px; }
+
+/* ---------- Einzeln öffnen ---------- */
+.inv { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; background: var(--brass-soft); border: 1px solid var(--brass); }
+.gold-btn { background: var(--brass); border-color: var(--brass); color: #1b1305; }
+.gold-btn.bf { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.gold-btn .count { display: inline-block; min-width: 1.6em; margin-left: 6px; padding: 0 6px; background: rgba(0, 0, 0, .18); font-family: var(--mono); font-size: 13px; }
+.pool-notice { border: 1px solid var(--good); border-left-width: 4px; background: color-mix(in srgb, var(--good) 10%, var(--sheet)); padding: 10px 14px; display: grid; gap: 4px; }
+.pool-notice strong { color: var(--good); }
+.pool-notice.fresh { animation: notice 1.2s ease-out 1; }
+@keyframes notice { 0% { transform: scale(.98); box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); } 60% { box-shadow: 0 0 0 10px transparent; } 100% { transform: none; } }
+.log .gold { color: var(--brass); font-weight: 500; }
+.log .gold::before { content: "★ "; }
+.log .bfline { color: var(--sea); font-weight: 500; }

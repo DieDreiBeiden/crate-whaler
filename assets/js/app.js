@@ -541,7 +541,7 @@ $("groups").addEventListener("change", (e) => {
   const row = e.target.closest(".ship");
   row.classList.toggle("owned", e.target.checked);
   row.querySelector(".p").textContent = e.target.checked ? t("ships.inPort") : "…";
-  rollCtx = null;
+  resetRoll();
   scheduleNeeds();
   scheduleBuy();
   scheduleSim();
@@ -552,7 +552,7 @@ $("groups").addEventListener("click", (e) => {
   const val = !!e.target.dataset.all, imp = importedKeys();
   for (const s of GROUP_SHIPS[g]) { if (imp.has(s.key) === val) delete state.manual[s.key]; else state.manual[s.key] = val; }
   store.set("manual", state.manual);
-  rollCtx = null;
+  resetRoll();
   renderGroups();
   renderNeeds();
   scheduleBuy();
@@ -579,29 +579,90 @@ function renderDropTables() {
 }
 
 // ---------- Einzeln öffnen ----------
+// Golden Gift und Battle Forged aus Drops landen im Vorrat und werden per eigenem Knopf geöffnet.
 let rollCtx = null, rollNo = 0;
-for (const t of ["santa", "mega", "ultra", "golden", "bf"]) {
-  const o = document.createElement("option"); o.value = t; o.textContent = CONTAINER_DEFS[t].label; $("rollSel").appendChild(o);
+const SANTA_POOL = ["A", "B", "C"];
+for (const ct of ["santa", "mega", "ultra"]) {
+  const o = document.createElement("option"); o.value = ct; o.textContent = CONTAINER_DEFS[ct].label; $("rollSel").appendChild(o);
 }
-$("rollBtn").addEventListener("click", () => {
-  if (!rollCtx) { rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity } }; rollNo = 0; }
-  const ct = $("rollSel").value;
+function ensureRollCtx() {
+  if (rollCtx) return;
+  rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity }, bfPity: buy.bfPity, inv: { golden: 0, bf: 0 }, mainOpened: 0, poolShown: false, goldShown: false };
+  rollNo = 0;
+  checkNotices(true);
+}
+function resetRoll() {
+  rollCtx = null;
+  $("rollLog").innerHTML = "";
+  for (const id of ["poolNotice", "goldNotice"]) { $(id).hidden = true; $(id).innerHTML = ""; }
+  renderRollState();
+}
+const isEmpty = (groups) => groups.every((g) => !availIn(g, rollCtx.owned).length);
+
+function showNotice(id, title, text, fresh) {
+  const el = $(id);
+  el.innerHTML = `<strong>${esc(title)}</strong><span>${esc(text)}</span>`;
+  el.hidden = false;
+  el.classList.toggle("fresh", fresh);
+}
+// Einblendungen, sobald der Schiffspool der Santa-Container bzw. der Golden-Gift-Pool leer ist
+function checkNotices(atStart) {
+  if (!rollCtx.poolShown && isEmpty(SANTA_POOL)) {
+    rollCtx.poolShown = true;
+    const n = SANTA_POOL.reduce((a, g) => a + GROUP_SHIPS[g].length, 0);
+    showNotice("poolNotice", t("roll.poolTitle"), `${t("roll.poolText", { n: fmt.format(n) })} ${atStart ? t("roll.poolStart") : t("roll.poolAt", { n: fmt.format(rollCtx.mainOpened) })}`, !atStart);
+  }
+  if (!rollCtx.goldShown && isEmpty(["GR", "GG"])) {
+    rollCtx.goldShown = true;
+    showNotice("goldNotice", t("roll.goldTitle"), t("roll.goldText"), !atStart);
+  }
+  if (rollCtx.goldShown && isEmpty(["NJ"])) showNotice("goldNotice", t("roll.goldTitle"), t("roll.njDone"), false);
+}
+function renderRollState() {
+  const inv = rollCtx ? rollCtx.inv : { golden: 0, bf: 0 };
+  $("rollInv").hidden = !inv.golden && !inv.bf;
+  $("openGolden").hidden = !inv.golden;
+  $("openGolden").innerHTML = `${esc(t("roll.openGolden"))}<span class="count">${inv.golden}</span>`;
+  $("openBf").hidden = !inv.bf;
+  $("openBf").innerHTML = `${esc(t("roll.openBf"))}<span class="count">${inv.bf}</span>`;
+  const types = [$("rollSel").value, "golden"].concat(isRollBf() ? ["bf"] : []);
+  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
+  $("rollStatus").textContent = t("roll.status", { list: types.map((ct) => `${label[ct]} ${rollCtx ? rollCtx.pity[ct] || 0 : 0}/${state.pity[ct]}`).join(" · ") });
+}
+const isRollBf = () => rollCtx && (rollCtx.inv.bf > 0 || (rollCtx.pity.bf || 0) > 0 || isEmpty(["GR", "GG"]));
+
+function rollOpen(ct) {
+  ensureRollCtx();
   const o = openContainer(ct, rollCtx);
   rollNo++;
+  if (ct !== "golden" && ct !== "bf") rollCtx.mainOpened++;
   const parts = [];
   for (const s of o.ships) parts.push(`${s.name} (${ROMAN[tierOf(s)]})`);
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${resName(k)}`);
-  for (const g of o.give) parts.push(t(g === "golden" ? "drops.oneGolden" : "drops.oneBf"));
   const line = document.createElement("div");
   if (o.ships.length) line.className = "hit";
-  line.textContent = `#${rollNo} ${CONTAINER_DEFS[ct].label}: ${parts.join(" + ")}${o.forced ? t("roll.forced") : ""}${o.comp ? t("roll.comp") : ""}`;
+  line.textContent = `#${rollNo} ${CONTAINER_DEFS[ct].label}: ${parts.join(" + ") || "–"}${o.forced ? t("roll.forced") : ""}${o.comp ? t("roll.comp") : ""}`;
   $("rollLog").prepend(line);
-});
-$("rollReset").addEventListener("click", () => { rollCtx = null; $("rollLog").innerHTML = ""; });
+  // Erhaltene Golden Gifts und Battle Forged Container eigens hervorheben
+  for (const g of o.give) {
+    rollCtx.inv[g]++;
+    const extra = document.createElement("div");
+    extra.className = g === "golden" ? "gold" : "bfline";
+    extra.textContent = `   ${t(g === "golden" ? "roll.gotGolden" : "roll.gotBf")}`;
+    $("rollLog").prepend(extra);
+  }
+  checkNotices(false);
+  renderRollState();
+}
+$("rollBtn").addEventListener("click", () => rollOpen($("rollSel").value));
+$("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
+$("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) { rollCtx.inv.bf--; rollOpen("bf"); } });
+$("rollSel").addEventListener("change", renderRollState);
+$("rollReset").addEventListener("click", resetRoll);
 
 // ---------- Neu zeichnen ----------
 function changed() {
-  rollCtx = null;
+  resetRoll();
   renderNeeds();
   requestBuy();
   renderPlanInputs();

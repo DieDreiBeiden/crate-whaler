@@ -289,6 +289,14 @@
         <button type="button" id="rollBtn" data-i18n="roll.open">Öffnen</button>
         <button type="button" class="ghost" id="rollReset" data-i18n="roll.reset">Zurücksetzen</button>
       </div>
+      <div class="inv" id="rollInv" hidden>
+        <span class="mini" data-i18n="roll.inv">Erhalten, noch nicht geöffnet:</span>
+        <button type="button" class="gold-btn" id="openGolden" hidden></button>
+        <button type="button" class="gold-btn bf" id="openBf" hidden></button>
+      </div>
+      <div class="pool-notice" id="poolNotice" role="alert" hidden></div>
+      <div class="pool-notice" id="goldNotice" role="alert" hidden></div>
+      <p class="mini" id="rollStatus"></p>
       <p class="note" data-i18n="roll.note"></p>
       <div class="log" id="rollLog" aria-live="polite"></div>
     </div>
