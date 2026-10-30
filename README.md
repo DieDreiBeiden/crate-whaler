@@ -35,7 +35,7 @@ npm test
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
 | `assets/js/boot.js` | Wargaming Application ID, Sprache und Farbschema vor dem ersten Zeichnen |
 | `assets/js/i18n.js` | Alle Texte auf Deutsch und Englisch (`t()`), Übersetzung der Ressourcen |
-| `assets/js/app.js` | Seitenlogik: Login, vier Reiter (Pro Stufe mit Tabelle und Kurve, Kaufplan in Paketen mit Einzeln öffnen, Mein Plan, Schiffe) |
+| `assets/js/app.js` | Seitenlogik: Login, fünf Reiter (Pro Stufe mit Kennzahl und Kurve, Kaufplan in Paketen mit Einzeln öffnen, Mein Plan, Schiffe, Tracker) |
 | `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`), Container je Stufe (`runNeeds`), Meilensteine je Paket (`runMilestones`), Golden-Gift-Zähler (`runPityTable`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
 | `assets/js/santa2026.js` | Drop-Tabellen und Schiffslisten des Events |
@@ -92,6 +92,14 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 - Ein leerer Pool gibt seinen Anteil gewichtet an die übrigen Pools ab, erst ohne fehlende Schiffe gibt es Stahl.
 - Golden Gift: erst die 3 regulären Schiffe, dann die 4 Gold-Schiffe, danach ersetzt der Battle Forged Container den Schiffsplatz. Ob die Golden-Gift-Garantie auch für den Battle Forged Container gilt, ist offen und auf der Seite umschaltbar.
 - Unterschied zu `santa_sim.py`: Die Seite lässt die Container-Garantie weiterlaufen, wenn dem Container keine Schiffe mehr fehlen (dann Stahl statt Golden-Gift-Chance). Das macht die Golden-Gift-Ziele rund 3 % teurer.
+
+## Tracker
+
+Im Reiter „Tracker“ trägt man ein, was man geöffnet hat (Container-Typ, Pakete, Golden Gifts) und welche neuen Schiffe drin waren. Eingetragene Schiffe gelten danach auf der ganzen Seite als im Hafen.
+
+- Glücksfaktor: Anteil von 1.000 simulierten Spielern (`runTrack` in `sim.js`) mit dem Hafen vor dem ersten Eintrag und derselben Folge von Containern, die weniger neue Schiffe bekamen; Gleichstand zählt halb (`luckOf`). 50 % ist genau Durchschnitt.
+- Annahmen: Garantie-Zähler stehen beim ersten Eintrag auf 0, Golden Gifts und Battle Forged Container werden gleich mitgeöffnet.
+- Gespeichert nur im Browser unter `santa26:tracker`.
 
 ## Gestaltung
 

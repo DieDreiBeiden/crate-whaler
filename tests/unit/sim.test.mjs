@@ -81,3 +81,27 @@ test("Benötigte Santa's für irgendein Schiff bei leerem Hafen: ~26 / ~86", () 
   assert.ok(r.any.p90 >= 78 && r.any.p90 <= 95, `90 % ${r.any.p90}`);
   assert.equal(r.any.qs.length, 99);
 });
+
+test("Glücksfaktor: Gleichstand zählt halb, Anteile stimmen", () => {
+  const luckOf = g("luckOf");
+  const r = luckOf([1, 2, 1], 4, 1);
+  assert.equal(r.luck, 0.5);
+  assert.equal(r.pExact, 0.5);
+  assert.equal(r.pAtLeast, 0.75);
+  assert.equal(r.pAtMost, 0.75);
+  assert.equal(r.mean, 1);
+  assert.equal(luckOf([1, 2, 1], 4, 5).luck, 1);   // mehr als jemals simuliert
+  assert.equal(luckOf([0, 2, 2], 4, 0).luck, 0);   // weniger als jemals simuliert
+});
+
+test("Tracker-Simulation: Garantie greift, Verteilung vollständig", () => {
+  const runTrack = g("runTrack");
+  // 7 Ultra ab leerem Hafen: die Garantie erzwingt spätestens beim 7. ein Schiff
+  const r = runTrack({ ownedKeys: [], pityCfg: { ...PITY }, bfPity: true, steps: [{ type: "ultra", n: 7 }], runs: 500 });
+  assert.equal(r.ships[0], 0);
+  assert.equal(r.ships.reduce((a, b) => a + b, 0), 500);
+  assert.equal(r.golden.reduce((a, b) => a + b, 0), 500);
+  // Ohne Container keine Schiffe
+  const z = runTrack({ ownedKeys: [], pityCfg: { ...PITY }, bfPity: true, steps: [], runs: 50 });
+  assert.deepEqual([...z.ships], [50]);
+});

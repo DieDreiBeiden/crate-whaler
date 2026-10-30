@@ -222,3 +222,44 @@ function runPityTable({ ownedKeys, type, pityCfg, runs, pack, bfPity }) {
   }
   return out;
 }
+
+// Tracker: dieselbe Folge geöffneter Container wie eingetragen, ab dem Hafen vor dem ersten Eintrag.
+// Golden Gifts und Battle Forged Container aus Drops werden sofort mitgeöffnet (wie im Kaufplan).
+// steps = [{ type, n }], Ergebnis: Verteilung der neuen Schiffe und der Golden Gifts je Durchlauf.
+function runTrack({ ownedKeys, pityCfg, bfPity, steps, runs }) {
+  const base = new Set(ownedKeys);
+  const ships = [], golden = [];
+  let nj = 0;
+  const NJ = new Set(GROUP_SHIPS.NJ.map((s) => s.key));
+  for (let r = 0; r < runs; r++) {
+    const ctx = { owned: new Set(base), pity: {}, pityCfg, bfPity };
+    let s = 0, g = 0, gotNj = false;
+    for (const st of steps) {
+      for (let i = 0; i < st.n; i++) {
+        const queue = [st.type];
+        while (queue.length) {
+          const o = openContainer(queue.shift(), ctx);
+          s += o.ships.length;
+          if (o.ships.some((x) => NJ.has(x.key))) gotNj = true;
+          for (const gv of o.give) { if (gv === "golden") g++; queue.push(gv); }
+        }
+      }
+    }
+    ships[s] = (ships[s] || 0) + 1;
+    golden[g] = (golden[g] || 0) + 1;
+    if (gotNj) nj++;
+  }
+  const dense = (a) => Array.from({ length: a.length }, (_, i) => a[i] || 0);
+  return { runs, ships: dense(ships), golden: dense(golden), nj };
+}
+
+// Glück aus einer Verteilung (Häufigkeiten je Anzahl): Anteil schlechterer Ergebnisse, Gleichstand halb gezählt
+function luckOf(hist, runs, k) {
+  let below = 0;
+  for (let i = 0; i < Math.min(k, hist.length); i++) below += hist[i] || 0;
+  const eq = hist[k] || 0;
+  let mean = 0;
+  hist.forEach((c, i) => { mean += i * c; });
+  return { luck: (below + eq / 2) / runs, pExact: eq / runs, pAtLeast: 1 - below / runs, pAtMost: (below + eq) / runs, mean: mean / runs };
+}
+

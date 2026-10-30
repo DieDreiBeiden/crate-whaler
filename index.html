@@ -24,9 +24,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261030-3">
-<link rel="stylesheet" href="assets/css/app.css?v=20261030-3">
-<script src="assets/js/boot.js?v=20261030-3"></script>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261030-5">
+<link rel="stylesheet" href="assets/css/app.css?v=20261030-5">
+<script src="assets/js/boot.js?v=20261030-5"></script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
@@ -107,6 +107,7 @@
     <a href="#kaufplan" data-view="kaufplan"><span class="n">02</span><span data-i18n="tab.buy">Kaufplan</span></a>
     <a href="#plan" data-view="plan"><span class="n">03</span><span data-i18n="tab.plan">Mein Plan</span></a>
     <a href="#schiffe" data-view="schiffe"><span class="n">04</span><span data-i18n="tab.ships">Schiffe</span></a>
+    <a href="#tracker" data-view="tracker"><span class="n">05</span><span data-i18n="tab.tracker">Tracker</span></a>
   </nav>
 
   <div class="view stack" id="v-stufen" hidden>
@@ -342,6 +343,68 @@
   </details>
   </div>
 
+  <div class="view stack" id="v-tracker" hidden>
+  <!-- ============ TRACKER ============ -->
+  <section class="panel trk" aria-labelledby="trkTitle">
+    <div class="panel-head"><h2 id="trkTitle" data-i18n="trk.title">Was hast du bekommen?</h2></div>
+    <p class="lede" data-i18n="trk.lede"></p>
+    <form id="trkForm" class="stack" novalidate>
+      <div class="fields">
+        <label class="f"><span data-i18n="trk.type">Container</span>
+          <select id="trkType"><option value="santa">Santa's Gift</option><option value="mega">Santa's Mega Gift</option><option value="ultra">Santa's Ultra Gift</option></select></label>
+        <label class="f"><span data-i18n="trk.packs">Pakete</span> <input id="trkPacks" type="number" inputmode="numeric" min="0" value="1"></label>
+        <label class="f"><span data-i18n="trk.perPack">Container je Paket</span> <input id="trkPer" type="number" inputmode="numeric" min="1" value="20"></label>
+        <label class="f"><span data-i18n="trk.golden">Golden Gifts erhalten</span> <input id="trkGolden" type="number" inputmode="numeric" min="0" value="0"></label>
+      </div>
+      <p class="mini" id="trkSum"></p>
+      <div class="stack trk-ships">
+        <label class="f"><span data-i18n="trk.ships">Neue Schiffe</span>
+          <input id="trkSearch" type="search" autocomplete="off" spellcheck="false" aria-describedby="trkShipsHelp" aria-controls="trkResults" data-i18n-attr="placeholder:trk.searchPh"></label>
+        <p class="mini" id="trkShipsHelp" data-i18n="trk.shipsHelp"></p>
+        <div class="trk-results" id="trkResults"></div>
+        <div class="trk-picked" id="trkPicked"></div>
+      </div>
+      <div class="row">
+        <button type="submit" id="trkAdd" data-i18n="trk.add">Eintragen</button>
+        <span class="msg" id="trkMsg" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="trkResTitle">
+    <div class="panel-head"><h2 id="trkResTitle" data-i18n="trk.resTitle">Auswertung</h2><span class="calc-state" id="trkState"></span></div>
+    <p class="empty" id="trkEmpty" data-i18n="trk.empty"></p>
+    <div class="stack" id="trkBody" hidden>
+      <div class="readout" id="trkReadout"></div>
+      <p class="trk-verdict" id="trkVerdict"></p>
+      <p id="trkProb"></p>
+      <figure class="trk-hist">
+        <figcaption class="mini" id="trkHistCap"></figcaption>
+        <div id="trkHist"></div>
+      </figure>
+      <p class="mini" id="trkGoldLine"></p>
+      <p class="mini" id="trkNjLine"></p>
+      <p class="note" data-i18n="trk.method"></p>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="trkMissTitle">
+    <div class="panel-head"><h2 id="trkMissTitle" data-i18n="trk.missTitle">Was dir noch fehlt</h2><a href="#stufen" data-i18n="trk.toNeeds">Wie viele Container noch?</a></div>
+    <div class="stack" id="trkMissing"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="trkLogTitle">
+    <div class="panel-head">
+      <h2 id="trkLogTitle" data-i18n="trk.logTitle">Verlauf</h2>
+      <div class="row"><button type="button" class="ghost sm" id="trkUndo" data-i18n="trk.undo">Letzten Eintrag löschen</button><button type="button" class="ghost sm" id="trkReset" data-i18n="trk.reset">Tracker zurücksetzen</button></div>
+    </div>
+    <div class="tbl" tabindex="0" role="region" aria-labelledby="trkLogTitle"><table class="trk-log">
+      <thead><tr><th scope="col" data-i18n="trk.colWhen">Wann</th><th scope="col" data-i18n="trk.colCont">Container</th><th scope="col" class="num" data-i18n="trk.colGolden">Golden Gifts</th><th scope="col" data-i18n="trk.colShips">Neue Schiffe</th></tr></thead>
+      <tbody id="trkLog"></tbody>
+    </table></div>
+  </section>
+  </div>
+
   </div>
   </main>
 
@@ -351,10 +414,10 @@
   </footer>
 </div>
 
-<script src="assets/js/ships.js?v=20261030-3" defer></script>
-<script src="assets/js/santa2026.js?v=20261030-3" defer></script>
-<script src="assets/js/sim.js?v=20261030-3" defer></script>
-<script src="assets/js/i18n.js?v=20261030-3" defer></script>
-<script src="assets/js/app.js?v=20261030-3" defer></script>
+<script src="assets/js/ships.js?v=20261030-5" defer></script>
+<script src="assets/js/santa2026.js?v=20261030-5" defer></script>
+<script src="assets/js/sim.js?v=20261030-5" defer></script>
+<script src="assets/js/i18n.js?v=20261030-5" defer></script>
+<script src="assets/js/app.js?v=20261030-5" defer></script>
 </body>
 </html>

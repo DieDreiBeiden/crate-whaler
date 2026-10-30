@@ -77,7 +77,7 @@ test("Kein horizontales Scrollen bei 320 px", async ({ page }) => {
   await guard(page);
   await page.setViewportSize({ width: 320, height: 800 });
   await openManual(page);
-  for (const v of ["stufen", "kaufplan", "plan", "schiffe"]) {
+  for (const v of ["stufen", "kaufplan", "plan", "schiffe", "tracker"]) {
     await page.goto(`/#${v}`);
     await page.waitForTimeout(150);
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -416,3 +416,36 @@ nav.tabs a[aria-current="page"] .n { color: inherit; opacity: .75; } /* 1.4.3: N
 .view > *, .stack > *, .grid2 > *, .groups > *, .fields > *, .panel > *, .pity-box > *, .curve > *, details.more > .inner > * { min-width: 0; }
 .ship .nm, .pitygrid div, .log div { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 360px) { .ship { gap: 6px; } .sicon { width: 44px; } .pitygrid .c { font-size: 12px; } }
+
+/* ---------- Tracker ---------- */
+nav.tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+nav.tabs a { min-width: 0; text-align: center; overflow-wrap: anywhere; }
+@media (max-width: 640px) { nav.tabs a .n { display: none; } nav.tabs a { font-size: 14px; letter-spacing: .04em; padding: 6px 2px; } }
+.trk { border-top: 3px solid var(--sea); }
+.trk-ships { gap: 6px; }
+.trk-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 6px; }
+.trk-results:empty { display: none; }
+.trk-hit { display: flex; align-items: center; gap: 10px; text-align: left; font-weight: 500; padding: 4px 10px; min-height: 48px; }
+.trk-hit .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.trk-hit .tier { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--ink-soft); }
+.trk-hit .sicon { width: 56px; }
+.trk-picked { display: flex; flex-wrap: wrap; gap: 6px; }
+.trk-picked:empty { display: none; }
+.trk-chip { background: var(--raised); border-color: var(--sea); color: var(--ink); font-family: var(--body); font-size: 14px; min-height: 36px; }
+@media (pointer: coarse), (max-width: 640px) { .trk-chip { min-height: 44px; } }
+.trk-verdict { font-size: 17px; font-weight: 600; }
+#trkBody { transition: opacity .2s; }
+#trkBody.stale { opacity: .5; }
+.trk-hist { margin: 0; display: grid; gap: 6px; }
+.trk-hist svg { width: 100%; height: auto; display: block; }
+.trk-hist .bar { fill: var(--c-ctx); }
+.trk-hist .me { fill: var(--c-sel); }
+.trk-hist .base { stroke: var(--rule-strong); stroke-width: 1; }
+.trk-hist text { fill: var(--ink-soft); font-family: var(--mono); font-size: 12px; }
+.trk-hist text.me-l { fill: var(--ink); font-weight: 500; }
+.trk-mg { display: grid; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.trk-mg:last-child { border-bottom: 0; }
+.trk-mh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+.trk-mg.done strong { color: var(--ink-soft); }
+.trk-names { font-size: 14px; }
+.trk-log td { vertical-align: top; }

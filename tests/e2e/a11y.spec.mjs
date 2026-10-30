@@ -16,7 +16,7 @@ for (const theme of ["light", "dark"]) {
     await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
     await page.goto("/#kaufplan");
     await page.locator("#buyBody tr").first().waitFor();
-    for (const v of ["stufen", "kaufplan", "plan", "schiffe"]) {
+    for (const v of ["stufen", "kaufplan", "plan", "schiffe", "tracker"]) {
       await page.goto(`/#${v}`);
       await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
       await page.waitForTimeout(200);

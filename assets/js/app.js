@@ -53,18 +53,39 @@ const state = {
 };
 if (!CONTAINER_DEFS[state.ctype] || state.ctype === "golden" || state.ctype === "bf") state.ctype = "santa";
 
+// ---------- Tracker: eingetragene Öffnungen auswerten ----------
+// Gespeichert: base = Container-Schiffe im Hafen vor dem ersten Eintrag, entries = Einträge in Reihenfolge
+const TRACK_RUNS = 1000, TRACK_TYPES = ["santa", "mega", "ultra"];
+const ALL_KEYS = new Set(GROUP_ORDER.flatMap((g) => GROUP_SHIPS[g].map((s) => s.key)));
+const SHIP_BY_KEY = new Map(GROUP_ORDER.flatMap((g) => GROUP_SHIPS[g].map((s) => [s.key, s])));
+const NJ_KEYS = GROUP_SHIPS.NJ.map((s) => s.key);
+const int = (v, min, max) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min; };
+// Gespeicherte Daten prüfen: nur bekannte Container-Typen, ganze Zahlen und bekannte Schiffe
+const tracker = (() => {
+  const raw = store.get("tracker", null) || {};
+  const entries = (Array.isArray(raw.entries) ? raw.entries : []).filter((e) => e && TRACK_TYPES.includes(e.type)).map((e) => ({
+    at: int(e.at, 0, 8.64e15), type: e.type, packs: int(e.packs, 0, 100000), per: int(e.per, 1, 1000), golden: int(e.golden, 0, 1e7),
+    ships: [...new Set(Array.isArray(e.ships) ? e.ships.filter((k) => ALL_KEYS.has(k)) : [])]
+  }));
+  const base = Array.isArray(raw.base) ? raw.base.filter((k) => ALL_KEYS.has(k)) : null;
+  return { base: entries.length ? base || [] : null, entries, per: raw.per ? int(raw.per, 1, 1000) : 20, type: TRACK_TYPES.includes(raw.type) ? raw.type : "ultra" };
+})();
+const saveTracker = () => store.set("tracker", tracker);
+const trackedKeys = () => new Set(tracker.entries.flatMap((e) => e.ships));
+const entryN = (e) => e.packs * e.per;
+
 const hasImport = () => state.source === "import" && state.imported && state.imported.ids.length > 0;
 function importedKeys() {
   const s = new Set();
   if (hasImport()) for (const id of state.imported.ids) { const sh = SHIPS.get(id); if (sh) s.add(shipKey(sh.name)); }
   return s;
 }
-// Besitz der Container-Schiffe: Import (per Name) plus Häkchen von Hand
+// Besitz der Container-Schiffe: Import (per Name), Häkchen von Hand und Schiffe aus dem Tracker
 function ownedSet() {
-  const imp = importedKeys(), s = new Set();
+  const imp = importedKeys(), trk = trackedKeys(), s = new Set();
   for (const g of GROUP_ORDER) for (const sh of GROUP_SHIPS[g]) {
     const m = state.manual[sh.key];
-    if (m === true || (m !== false && imp.has(sh.key))) s.add(sh.key);
+    if (m === true || trk.has(sh.key) || (m !== false && imp.has(sh.key))) s.add(sh.key);
   }
   return s;
 }
@@ -816,10 +837,11 @@ $("rollSel").addEventListener("change", renderRollState);
 $("rollReset").addEventListener("click", resetRoll);
 
 // ---------- Reiter ----------
-const VIEWS = ["stufen", "kaufplan", "plan", "schiffe"];
+const VIEWS = ["stufen", "kaufplan", "plan", "schiffe", "tracker"];
 function showView() {
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "stufen";
   for (const id of VIEWS) $("v-" + id).hidden = id !== v;
+  if (v === "tracker" && typeof renderTracker === "function") renderTracker();
   document.querySelectorAll("nav.tabs a").forEach((el) => { if (el.dataset.view === v) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
 }
 window.addEventListener("hashchange", () => {
@@ -827,6 +849,191 @@ window.addEventListener("hashchange", () => {
   const nav = document.querySelector("nav.tabs");
   if (nav.getBoundingClientRect().top < 0) nav.scrollIntoView({ block: "start" });
 });
+
+let trkPicked = [];
+
+$("trkType").value = tracker.type;
+$("trkPer").value = tracker.per;
+function trkSum() {
+  const n = int($("trkPacks").value, 0, 100000) * int($("trkPer").value, 1, 1000);
+  $("trkSum").textContent = t("trk.sum", { n: fmt.format(n) });
+}
+for (const id of ["trkPacks", "trkPer"]) $(id).addEventListener("input", trkSum);
+$("trkType").addEventListener("change", () => { tracker.type = $("trkType").value; saveTracker(); });
+$("trkPer").addEventListener("change", () => { tracker.per = int($("trkPer").value, 1, 1000); $("trkPer").value = tracker.per; saveTracker(); });
+
+// Schiffs-Suche: nur Schiffe, die dir laut Hafen, Häkchen und Tracker noch fehlen
+function trkCandidates() {
+  const q = shipKey($("trkSearch").value.trim());
+  if (!q) return [];
+  const owned = ownedSet();
+  return GROUP_ORDER.flatMap((g) => GROUP_SHIPS[g]).filter((s) => !owned.has(s.key) && !trkPicked.includes(s.key) && s.key.includes(q)).slice(0, 8);
+}
+function renderTrkPicker() {
+  const list = trkCandidates();
+  $("trkResults").innerHTML = list.map((s) => `<button type="button" class="ghost trk-hit" data-key="${s.key}">${shipIcon(s)}<span class="nm">${esc(s.name)}</span><span class="tier">${ROMAN[tierOf(s)] || ""}</span></button>`).join("") +
+    ($("trkSearch").value.trim() && !list.length ? `<p class="mini">${esc(t("trk.noHit"))}</p>` : "");
+  $("trkPicked").innerHTML = trkPicked.map((k) => { const s = SHIP_BY_KEY.get(k); return `<button type="button" class="chip trk-chip" data-key="${k}" aria-label="${esc(t("trk.remove", { name: s.name }))}">${esc(s.name)} <span aria-hidden="true">×</span></button>`; }).join("");
+}
+$("trkSearch").addEventListener("input", renderTrkPicker);
+$("trkSearch").addEventListener("keydown", (e) => {
+  // Enter übernimmt den ersten Treffer, statt das Formular abzuschicken
+  if (e.key !== "Enter" || !$("trkSearch").value.trim()) return;
+  e.preventDefault();
+  const first = trkCandidates()[0];
+  if (first) { trkPicked.push(first.key); $("trkSearch").value = ""; renderTrkPicker(); }
+});
+$("trkResults").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-key]");
+  if (!b) return;
+  trkPicked.push(b.dataset.key); $("trkSearch").value = ""; renderTrkPicker(); $("trkSearch").focus();
+});
+$("trkPicked").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-key]");
+  if (!b) return;
+  trkPicked = trkPicked.filter((k) => k !== b.dataset.key); renderTrkPicker(); $("trkSearch").focus();
+});
+
+$("trkForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const entry = { at: Date.now(), type: $("trkType").value, packs: int($("trkPacks").value, 0, 100000), per: int($("trkPer").value, 1, 1000), golden: int($("trkGolden").value, 0, 1e7), ships: [...trkPicked] };
+  const msg = $("trkMsg");
+  if (!entryN(entry) && !entry.golden && !entry.ships.length) { msg.className = "msg err"; msg.textContent = t("trk.errEmpty"); return; }
+  if (entry.golden > entryN(entry)) { msg.className = "msg err"; msg.textContent = t("trk.errGolden"); return; }
+  if (!tracker.base) tracker.base = [...ownedSet()];
+  tracker.entries.push(entry);
+  saveTracker();
+  trkPicked = []; $("trkGolden").value = 0; $("trkSearch").value = "";
+  msg.className = "msg ok"; msg.textContent = t("trk.added", { n: fmt.format(entryN(entry)), s: fmt.format(entry.ships.length) });
+  changed();
+});
+$("trkUndo").addEventListener("click", () => {
+  if (!tracker.entries.length) return;
+  tracker.entries.pop();
+  if (!tracker.entries.length) tracker.base = null;
+  saveTracker(); $("trkMsg").textContent = ""; changed();
+});
+$("trkReset").addEventListener("click", () => {
+  if (!tracker.entries.length || !window.confirm(t("trk.resetConfirm"))) return;
+  tracker.entries = []; tracker.base = null;
+  saveTracker(); $("trkMsg").textContent = ""; changed();
+});
+
+// Simulation im eigenen Worker; eine veraltete Rechnung wird abgebrochen
+let trackWorker = null, trackPending = null, trackId = 0;
+const trackCache = new Map();
+function startTrackWorker() {
+  try {
+    trackWorker = new Worker(WORKER_URL);
+    trackWorker.onmessage = (e) => {
+      if (!trackPending || trackPending.id !== e.data.id) return;
+      const key = trackPending.key; trackPending = null;
+      trackCache.set(key, e.data.result);
+      if (key === trackKey()) drawTrackResult(e.data.result);
+    };
+    trackWorker.onerror = () => { trackWorker = null; trackPending = null; };
+  } catch { trackWorker = null; }
+}
+startTrackWorker();
+const trackParams = () => ({ ownedKeys: tracker.base || [], pityCfg: { ...state.pity }, bfPity: buy.bfPity,
+  steps: tracker.entries.filter((e) => entryN(e) > 0).map((e) => ({ type: e.type, n: entryN(e) })), runs: TRACK_RUNS });
+const trackKey = () => JSON.stringify(trackParams());
+
+function renderTracker() {
+  trkSum(); renderTrkPicker(); renderTrkMissing(); renderTrkLog();
+  const has = tracker.entries.length > 0;
+  $("trkEmpty").hidden = has; $("trkBody").hidden = !has;
+  $("trkUndo").disabled = !has; $("trkReset").disabled = !has;
+  if (!has) { $("trkState").textContent = ""; return; }
+  const key = trackKey();
+  if (trackCache.has(key)) { drawTrackResult(trackCache.get(key)); return; }
+  $("trkState").dataset.busy = "true"; $("trkState").textContent = t("calc.busy");
+  $("trkBody").classList.add("stale");
+  if (trackPending) { if (trackPending.key === key) return; trackWorker.terminate(); trackPending = null; startTrackWorker(); }
+  const params = trackParams();
+  if (trackWorker) { trackPending = { id: ++trackId, key }; trackWorker.postMessage({ id: trackPending.id, kind: "track", params }); }
+  else setTimeout(() => { const res = runTrack({ ...params, runs: 300 }); trackCache.set(key, res); if (key === trackKey()) drawTrackResult(res); }, 0);
+}
+
+function drawTrackResult(res) {
+  $("trkState").dataset.busy = "false"; $("trkState").textContent = t("calc.runs", { n: fmt.format(res.runs) });
+  $("trkBody").classList.remove("stale");
+  const tracked = trackedKeys(), base = new Set(tracker.base || []);
+  const k = tracker.entries.reduce((a, e) => a + e.ships.length, 0);
+  const g = tracker.entries.reduce((a, e) => a + e.golden, 0);
+  const sl = luckOf(res.ships, res.runs, k), gl = luckOf(res.golden, res.runs, g);
+  const total = tracker.entries.reduce((a, e) => a + entryN(e), 0);
+  const byType = TRACK_TYPES.map((ty) => [ty, tracker.entries.filter((e) => e.type === ty).reduce((a, e) => a + entryN(e), 0)]).filter(([, n]) => n);
+  // Sehr kleine oder sehr große Anteile nicht als 0 % bzw. 100 % zeigen
+  const fp = (p) => (p <= 0 ? `< ${fmtP(1 / res.runs)}` : p >= 1 ? `> ${fmtP(1 - 1 / res.runs)}` : fmtP(p));
+  const fm = (m) => fmt1.format(m);
+  const band = sl.luck >= 0.85 ? "trk.v5" : sl.luck >= 0.6 ? "trk.v4" : sl.luck > 0.4 ? "trk.v3" : sl.luck > 0.15 ? "trk.v2" : "trk.v1";
+  $("trkReadout").innerHTML = [
+    [t("trk.kCont"), fmt.format(total), byType.map(([ty, n]) => `${fmt.format(n)} ${SHORT[ty]}`).join(" · "), ""],
+    [t("trk.kShips"), fmt.format(k), t("trk.expected", { m: fm(sl.mean) }), ""],
+    [t("trk.kGolden"), fmt.format(g), t("trk.expected", { m: fm(gl.mean) }), ""],
+    [t("trk.kLuck"), fp(sl.luck), t(band), " accent"]
+  ].map(([kk, v, sub, cls]) => `<div><span class="k">${esc(kk)}</span><span class="v${cls}">${esc(v)}</span><span class="s">${esc(sub)}</span></div>`).join("");
+  $("trkVerdict").textContent = t("trk.verdict", { band: t(band), p: fp(sl.luck) });
+  $("trkProb").textContent = t("trk.prob", { k: fmt.format(k), pe: fp(sl.pExact), pa: fp(sl.pAtLeast), pb: fp(sl.pAtMost) });
+  $("trkHistCap").textContent = t("trk.histCap", { n: fmt.format(total) });
+  drawTrackHist(res, k);
+  $("trkGoldLine").textContent = t("trk.goldLine", { g: fmt.format(g), m: fm(gl.mean), l: fp(gl.luck) });
+  const njBefore = NJ_KEYS.every((key) => base.has(key));
+  $("trkNjLine").hidden = njBefore;
+  if (!njBefore) $("trkNjLine").textContent = t(NJ_KEYS.some((key) => tracked.has(key)) ? "trk.njGot" : "trk.njNot", { p: fp(res.nj / res.runs) });
+}
+
+// Säulen: Anteil der Durchläufe je Anzahl neuer Schiffe, dein Ergebnis hervorgehoben
+let lastTrkHist = null;
+window.addEventListener("resize", debounce(() => { if (lastTrkHist && !$("v-tracker").hidden) drawTrackHist(...lastTrkHist); }, 150));
+function drawTrackHist(res, k) {
+  const h = res.ships, n = res.runs;
+  let lo = 0, hi = h.length - 1, cum = 0;
+  for (let i = 0; i < h.length; i++) { cum += h[i]; if (cum / n >= 0.002) { lo = i; break; } }
+  cum = 0;
+  for (let i = h.length - 1; i >= 0; i--) { cum += h[i]; if (cum / n >= 0.002) { hi = i; break; } }
+  lo = Math.min(lo, k); hi = Math.max(hi, k);
+  lastTrkHist = [res, k];
+  // In der echten Breite zeichnen, damit Schrift und Höhe auf jedem Bildschirm passen
+  const W = Math.max(280, Math.round($("trkHist").clientWidth || 640)), H = W < 500 ? 130 : 170, L = 8, R = 8, T = 10, B = 26, cols = hi - lo + 1;
+  const bw = (W - L - R) / cols, max = Math.max(...h.slice(lo, hi + 1), 1);
+  let bars = "";
+  for (let i = lo; i <= hi; i++) {
+    const v = h[i] || 0, bh = v / max * (H - T - B), x = L + (i - lo) * bw;
+    const tip = esc(t("trk.histBar", { k: fmt.format(i), p: fmtP(v / n) }));
+    bars += `<rect class="${i === k ? "me" : "bar"}" x="${(x + Math.min(1, bw * 0.15)).toFixed(1)}" y="${(H - B - Math.max(i === k ? 2 : 0, bh)).toFixed(1)}" width="${Math.max(1, bw - Math.min(2, bw * 0.3)).toFixed(1)}" height="${Math.max(i === k ? 2 : 0, bh).toFixed(1)}"><title>${tip}</title></rect>`;
+  }
+  const lab = (i, anchor) => `<text x="${(L + (i - lo + 0.5) * bw).toFixed(1)}" y="${H - 8}" text-anchor="${anchor}">${fmt.format(i)}</text>`;
+  const labels = [lab(lo, "start"), lab(hi, "end")];
+  if (k !== lo && k !== hi) labels.push(`<text class="me-l" x="${(L + (k - lo + 0.5) * bw).toFixed(1)}" y="${H - 8}" text-anchor="middle">${fmt.format(k)}</text>`);
+  $("trkHist").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="trkHistCap"><line class="base" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>${bars}${labels.join("")}</svg>`;
+}
+
+function renderTrkMissing() {
+  const owned = ownedSet();
+  $("trkMissing").innerHTML = GROUP_ORDER.map((g) => {
+    const all = GROUP_SHIPS[g], miss = all.filter((s) => !owned.has(s.key));
+    const head = `<div class="trk-mh"><strong>${esc(t("group." + g))}</strong><span class="mini">${miss.length ? t("trk.missGroup", { miss: fmt.format(miss.length), total: fmt.format(all.length) }) : t("trk.missNone")}</span></div>`;
+    if (!miss.length) return `<div class="trk-mg done">${head}</div>`;
+    // Kleine Gruppen mit Namen, große nach Stufe zusammengefasst
+    if (all.length <= 8) return `<div class="trk-mg">${head}<p class="trk-names">${miss.map((s) => esc(s.name)).join(" · ")}</p></div>`;
+    const byTier = {};
+    for (const s of miss) byTier[tierOf(s)] = (byTier[tierOf(s)] || 0) + 1;
+    const tiers = Object.keys(byTier).map(Number).sort((a, b) => b - a).map((tr) => `${ROMAN[tr]}: ${fmt.format(byTier[tr])}`).join(" · ");
+    return `<div class="trk-mg">${head}<p class="trk-names">${esc(tiers)}</p></div>`;
+  }).join("");
+}
+
+function renderTrkLog() {
+  const dt = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  $("trkLog").innerHTML = tracker.entries.length ? [...tracker.entries].reverse().map((e) => `<tr>
+    <td>${esc(dt.format(e.at))}</td>
+    <td>${entryN(e) ? esc(t("trk.logCont", { packs: fmt.format(e.packs), per: fmt.format(e.per), c: SHORT[e.type] })) : t("trk.logNone")}</td>
+    <td class="num">${fmt.format(e.golden)}</td>
+    <td>${e.ships.length ? e.ships.map((key) => esc(SHIP_BY_KEY.get(key).name)).join(", ") : t("trk.logNone")}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="mini">${esc(t("trk.logEmpty"))}</td></tr>`;
+}
 
 // ---------- Neu zeichnen ----------
 function changed() {
@@ -836,6 +1043,7 @@ function changed() {
   renderPlanInputs();
   renderGroups();
   scheduleSim();
+  renderTracker();
 }
 
 // ---------- Start ----------
