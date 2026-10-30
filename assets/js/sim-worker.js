@@ -1,5 +1,6 @@
 // Rechnet im Hintergrund, damit die Seite beim Tippen nicht ruckelt.
-importScripts("santa2026.js", "sim.js");
+// Versionsnummer aus index.html weiterreichen, damit kein alter Stand aus dem Cache kommt
+importScripts("santa2026.js" + self.location.search, "sim.js" + self.location.search);
 
 const JOBS = { plan: runPlan, needs: runNeeds, milestones: runMilestones, pitytable: runPityTable };
 

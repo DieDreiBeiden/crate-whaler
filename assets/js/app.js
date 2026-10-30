@@ -1,9 +1,11 @@
 (() => {
 "use strict";
 const $ = (id) => document.getElementById(id);
+// Worker mit derselben Versionsnummer wie app.js laden (siehe ?v= in index.html)
+const WORKER_URL = "assets/js/sim-worker.js" + (document.currentScript ? new URL(document.currentScript.src).search : "");
 const fmt = new Intl.NumberFormat(LOCALE);
 const fmt1 = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 });
-const fmtP = (p) => (p * 100).toLocaleString(LOCALE, { maximumFractionDigits: p > 0 && p < 0.001 ? 3 : p < 0.1 ? 2 : 1 }) + " %";
+const fmtP = (p) => (p * 100).toLocaleString(LOCALE, { maximumFractionDigits: p > 0 && p < 0.001 ? 3 : p < 0.1 ? 2 : 1 }) + (LANG === "de" ? " %" : "%");
 const ROMAN = { 0: "?", 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "★" };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const debounce = (fn, ms) => { let t = 0; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -44,7 +46,7 @@ const state = {
   imported: store.get("imported", null),
   manual: store.get("manual", {}),
   plan: store.get("plan", null),
-  pity: { ...PITY_DEFAULT, ...store.get("pity", {}) },
+  pity: Object.fromEntries(Object.entries(PITY_DEFAULT).map(([k, d]) => { const v = parseInt((store.get("pity", {}) || {})[k], 10); return [k, v > 0 && v < 10000 ? v : d]; })),
   filter: store.get("filter", "missing"),
   ctype: store.get("ctype", "santa"),
   openGroups: new Set(store.get("openGroups", []))
@@ -117,7 +119,10 @@ document.querySelectorAll("[data-realm]").forEach((b) => b.addEventListener("cli
   if (!appId()) { importMsg(t("msg.noAppId"), "err"); $("appId").focus(); return; }
   const realm = b.dataset.realm;
   const exp = Math.floor(Date.now() / 1000) + 14 * 86400;
-  location.href = `https://api.worldoftanks.${realm}/wot/auth/login/?application_id=${encodeURIComponent(appId())}&expires_at=${exp}&redirect_uri=${encodeURIComponent(`${selfUrl()}?realm=${realm}`)}`;
+  // Einmal-Code gegen untergeschobene Login-Links (Login-CSRF): wird beim Rücksprung verglichen
+  const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)), (x) => x.toString(16).padStart(2, "0")).join("");
+  try { sessionStorage.setItem("santa26:nonce", nonce); } catch { /* ohne Speicher keine Prüfung möglich */ }
+  location.href = `https://api.worldoftanks.${realm}/wot/auth/login/?application_id=${encodeURIComponent(appId())}&expires_at=${exp}&redirect_uri=${encodeURIComponent(`${selfUrl()}?realm=${realm}&n=${nonce}`)}`;
 }));
 
 // Rücksprung auswerten und den Schlüssel sofort aus der Adresszeile entfernen
@@ -125,6 +130,9 @@ function handleCallback() {
   const q = new URLSearchParams(location.search);
   if (!q.has("status")) return;
   history.replaceState(null, "", selfUrl() + location.hash);
+  let expected = null, storageOk = true;
+  try { expected = sessionStorage.getItem("santa26:nonce"); sessionStorage.removeItem("santa26:nonce"); } catch { storageOk = false; }
+  if (storageOk && (!expected || q.get("n") !== expected)) { importMsg(t("msg.badState"), "err"); return; }
   if (q.get("status") !== "ok") {
     importMsg(t("msg.loginFailed", { reason: q.get("message") || q.get("code") || q.get("status") }), "err");
     return;
@@ -225,7 +233,7 @@ const NEED_RUNS = 1000, NEED_CAP = 20000;
 let needsWorker = null, needsId = 0;
 const needsCache = new Map();   // Schlüssel: Typ + Garantie + Besitz -> Ergebnis
 try {
-  needsWorker = new Worker("assets/js/sim-worker.js");
+  needsWorker = new Worker(WORKER_URL);
   needsWorker.onmessage = (e) => { const job = needsJobs.get(e.data.id); if (job) { needsJobs.delete(e.data.id); needsCache.set(job, e.data.result); if (job === needsKey()) drawNeeds(e.data.result); } };
   needsWorker.onerror = () => { needsWorker = null; };
 } catch { needsWorker = null; }
@@ -260,24 +268,121 @@ function renderNeeds() {
 // result = null zeichnet die Tabelle mit Platzhaltern, solange gerechnet wird
 function drawNeeds(result) {
   const missing = missingByRow(ownedSet());
-  const fin = result ? Object.values(result).flatMap((r) => [r.p90]).filter(Number.isFinite) : [];
-  const maxLog = Math.log10(Math.max(10, ...fin));
-  const w = (n) => (Number.isFinite(n) ? Math.max(2, Math.log10(Math.max(1, n)) / maxLog * 100) : 100).toFixed(1);
   const num = (n) => (Number.isFinite(n) ? fmt.format(n) : `> ${fmt.format(NEED_CAP)}`);
   $("needsBody").innerHTML = NEED_ROWS.map((row, i) => {
     const head = `<th scope="row">${esc(row.label)}<span class="miss-inline">${t("needs.missInline", { n: fmt.format(missing[i]) })}</span></th><td class="num col-miss">${fmt.format(missing[i])}</td>`;
-    if (!missing[i]) return `<tr class="done">${head}<td colspan="3" class="mini">${t("needs.allOwned")}</td></tr>`;
+    if (!missing[i]) return `<tr class="done">${head}<td colspan="2" class="mini">${t("needs.allOwned")}</td></tr>`;
     const r = result && result["r" + i];
-    if (!r) return `<tr${row.tier == null ? ' class="any"' : ""}>${head}<td class="num big wait">…</td><td class="num big wait">…</td><td class="bar-col"><span class="nbar"></span></td></tr>`;
-    return `<tr${row.tier == null ? ' class="any"' : ""}>${head}<td class="num big">${num(r.p50)}</td><td class="num big">${num(r.p90)}</td>
-      <td class="bar-col"><span class="nbar" aria-hidden="true"><span class="p90" style="width:${w(r.p90)}%"></span><span class="p50" style="width:${w(r.p50)}%"></span></span></td></tr>`;
+    const cls = row.tier == null ? "any" : row.tier === curveTier ? "sel" : "";
+    if (!r) return `<tr class="${cls}">${head}<td class="num big wait">…</td><td class="num big wait">…</td></tr>`;
+    return `<tr class="${cls}" data-tier="${row.tier ?? ""}">${head}<td class="num big">${num(r.p50)}</td><td class="num big">${num(r.p90)}</td></tr>`;
   }).join("");
   $("needsTitle").setAttribute("aria-busy", result ? "false" : "true");
+  if (result) lastNeeds = result;
+  $("curveBox").classList.toggle("stale", !result);
+  drawCurve();
 }
+
+// ---------- Kurve: Wahrscheinlichkeit nach geöffneten Containern ----------
+// Zwei Farben: "Irgendein Schiff" und die gewählte Stufe; übrige Stufen grau als Kontext.
+let lastNeeds = null, curveTier = store.get("curveTier", 10), curveX = null;
+// Gezeichnet in der echten Breite des Containers, damit Schrift auf dem Handy lesbar bleibt
+const curveDims = () => { const W = Math.max(280, Math.round($("curvePlot").clientWidth || 720)); return { W, H: W < 500 ? 240 : 300, L: 42, R: 14, T: 14, B: 40 }; };
+function curveSeries() {
+  if (!lastNeeds) return [];
+  return NEED_ROWS.map((row, i) => ({ row, i, r: lastNeeds["r" + i] })).filter((s) => s.r && s.r.qs);
+}
+// Anteil der Durchläufe, die nach x Containern das Ziel erreicht haben (Auflösung 1 %)
+const probAt = (qs, x) => { let k = 0; while (k < qs.length && qs[k] <= x) k++; return k / 100; };
+
+function drawCurve() {
+  const box = $("curvePlot");
+  const series = curveSeries();
+  // Stufen-Auswahl
+  const tiers = series.filter((s) => s.row.tier != null).map((s) => s.row.tier);
+  if (tiers.length && !tiers.includes(curveTier)) curveTier = tiers[0];
+  $("curveTiers").innerHTML = tiers.map((tr) => `<button type="button" class="chip" data-curve-tier="${tr}" aria-pressed="${tr === curveTier}">${ROMAN[tr]}</button>`).join("");
+  $("curveBox").hidden = !series.length;
+  if (!series.length) { box.innerHTML = ""; return; }
+  const { W, H, L, R, T, B } = curveDims();
+  const finite = series.flatMap((s) => s.r.qs.filter(Number.isFinite));
+  const xMax = Math.pow(10, Math.ceil(Math.log10(Math.max(10, ...finite))));
+  const sx = (x) => L + Math.log10(Math.max(1, x)) / Math.log10(xMax) * (W - L - R);
+  const sy = (p) => T + (1 - p) * (H - T - B);
+  let g = "";
+  for (const p of [0, 0.25, 0.5, 0.75, 1]) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${sy(p)}" y2="${sy(p)}"/><text x="${L - 6}" y="${sy(p) + 4}" text-anchor="end">${fmt.format(p * 100)} %</text>`;
+  for (const p of [0.5, 0.9]) g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${sy(p)}" y2="${sy(p)}"/>`;
+  for (let x = 1; x <= xMax; x *= 10) g += `<line class="grid" x1="${sx(x)}" x2="${sx(x)}" y1="${T}" y2="${H - B}"/><text x="${sx(x)}" y="${H - B + 16}" text-anchor="${x === 1 ? "start" : x === xMax ? "end" : "middle"}">${fmt.format(x)}</text>`;
+  g += `<text class="axis-title" x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${esc(t("curve.xAxis"))}</text>`;
+  const path = (qs) => {
+    const pts = [[sx(1), sy(0)]];
+    qs.forEach((x, i) => { if (Number.isFinite(x)) pts.push([sx(x), sy((i + 1) / 100)]); });
+    return "M" + pts.map((p) => p.map((v) => v.toFixed(1)).join(",")).join("L");
+  };
+  const role = (s) => (s.row.tier == null ? "any" : s.row.tier === curveTier ? "sel" : "ctx");
+  // Kontextlinien zuerst, damit die farbigen oben liegen
+  const ordered = [...series].sort((a, b) => ({ ctx: 0, sel: 1, any: 2 }[role(a)] - { ctx: 0, sel: 1, any: 2 }[role(b)]));
+  let lines = "";
+  for (const s of ordered) lines += `<path class="ln ${role(s)}" d="${path(s.r.qs)}"/>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" tabindex="0" aria-labelledby="curveTitle" aria-describedby="curveDesc">
+    <desc id="curveDesc">${esc(t("curve.desc"))}</desc>
+    ${g}${lines}
+    <line class="xhair" id="xhair" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>
+    <rect class="hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/>
+  </svg><div class="tip" id="curveTip" role="status" hidden></div>`;
+  $("curveLegend").innerHTML = `<span><i class="key any"></i>${esc(t("curve.any"))}</span><span><i class="key sel"></i>${esc(t("needs.tier", { t: ROMAN[curveTier] }))}</span><span><i class="key ctx"></i>${esc(t("curve.others"))}</span>`;
+  const svg = box.querySelector("svg");
+  const showAt = (x) => {
+    curveX = Math.min(xMax, Math.max(1, x));
+    const hx = sx(curveX);
+    const xh = svg.querySelector("#xhair"); xh.setAttribute("x1", hx); xh.setAttribute("x2", hx); xh.setAttribute("visibility", "visible");
+    const tip = $("curveTip");
+    tip.textContent = "";
+    const head = document.createElement("div"); head.className = "tip-h"; head.textContent = t("curve.tipHead", { n: fmt.format(Math.round(curveX)) }); tip.appendChild(head);
+    for (const s of series) {
+      const rl = role(s), row = document.createElement("div"); row.className = "tip-r " + rl;
+      const k = document.createElement("i"); k.className = "key " + rl;
+      const v = document.createElement("strong"); v.textContent = fmtP(probAt(s.r.qs, curveX));
+      const n = document.createElement("span"); n.textContent = s.row.label;
+      row.append(k, v, n); tip.appendChild(row);
+    }
+    tip.hidden = false;
+    const rect = svg.getBoundingClientRect(), px = hx / W * rect.width;
+    tip.style.left = `${Math.min(rect.width - tip.offsetWidth, Math.max(0, px + 12))}px`;
+  };
+  const hide = () => { svg.querySelector("#xhair").setAttribute("visibility", "hidden"); $("curveTip").hidden = true; };
+  const fromEvent = (e) => { const rect = svg.getBoundingClientRect(); const vx = (e.clientX - rect.left) / rect.width * W; return Math.pow(10, (vx - L) / (W - L - R) * Math.log10(xMax)); };
+  svg.addEventListener("pointermove", (e) => showAt(fromEvent(e)));
+  svg.addEventListener("pointerleave", hide);
+  svg.addEventListener("blur", hide);
+  // Tastatur: Pfeile verschieben das Fadenkreuz in Schritten von 1/20 Dekade
+  svg.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { hide(); return; }
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const step = Math.pow(10, 1 / 20), cur = curveX || 10;
+    showAt(e.key === "Home" ? 1 : e.key === "End" ? xMax : e.key === "ArrowRight" ? cur * step : cur / step);
+  });
+  svg.addEventListener("focus", () => showAt(curveX || 10));
+}
+$("curveTiers").addEventListener("click", (e) => {
+  const tr = e.target.dataset && e.target.dataset.curveTier;
+  if (!tr) return;
+  curveTier = +tr; store.set("curveTier", curveTier);
+  drawNeeds(lastNeeds);
+});
+$("needsBody").addEventListener("click", (e) => {
+  const row = e.target.closest("tr[data-tier]");
+  if (!row || !row.dataset.tier) return;
+  curveTier = +row.dataset.tier; store.set("curveTier", curveTier);
+  drawNeeds(lastNeeds);
+});
 document.querySelectorAll("[data-ctype]").forEach((b) => b.addEventListener("click", () => {
   state.ctype = b.dataset.ctype; store.set("ctype", state.ctype); renderNeeds();
 }));
 const scheduleNeeds = debounce(renderNeeds, 250);
+let curveW = 0;
+window.addEventListener("resize", debounce(() => { const w = $("curvePlot").clientWidth; if (w && w !== curveW) { curveW = w; drawCurve(); } }, 150));
 
 // ---------- Kaufplan in Paketen ----------
 const fmtEur = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -296,7 +401,7 @@ $("b-bfpity").checked = buy.bfPity; $("b-counter").value = buy.counter;
 let buyWorker = null, buyId = 0, buyResult = null, pityResult = null;
 const buyCache = new Map();
 try {
-  buyWorker = new Worker("assets/js/sim-worker.js");
+  buyWorker = new Worker(WORKER_URL);
   buyWorker.onmessage = (e) => { const job = buyJobs.get(e.data.id); if (!job) return; buyJobs.delete(e.data.id); buyCache.set(job.key, e.data.result); if (job.key === buyKey(job.kind)) applyBuy(job.kind, e.data.result); };
   buyWorker.onerror = () => { buyWorker = null; };
 } catch { buyWorker = null; }
@@ -352,7 +457,7 @@ function drawBuy() {
 
 function drawPity() {
   const N = state.pity.golden, c = Math.min(N - 1, Math.max(0, buy.counter));
-  $("pityGrid").innerHTML = Array.from({ length: N }, (_, i) => `<div class="${i === c ? "cur" : ""}"><span class="z">${i}</span><span class="c">${pityResult ? fmtP(pityResult[i]).replace(" %", "%") : "…"}</span></div>`).join("");
+  $("pityGrid").innerHTML = Array.from({ length: N }, (_, i) => `<div class="${i === c ? "cur" : ""}"${i === c ? ' aria-current="true"' : ""}><span class="z">${i}</span><span class="c">${pityResult ? fmtP(pityResult[i]).replace(" %", "%") : "…"}</span></div>`).join("");
   const v = $("pityVerdict");
   if (!pityResult) { v.className = "pity-verdict"; v.textContent = ""; return; }
   const p = pityResult[c];
@@ -414,7 +519,7 @@ $("runs").addEventListener("change", () => scheduleSim());
 // ---------- Simulation im Hintergrund ----------
 let worker = null, simId = 0, lastSim = null;
 try {
-  worker = new Worker("assets/js/sim-worker.js");
+  worker = new Worker(WORKER_URL);
   worker.onmessage = (e) => { if (e.data.id === simId) finishSim(e.data.result); };
   worker.onerror = () => { worker = null; scheduleSim(); };
 } catch { worker = null; }
@@ -668,6 +773,19 @@ $("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) { r
 $("rollSel").addEventListener("change", renderRollState);
 $("rollReset").addEventListener("click", resetRoll);
 
+// ---------- Reiter ----------
+const VIEWS = ["stufen", "kaufplan", "plan", "schiffe"];
+function showView() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "stufen";
+  for (const id of VIEWS) $("v-" + id).hidden = id !== v;
+  document.querySelectorAll("nav.tabs a").forEach((el) => { if (el.dataset.view === v) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
+}
+window.addEventListener("hashchange", () => {
+  showView();
+  const nav = document.querySelector("nav.tabs");
+  if (nav.getBoundingClientRect().top < 0) nav.scrollIntoView({ block: "start" });
+});
+
 // ---------- Neu zeichnen ----------
 function changed() {
   resetRoll();
@@ -686,4 +804,5 @@ if (session && !sessionValid()) { session = null; store.set("session", null); im
 setSource(state.source === "manual" ? "manual" : "import");
 handleCallback();
 if (sessionValid() && !state.imported) loadPort();
+showView();
 })();

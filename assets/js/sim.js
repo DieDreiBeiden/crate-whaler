@@ -152,7 +152,8 @@ function runNeeds({ ownedKeys, type, pityCfg, runs, targets, tiers, cap }) {
   for (const t of live) {
     const a = samples[t.id].sort((x, y) => x - y);
     const q = (f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
-    out[t.id] = { p50: q(0.5), p90: q(0.9) };
+    // qs[i] = benötigte Container für (i+1) % Wahrscheinlichkeit, für die Kurve
+    out[t.id] = { p50: q(0.5), p90: q(0.9), qs: Array.from({ length: 99 }, (_, i) => q((i + 1) / 100)) };
   }
   return out;
 }

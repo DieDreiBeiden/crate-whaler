@@ -24,9 +24,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css">
-<link rel="stylesheet" href="assets/css/app.css">
-<script src="assets/js/boot.js"></script>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261030">
+<link rel="stylesheet" href="assets/css/app.css?v=20261030">
+<script src="assets/js/boot.js?v=20261030"></script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
@@ -41,12 +41,12 @@
         <span class="visually-hidden" data-i18n="ub.as">Angemeldet als</span>
         <strong id="ubName"></strong>
         <span class="tag" id="ubRealm"></span>
-        <button type="button" class="ghost sm" id="ubReload" data-i18n="ub.reload" data-i18n-attr="title:ub.reloadTitle">Neu laden</button>
+        <button type="button" class="ghost sm icon-only" id="ubReload" data-i18n-attr="title:ub.reloadTitle;aria-label:ub.reloadTitle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button>
         <button type="button" class="ghost sm" id="ubLogout" data-i18n="ub.logout">Abmelden</button>
       </div>
       <button type="button" class="ghost sm" id="ubLogin" hidden data-i18n="ub.login">Mit Wargaming anmelden</button>
-      <button type="button" class="ghost lang-btn" id="langBtn" data-i18n-attr="aria-label:lang.aria">DE</button>
-      <button type="button" class="ghost icon-btn" id="themeBtn">
+      <button type="button" class="ghost sm lang-btn" id="langBtn" data-i18n-attr="aria-label:lang.aria">DE</button>
+      <button type="button" class="ghost sm icon-btn" id="themeBtn">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 7a5 5 0 0 0 0 10z" fill="currentColor"/></svg>
         <span id="themeLabel">Auto</span>
       </button>
@@ -99,6 +99,14 @@
   <div id="app" class="stack" style="gap: 20px;">
   <div class="msg" id="importMsg" role="status" aria-live="polite"></div>
 
+  <nav class="tabs" data-i18n-attr="aria-label:tab.aria">
+    <a href="#stufen" data-view="stufen"><span class="n">01</span><span data-i18n="tab.needs">Pro Stufe</span></a>
+    <a href="#kaufplan" data-view="kaufplan"><span class="n">02</span><span data-i18n="tab.buy">Kaufplan</span></a>
+    <a href="#plan" data-view="plan"><span class="n">03</span><span data-i18n="tab.plan">Mein Plan</span></a>
+    <a href="#schiffe" data-view="schiffe"><span class="n">04</span><span data-i18n="tab.ships">Schiffe</span></a>
+  </nav>
+
+  <div class="view stack" id="v-stufen" hidden>
   <!-- ============ BENÖTIGTE CONTAINER ============ -->
   <section class="panel needs" aria-labelledby="needsTitle">
     <div class="panel-head">
@@ -116,13 +124,22 @@
         <th scope="col" class="num col-miss" data-i18n="needs.colMiss">Fehlen dir</th>
         <th scope="col" class="num" data-i18n="needs.col50">50 % Chance</th>
         <th scope="col" class="num" data-i18n="needs.col90">90 % Chance</th>
-        <th scope="col" class="bar-col"><span class="visually-hidden" data-i18n="needs.colBar">Vergleich</span></th>
       </tr></thead>
       <tbody id="needsBody"></tbody>
     </table></div>
+    <div class="curve" id="curveBox">
+      <div class="curve-head">
+        <h3 id="curveTitle" data-i18n="curve.title">Wahrscheinlichkeit nach geöffneten Containern</h3>
+        <div class="curve-tiers" role="group" data-i18n-attr="aria-label:curve.pick" id="curveTiers"></div>
+      </div>
+      <div class="curve-legend" id="curveLegend"></div>
+      <div class="curve-plot" id="curvePlot"></div>
+    </div>
     <p class="mini" id="needsNote"></p>
   </section>
+  </div>
 
+  <div class="view stack" id="v-kaufplan" hidden>
   <!-- ============ KAUFPLAN ============ -->
   <section class="panel" aria-labelledby="buyTitle">
     <div class="panel-head">
@@ -171,11 +188,36 @@
         </label>
         <p class="pity-verdict" id="pityVerdict" role="status"></p>
       </div>
-      <div class="pitygrid" id="pityGrid" data-i18n-attr="aria-label:buy.gridAria"></div>
+      <div class="pitygrid" id="pityGrid" role="group" data-i18n-attr="aria-label:buy.gridAria"></div>
       <p class="mini" id="pityNote"></p>
     </div>
   </section>
 
+  <details class="more">
+    <summary><span><span data-i18n="roll.title">Einzeln öffnen</span> <span class="mini" data-i18n="roll.sub">zum Ausprobieren</span></span></summary>
+    <div class="inner">
+      <div class="row">
+        <label class="f" style="flex: 1 1 200px;"><span data-i18n="buy.type">Container</span>
+          <select id="rollSel"></select>
+        </label>
+        <button type="button" id="rollBtn" data-i18n="roll.open">Öffnen</button>
+        <button type="button" class="ghost" id="rollReset" data-i18n="roll.reset">Zurücksetzen</button>
+      </div>
+      <div class="inv" id="rollInv" hidden>
+        <span class="mini" data-i18n="roll.inv">Erhalten, noch nicht geöffnet:</span>
+        <button type="button" class="gold-btn" id="openGolden" hidden></button>
+        <button type="button" class="gold-btn bf" id="openBf" hidden></button>
+      </div>
+      <div class="pool-notice" id="poolNotice" role="alert" hidden></div>
+      <div class="pool-notice" id="goldNotice" role="alert" hidden></div>
+      <p class="mini" id="rollStatus"></p>
+      <p class="note" data-i18n="roll.note"></p>
+      <div class="log" id="rollLog" role="log" aria-live="polite" tabindex="0" data-i18n-attr="aria-label:roll.logAria"></div>
+    </div>
+  </details>
+  </div>
+
+  <div class="view stack" id="v-plan" hidden>
   <!-- ============ PLAN ============ -->
   <section class="stack" style="gap: 20px;" data-i18n-attr="aria-label:plan.aria">
     <div class="readout" id="contReadout" aria-live="polite"></div>
@@ -261,7 +303,9 @@
       </div>
     </div>
   </section>
+  </div>
 
+  <div class="view stack" id="v-schiffe" hidden>
   <!-- ============ SCHIFFE ============ -->
   <section class="panel" aria-labelledby="shipsTitle">
     <div class="panel-head">
@@ -280,32 +324,11 @@
   </section>
 
   <details class="more">
-    <summary><span><span data-i18n="roll.title">Einzeln öffnen</span> <span class="mini" data-i18n="roll.sub">zum Ausprobieren</span></span></summary>
-    <div class="inner">
-      <div class="row">
-        <label class="f" style="flex: 1 1 200px;"><span data-i18n="buy.type">Container</span>
-          <select id="rollSel"></select>
-        </label>
-        <button type="button" id="rollBtn" data-i18n="roll.open">Öffnen</button>
-        <button type="button" class="ghost" id="rollReset" data-i18n="roll.reset">Zurücksetzen</button>
-      </div>
-      <div class="inv" id="rollInv" hidden>
-        <span class="mini" data-i18n="roll.inv">Erhalten, noch nicht geöffnet:</span>
-        <button type="button" class="gold-btn" id="openGolden" hidden></button>
-        <button type="button" class="gold-btn bf" id="openBf" hidden></button>
-      </div>
-      <div class="pool-notice" id="poolNotice" role="alert" hidden></div>
-      <div class="pool-notice" id="goldNotice" role="alert" hidden></div>
-      <p class="mini" id="rollStatus"></p>
-      <p class="note" data-i18n="roll.note"></p>
-      <div class="log" id="rollLog" aria-live="polite"></div>
-    </div>
-  </details>
-
-  <details class="more">
     <summary><span><span data-i18n="drops.title">Drop-Tabellen</span> <span class="mini" data-i18n="drops.sub">Chancen laut Devblog</span></span></summary>
     <div class="inner" id="dropTables"></div>
   </details>
+  </div>
+
   </div>
   </main>
 
@@ -315,10 +338,10 @@
   </footer>
 </div>
 
-<script src="assets/js/ships.js" defer></script>
-<script src="assets/js/santa2026.js" defer></script>
-<script src="assets/js/sim.js" defer></script>
-<script src="assets/js/i18n.js" defer></script>
-<script src="assets/js/app.js" defer></script>
+<script src="assets/js/ships.js?v=20261030" defer></script>
+<script src="assets/js/santa2026.js?v=20261030" defer></script>
+<script src="assets/js/sim.js?v=20261030" defer></script>
+<script src="assets/js/i18n.js?v=20261030" defer></script>
+<script src="assets/js/app.js?v=20261030" defer></script>
 </body>
 </html>
