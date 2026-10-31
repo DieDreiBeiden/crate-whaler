@@ -801,6 +801,8 @@ function renderRollState() {
   $("rollInv").hidden = !inv.golden && !inv.bf;
   $("openGolden").hidden = !inv.golden;
   $("openGolden").innerHTML = `${esc(t("roll.openGolden"))}<span class="count">${inv.golden}</span>`;
+  $("openAllGolden").hidden = inv.golden < 2;
+  $("openAllGolden").innerHTML = `${esc(t("roll.openAllGolden"))}<span class="count">${inv.golden}</span>`;
   $("openBf").hidden = !inv.bf;
   $("openBf").innerHTML = `${esc(t("roll.openBf"))}<span class="count">${inv.bf}</span>`;
   const types = [$("rollSel").value, "golden"].concat(isRollBf() ? ["bf"] : []);
@@ -890,6 +892,8 @@ $("rollPrice").addEventListener("change", () => {
 $("rollSel").addEventListener("change", showRollPrice);
 showRollPrice();
 $("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
+// Alle vorrätigen Golden Gifts nacheinander öffnen; Battle Forged Container daraus bleiben im Vorrat
+$("openAllGolden").addEventListener("click", () => { while (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
 $("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) { rollCtx.inv.bf--; rollOpen("bf"); } });
 $("rollSel").addEventListener("change", renderRollState);
 $("rollReset").addEventListener("click", resetRoll);

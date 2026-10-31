@@ -161,3 +161,22 @@ test("20 auf einmal öffnen und Money wasted je Container-Typ", async ({ page })
   expect(errors).toEqual([]);
 });
 
+test("Alle Golden Gifts auf einmal öffnen", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await page.goto("/#kaufplan");
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await page.selectOption("#rollSel", "ultra");
+  for (let i = 0; i < 10 && !(await page.isVisible("#openAllGolden")); i++) await page.locator("#rollBtn20").click();
+  await expect(page.locator("#openAllGolden")).toBeVisible();
+  const n = +(await page.locator("#openAllGolden .count").textContent());
+  expect(n).toBeGreaterThanOrEqual(2);
+  await page.locator("#openAllGolden").click();
+  await expect(page.locator("#openGolden")).toBeHidden();
+  await expect(page.locator("#openAllGolden")).toBeHidden();
+  // Beute: alle erhaltenen Golden Gifts sind geöffnet
+  await expect(page.locator("#lootReadout .s").nth(1)).toContainText("Golden");
+  await expect(page.locator("#lootReadout .s").nth(3)).not.toContainText("noch nicht");
+  expect(errors).toEqual([]);
+});
+
