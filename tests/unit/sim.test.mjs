@@ -105,3 +105,14 @@ test("Tracker-Simulation: Garantie greift, Verteilung vollständig", () => {
   const z = runTrack({ ownedKeys: [], pityCfg: { ...PITY }, bfPity: true, steps: [], runs: 50 });
   assert.deepEqual([...z.ships], [50]);
 });
+
+test("Pull-Simulation: Garantie-Zähler aus dem Stand vor dem Pull wird übernommen", () => {
+  const runBatch = g("runBatch");
+  // Ultra mit Zähler 6 von 7: der nächste Container bringt sicher ein Schiff
+  const r = runBatch({ ownedKeys: [], pity: { ultra: 6 }, pityCfg: { ...PITY }, bfPity: true, type: "ultra", n: 1, runs: 300 });
+  assert.equal(r.ships[0] || 0, 0);
+  assert.equal(r.ships.reduce((a, b) => a + b, 0), 300);
+  // Ohne Vorlauf ist ein Schiff nicht sicher
+  const z = runBatch({ ownedKeys: [], pity: {}, pityCfg: { ...PITY }, bfPity: true, type: "ultra", n: 1, runs: 300 });
+  assert.ok(z.ships[0] > 100);
+});

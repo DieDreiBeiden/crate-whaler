@@ -180,3 +180,34 @@ test("Alle Golden Gifts auf einmal öffnen", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+
+test("Einzeln öffnen: Chancen für letzten Pull und gesamten Run", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await page.goto("/#kaufplan");
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await page.selectOption("#rollSel", "ultra");
+  await page.locator("#rollBtn20").click();
+  const rows = page.locator("#oddsBody tr");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0).locator("th")).toContainText("Letzter Pull: 20 Ultra");
+  await expect(rows.nth(1).locator("th")).toContainText("Gesamter Run: 20 Ultra");
+  await expect(rows.nth(0).locator("td.luck")).toHaveText(/%/, { timeout: 15_000 });
+  await expect(rows.nth(1).locator("td.luck")).toHaveText(/%/, { timeout: 15_000 });
+  // Die Schiffszahl des Pulls stimmt mit der Beute überein
+  const ships = await page.locator("#lootReadout .v").nth(2).textContent();
+  await expect(rows.nth(0).locator("td").first()).toHaveText(ships);
+  // Zweiter Pull: der Run wächst, der Pull zeigt nur den neuen
+  await page.locator("#rollBtn").click();
+  await expect(rows.nth(0).locator("th")).toContainText("Letzter Pull: 1 Ultra");
+  await expect(rows.nth(1).locator("th")).toContainText("Gesamter Run: 21 Ultra");
+  // Golden Gifts öffnen ändert den Pull nicht, nur den Run
+  for (let i = 0; i < 5 && !(await page.isVisible("#openGolden")); i++) await page.locator("#rollBtn20").click();
+  const pullBefore = await rows.nth(0).locator("th").textContent();
+  await page.locator("#openGolden").click();
+  await expect(rows.nth(1).locator("th")).toContainText("Golden");
+  await expect(rows.nth(0).locator("th")).toHaveText(pullBefore);
+  await page.locator("#rollReset").click();
+  await expect(page.locator("#rollLoot")).toBeHidden();
+  expect(errors).toEqual([]);
+});

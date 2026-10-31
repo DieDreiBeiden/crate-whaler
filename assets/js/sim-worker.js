@@ -2,7 +2,7 @@
 // Versionsnummer aus index.html weiterreichen, damit kein alter Stand aus dem Cache kommt
 importScripts("santa2026.js" + self.location.search, "sim.js" + self.location.search);
 
-const JOBS = { plan: runPlan, needs: runNeeds, milestones: runMilestones, pitytable: runPityTable, track: runTrack };
+const JOBS = { plan: runPlan, needs: runNeeds, milestones: runMilestones, pitytable: runPityTable, track: runTrack, batch: runBatch };
 
 self.onmessage = (e) => {
   const { id, kind, params } = e.data;

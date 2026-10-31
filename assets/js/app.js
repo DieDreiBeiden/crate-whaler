@@ -764,7 +764,8 @@ for (const ct of ["santa", "mega", "ultra"]) {
 function ensureRollCtx() {
   if (rollCtx) return;
   rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity }, bfPity: buy.bfPity, inv: { golden: 0, bf: 0 }, mainOpened: 0, poolShown: false, goldShown: false,
-    loot: { opened: {}, ships: [], res: {}, times: {}, got: { golden: 0, bf: 0 }, spent: 0 } };
+    loot: { opened: {}, ships: [], res: {}, times: {}, got: { golden: 0, bf: 0 }, spent: 0 },
+    base: [...ownedSet()], steps: [], lastPull: null };
   rollNo = 0;
   checkNotices(true);
 }
@@ -772,6 +773,7 @@ function resetRoll() {
   rollCtx = null;
   $("rollLog").innerHTML = "";
   renderLoot();
+  oddsSeq++; if (typeof drawOdds === "function") drawOdds();
   for (const id of ["poolNotice", "goldNotice"]) { $(id).hidden = true; $(id).innerHTML = ""; }
   renderRollState();
 }
@@ -815,7 +817,11 @@ function rollOpen(ct) {
   ensureRollCtx();
   const o = openContainer(ct, rollCtx);
   rollNo++;
-  if (ct !== "golden" && ct !== "bf") { rollCtx.mainOpened++; rollCtx.loot.spent += pricePerContainer(ct); }
+  if (ct !== "golden" && ct !== "bf") {
+    rollCtx.mainOpened++; rollCtx.loot.spent += pricePerContainer(ct);
+    const last = rollCtx.steps[rollCtx.steps.length - 1];
+    if (last && last.type === ct) last.n++; else rollCtx.steps.push({ type: ct, n: 1 });
+  }
   const parts = [];
   for (const s of o.ships) parts.push(`${s.name} (${ROMAN[tierOf(s)]})`);
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${resName(k)}`);
@@ -840,6 +846,7 @@ function rollOpen(ct) {
   checkNotices(false);
   renderRollState();
   renderLoot();
+  return o.ships.length;
 }
 
 // Beute-Übersicht: alles, was seit dem letzten Zurücksetzen geöffnet und erhalten wurde
@@ -873,8 +880,8 @@ function renderLoot() {
   $("lootBody").innerHTML = list.length ? list.map((r) => `<tr><th scope="row">${esc(r.name)}</th><td class="num">${fmt.format(r.amount)}</td><td class="num">${fmt.format(r.times)}×</td></tr>`).join("")
     : `<tr><td colspan="3" class="mini">${esc(t("loot.none"))}</td></tr>`;
 }
-$("rollBtn").addEventListener("click", () => rollOpen($("rollSel").value));
-$("rollBtn20").addEventListener("click", () => { for (let i = 0; i < 20; i++) rollOpen($("rollSel").value); });
+$("rollBtn").addEventListener("click", () => rollPull($("rollSel").value, 1));
+$("rollBtn20").addEventListener("click", () => rollPull($("rollSel").value, 20));
 // Preis je 20 Container für „Money wasted“, je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
 const ROLL_PACK = 20;
 const rollPrice = (() => {
@@ -891,10 +898,80 @@ $("rollPrice").addEventListener("change", () => {
 });
 $("rollSel").addEventListener("change", showRollPrice);
 showRollPrice();
-$("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
+$("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) rollPull("golden", 1); });
 // Alle vorrätigen Golden Gifts nacheinander öffnen; Battle Forged Container daraus bleiben im Vorrat
-$("openAllGolden").addEventListener("click", () => { while (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
-$("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) { rollCtx.inv.bf--; rollOpen("bf"); } });
+$("openAllGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) rollPull("golden", rollCtx.inv.golden); });
+$("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) rollPull("bf", 1); });
+
+// Ein Klick = ein Pull: Stand davor merken, öffnen, dann die Chancen im Hintergrund rechnen
+function rollPull(ct, n) {
+  ensureRollCtx();
+  const fromInv = ct === "golden" || ct === "bf";
+  const before = { ownedKeys: [...rollCtx.owned], pity: { ...rollCtx.pity } };
+  let ships = 0;
+  for (let i = 0; i < n; i++) {
+    if (fromInv) { if (!rollCtx.inv[ct]) break; rollCtx.inv[ct]--; }
+    ships += rollOpen(ct);
+  }
+  // Als Pull zählt nur ein Klick auf Santa's, Mega oder Ultra; Golden Gifts und Battle Forged fließen in den Run ein
+  if (!fromInv) rollCtx.lastPull = { ...before, type: ct, n, ships };
+  scheduleOdds();
+}
+
+// Chancen für den letzten Pull und den ganzen Run, im eigenen Worker; veraltete Rechnungen werden verworfen
+const ODDS_RUNS = { pull: 2000, run: 1000 };
+let oddsWorker = null, oddsSeq = 0;
+const oddsResult = { pull: null, run: null };
+function startOddsWorker() {
+  try {
+    oddsWorker = new Worker(WORKER_URL);
+    oddsWorker.onmessage = (e) => {
+      const [seq, kind] = String(e.data.id).split(":");
+      if (+seq !== oddsSeq) return;
+      oddsResult[kind] = e.data.result; drawOdds();
+    };
+    oddsWorker.onerror = () => { oddsWorker = null; };
+  } catch { oddsWorker = null; }
+}
+startOddsWorker();
+const scheduleOdds = debounce(() => {
+  if (!rollCtx || !rollCtx.lastPull) return;
+  const seq = ++oddsSeq, p = rollCtx.lastPull;
+  oddsResult.pull = oddsResult.run = null;
+  const jobs = [["pull", "batch", { ownedKeys: p.ownedKeys, pity: p.pity, pityCfg: rollCtx.pityCfg, bfPity: rollCtx.bfPity, type: p.type, n: p.n, runs: ODDS_RUNS.pull }]];
+  if (rollCtx.steps.length) jobs.push(["run", "track", { ownedKeys: rollCtx.base, pityCfg: rollCtx.pityCfg, bfPity: rollCtx.bfPity, steps: rollCtx.steps.map((s) => ({ ...s })), runs: ODDS_RUNS.run }]);
+  rollCtx.oddsFor = { pull: { ...p }, run: { ships: rollCtx.loot.ships.length, opened: { ...rollCtx.loot.opened } }, hasRun: jobs.length > 1 };
+  drawOdds();
+  if (oddsWorker) {
+    // Eine neue Rechnung ersetzt die laufende, damit schnelles Klicken nicht in einer Warteschlange endet
+    oddsWorker.terminate(); startOddsWorker();
+    for (const [kind, job, params] of jobs) oddsWorker.postMessage({ id: `${seq}:${kind}`, kind: job, params });
+  } else {
+    for (const [kind, job, params] of jobs) oddsResult[kind] = (job === "batch" ? runBatch : runTrack)({ ...params, runs: 300 });
+    drawOdds();
+  }
+}, 250);
+
+function drawOdds() {
+  const f = rollCtx && rollCtx.oddsFor;
+  $("oddsBody").closest(".tbl").hidden = !f;
+  $("oddsNote").hidden = !f;
+  if (!f) return;
+  $("oddsNote").textContent = t("odds.note");
+  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
+  const what = (opened) => ["ultra", "mega", "santa", "golden", "bf"].filter((ct) => opened[ct]).map((ct) => `${fmt.format(opened[ct])} ${label[ct]}`).join(" · ");
+  const fp = (p, runs) => (p <= 0 ? `< ${fmtP(1 / runs)}` : p >= 1 ? `> ${fmtP(1 - 1 / runs)}` : fmtP(p));
+  // data-label: auf schmalen Bildschirmen wird jede Zeile zur Karte mit Beschriftung je Wert
+  const lb = (key) => `data-label="${esc(t(key))}"`;
+  const row = (title, k, res) => {
+    if (!res) return `<tr><th scope="row">${esc(title)}</th><td class="num" ${lb("odds.colShips")}>${fmt.format(k)}</td><td class="num wait" colspan="3">${t("odds.busy")}</td></tr>`;
+    const l = luckOf(res.ships, res.runs, k);
+    return `<tr><th scope="row">${esc(title)}</th><td class="num" ${lb("odds.colShips")}>${fmt.format(k)}</td><td class="num" ${lb("odds.colExact")}>${fp(l.pExact, res.runs)}</td><td class="num" ${lb("odds.colAtLeast")}>${fp(l.pAtLeast, res.runs)}</td><td class="num luck" ${lb("odds.colLuck")}>${fp(l.luck, res.runs)}</td></tr>`;
+  };
+  let html = row(t("odds.pull", { what: what({ [f.pull.type]: f.pull.n }) }), f.pull.ships, oddsResult.pull);
+  if (f.hasRun) html += row(t("odds.run", { what: what(f.run.opened) }), f.run.ships, oddsResult.run);
+  $("oddsBody").innerHTML = html;
+}
 $("rollSel").addEventListener("change", renderRollState);
 $("rollReset").addEventListener("click", resetRoll);
 

@@ -465,3 +465,18 @@ nav.tabs a { min-width: 0; text-align: center; overflow-wrap: anywhere; }
   .loot-table th[scope="row"] { font-size: 13px; }
 }
 .loot .readout .v.money { color: var(--warn); }
+
+/* Chancen für Pull und Run */
+.odds-table caption { text-align: left; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); padding-bottom: 6px; }
+.odds-table th[scope="row"] { font-family: var(--body); font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink); border-bottom: 1px solid var(--rule); }
+.odds-table td.luck { color: var(--brass); font-weight: 500; }
+.odds-table td.wait { color: var(--ink-soft); animation: pulse 1.2s infinite ease-in-out; }
+@media (max-width: 560px) {
+  .odds-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .odds-table, .odds-table tbody, .odds-table tr, .odds-table th, .odds-table td { display: block; width: 100%; }
+  .odds-table caption { display: block; width: 100%; }
+  .odds-table tr { border-bottom: 1px solid var(--rule); padding: 6px 0; }
+  .odds-table th[scope="row"] { border: 0; padding: 4px 0; }
+  .odds-table td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 2px 0; font-size: 14px; }
+  .odds-table td::before { content: attr(data-label); font-family: var(--body); color: var(--ink-soft); }
+}

@@ -24,9 +24,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261031-3">
-<link rel="stylesheet" href="assets/css/app.css?v=20261031-3">
-<script src="assets/js/boot.js?v=20261031-3"></script>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261031-5">
+<link rel="stylesheet" href="assets/css/app.css?v=20261031-5">
+<script src="assets/js/boot.js?v=20261031-5"></script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
@@ -235,6 +235,12 @@
       <section class="loot" id="rollLoot" aria-labelledby="lootTitle" hidden>
         <h3 id="lootTitle" data-i18n="loot.title">Beute</h3>
         <div class="readout" id="lootReadout"></div>
+        <div class="tbl" tabindex="0" role="region" aria-labelledby="oddsCap"><table class="odds-table">
+          <caption id="oddsCap" data-i18n="odds.cap">Wie wahrscheinlich war das?</caption>
+          <thead><tr><th scope="col" data-i18n="odds.colWhat">Ergebnis</th><th scope="col" class="num" data-i18n="odds.colShips">Neue Schiffe</th><th scope="col" class="num" data-i18n="odds.colExact">Genau so</th><th scope="col" class="num" data-i18n="odds.colAtLeast">So viele oder mehr</th><th scope="col" class="num" data-i18n="odds.colLuck">Glücksfaktor</th></tr></thead>
+          <tbody id="oddsBody"></tbody>
+        </table></div>
+        <p class="mini" id="oddsNote"></p>
         <div class="loot-ships" id="lootShips"></div>
         <div class="tbl" tabindex="0" role="region" aria-labelledby="lootTitle"><table class="loot-table">
           <thead><tr><th scope="col" data-i18n="loot.colRes">Belohnung</th><th scope="col" class="num" data-i18n="loot.colAmount">Menge</th><th scope="col" class="num" data-i18n="loot.colTimes">Wie oft</th></tr></thead>
@@ -429,10 +435,10 @@
   </footer>
 </div>
 
-<script src="assets/js/ships.js?v=20261031-3" defer></script>
-<script src="assets/js/santa2026.js?v=20261031-3" defer></script>
-<script src="assets/js/sim.js?v=20261031-3" defer></script>
-<script src="assets/js/i18n.js?v=20261031-3" defer></script>
-<script src="assets/js/app.js?v=20261031-3" defer></script>
+<script src="assets/js/ships.js?v=20261031-5" defer></script>
+<script src="assets/js/santa2026.js?v=20261031-5" defer></script>
+<script src="assets/js/sim.js?v=20261031-5" defer></script>
+<script src="assets/js/i18n.js?v=20261031-5" defer></script>
+<script src="assets/js/app.js?v=20261031-5" defer></script>
 </body>
 </html>

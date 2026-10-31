@@ -263,3 +263,16 @@ function luckOf(hist, runs, k) {
   return { luck: (below + eq / 2) / runs, pExact: eq / runs, pAtLeast: 1 - below / runs, pAtMost: (below + eq) / runs, mean: mean / runs };
 }
 
+// Einzeln öffnen: n Container eines Typs ab einem festen Stand (Besitz und Garantie-Zähler vor dem Pull).
+// Gezählt werden nur Schiffe aus diesen Containern; Golden Gifts aus Drops bleiben ungeöffnet wie auf der Seite.
+function runBatch({ ownedKeys, pity, pityCfg, bfPity, type, n, runs }) {
+  const base = new Set(ownedKeys), ships = [];
+  for (let r = 0; r < runs; r++) {
+    const ctx = { owned: new Set(base), pity: { ...pity }, pityCfg, bfPity };
+    let s = 0;
+    for (let i = 0; i < n; i++) s += openContainer(type, ctx).ships.length;
+    ships[s] = (ships[s] || 0) + 1;
+  }
+  return { runs, ships: Array.from({ length: ships.length }, (_, i) => ships[i] || 0) };
+}
+
