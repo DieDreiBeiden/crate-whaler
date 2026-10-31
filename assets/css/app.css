@@ -464,3 +464,4 @@ nav.tabs a { min-width: 0; text-align: center; overflow-wrap: anywhere; }
   .loot-table th, .loot-table td { padding: 6px 4px; font-size: 13px; }
   .loot-table th[scope="row"] { font-size: 13px; }
 }
+.loot .readout .v.money { color: var(--warn); }

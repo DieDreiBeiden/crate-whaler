@@ -194,6 +194,9 @@ const I18N = {
 
     "roll.title": "Einzeln öffnen", "roll.sub": "zum Ausprobieren",
     "roll.open": "Öffnen", "roll.reset": "Zurücksetzen",
+    "roll.open20": "20 öffnen", "roll.price": "Preis je Container (€)",
+    "roll.priceHelp": "Für „Money wasted“. Vorgabe für Ultra: 123 € je 20er-Paket. Container aus Event-Marken kosten nichts, dann 0 eintragen.",
+    "loot.money": "Money wasted", "loot.perShip": "{p} je neues Schiff", "loot.noShip": "noch kein neues Schiff",
     "roll.note": "Würfelt mit deinem Hafen. Gezogene Schiffe zählen als vorhanden, bis du zurücksetzt.",
     "roll.forced": " (Garantie)", "roll.comp": " (Ersatz)",
     "roll.inv": "Erhalten, noch nicht geöffnet:",
@@ -417,6 +420,9 @@ const I18N = {
 
     "roll.title": "Open one at a time", "roll.sub": "try it out",
     "roll.open": "Open", "roll.reset": "Reset",
+    "roll.open20": "Open 20", "roll.price": "Price per container (€)",
+    "roll.priceHelp": "For “Money wasted”. Ultra default: €123 per bundle of 20. Containers from event tokens are free, so enter 0.",
+    "loot.money": "Money wasted", "loot.perShip": "{p} per new ship", "loot.noShip": "no new ship yet",
     "roll.note": "Rolls with your port. Dropped ships count as owned until you reset.",
     "roll.forced": " (pity)", "roll.comp": " (compensation)",
     "roll.inv": "Received, not opened yet:",

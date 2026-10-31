@@ -764,7 +764,7 @@ for (const ct of ["santa", "mega", "ultra"]) {
 function ensureRollCtx() {
   if (rollCtx) return;
   rollCtx = { owned: ownedSet(), pity: {}, pityCfg: { ...state.pity }, bfPity: buy.bfPity, inv: { golden: 0, bf: 0 }, mainOpened: 0, poolShown: false, goldShown: false,
-    loot: { opened: {}, ships: [], res: {}, times: {}, got: { golden: 0, bf: 0 } } };
+    loot: { opened: {}, ships: [], res: {}, times: {}, got: { golden: 0, bf: 0 }, spent: 0 } };
   rollNo = 0;
   checkNotices(true);
 }
@@ -813,7 +813,7 @@ function rollOpen(ct) {
   ensureRollCtx();
   const o = openContainer(ct, rollCtx);
   rollNo++;
-  if (ct !== "golden" && ct !== "bf") rollCtx.mainOpened++;
+  if (ct !== "golden" && ct !== "bf") { rollCtx.mainOpened++; rollCtx.loot.spent += rollPrice[ct] || 0; }
   const parts = [];
   for (const s of o.ships) parts.push(`${s.name} (${ROMAN[tierOf(s)]})`);
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${resName(k)}`);
@@ -850,10 +850,13 @@ function renderLoot() {
   const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
   const opened = ["ultra", "mega", "santa", "golden", "bf"].filter((ct) => L.opened[ct]).map((ct) => `${fmt.format(L.opened[ct])} ${label[ct]}`).join(" · ");
   const left = (g) => (rollCtx.inv[g] ? t("loot.notOpened", { n: fmt.format(rollCtx.inv[g]) }) : "");
+  const eur = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" });
+  const perShip = L.ships.length ? t("loot.perShip", { p: eur.format(L.spent / L.ships.length) }) : t("loot.noShip");
   $("lootReadout").innerHTML = [
-    [t("loot.opened"), total, opened], [t("loot.ships"), L.ships.length, ""],
-    [t("loot.golden"), L.got.golden, left("golden")], [t("loot.bf"), L.got.bf, left("bf")]
-  ].map(([k, v, sub]) => `<div><span class="k">${esc(k)}</span><span class="v">${fmt.format(v)}</span><span class="s">${esc(sub)}</span></div>`).join("");
+    [t("loot.money"), eur.format(L.spent), perShip, " money"],
+    [t("loot.opened"), fmt.format(total), opened, ""], [t("loot.ships"), fmt.format(L.ships.length), "", ""],
+    [t("loot.golden"), fmt.format(L.got.golden), left("golden"), ""], [t("loot.bf"), fmt.format(L.got.bf), left("bf"), ""]
+  ].map(([k, v, sub, cls]) => `<div><span class="k">${esc(k)}</span><span class="v${cls}">${esc(v)}</span><span class="s">${esc(sub)}</span></div>`).join("");
   $("lootShips").innerHTML = L.ships.map((sh) => `<span class="loot-ship">${shipIcon(sh)}<span>${esc(sh.name)} <span class="mini">${ROMAN[tierOf(sh)] || ""}</span></span></span>`).join("");
   // „Booster episch (6×)“ = 6 Stück je Drop: in die Menge einrechnen und gleiche Arten zusammenfassen
   const rows = new Map();
@@ -869,6 +872,21 @@ function renderLoot() {
     : `<tr><td colspan="3" class="mini">${esc(t("loot.none"))}</td></tr>`;
 }
 $("rollBtn").addEventListener("click", () => rollOpen($("rollSel").value));
+$("rollBtn20").addEventListener("click", () => { for (let i = 0; i < 20; i++) rollOpen($("rollSel").value); });
+// Preis je Container für „Money wasted“, je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
+const rollPrice = (() => {
+  const saved = store.get("rollPrice", {}) || {}, out = { santa: 0, mega: 0, ultra: 6.15 };
+  for (const k of Object.keys(out)) { const v = parseFloat(saved[k]); if (Number.isFinite(v) && v >= 0 && v < 10000) out[k] = v; }
+  return out;
+})();
+const showRollPrice = () => { $("rollPrice").value = rollPrice[$("rollSel").value]; };
+$("rollPrice").addEventListener("change", () => {
+  const v = parseFloat($("rollPrice").value);
+  rollPrice[$("rollSel").value] = Number.isFinite(v) && v >= 0 ? Math.min(9999, v) : 0;
+  store.set("rollPrice", rollPrice); showRollPrice();
+});
+$("rollSel").addEventListener("change", showRollPrice);
+showRollPrice();
 $("openGolden").addEventListener("click", () => { if (rollCtx && rollCtx.inv.golden) { rollCtx.inv.golden--; rollOpen("golden"); } });
 $("openBf").addEventListener("click", () => { if (rollCtx && rollCtx.inv.bf) { rollCtx.inv.bf--; rollOpen("bf"); } });
 $("rollSel").addEventListener("change", renderRollState);

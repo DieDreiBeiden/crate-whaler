@@ -122,7 +122,7 @@ test("Beute-Übersicht summiert geöffnete Container und Ressourcen, Zurücksetz
   await page.selectOption("#rollSel", "ultra");
   for (let i = 0; i < 5; i++) await page.locator("#rollBtn").click();
   await expect(page.locator("#rollLoot")).toBeVisible();
-  await expect(page.locator("#lootReadout .v").first()).toHaveText("5");
+  await expect(page.locator("#lootReadout .v").nth(1)).toHaveText("5");
   // Jeder Ultra hat drei Plätze, also mindestens Booster und EP/Kohle/Dublonen in der Tabelle
   expect(await page.locator("#lootBody tr").count()).toBeGreaterThanOrEqual(2);
   // Platz 2 jedes Ultra: 6 epische Booster, also 5 Drops = 30 Stück
@@ -133,3 +133,31 @@ test("Beute-Übersicht summiert geöffnete Container und Ressourcen, Zurücksetz
   await expect(page.locator("#rollLoot")).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test("20 auf einmal öffnen und Money wasted je Container-Typ", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await page.goto("/#kaufplan");
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await page.selectOption("#rollSel", "ultra");
+  await expect(page.locator("#rollPrice")).toHaveValue("6.15");
+  await page.locator("#rollBtn20").click();
+  await expect(page.locator("#lootReadout .v").nth(1)).toHaveText("20");
+  await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
+  // Santa's aus Event-Marken kosten nichts: Zähler bleibt gleich
+  await page.selectOption("#rollSel", "santa");
+  await expect(page.locator("#rollPrice")).toHaveValue("0");
+  await page.locator("#rollBtn").click();
+  await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
+  // Eigener Preis wird je Typ gemerkt
+  await page.fill("#rollPrice", "0.5");
+  await page.press("#rollPrice", "Tab");
+  await page.locator("#rollBtn").click();
+  await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,50\s*€/);
+  await page.reload();
+  await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
+  await page.selectOption("#rollSel", "santa");
+  await expect(page.locator("#rollPrice")).toHaveValue("0.5");
+  expect(errors).toEqual([]);
+});
+
