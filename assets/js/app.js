@@ -813,7 +813,7 @@ function rollOpen(ct) {
   ensureRollCtx();
   const o = openContainer(ct, rollCtx);
   rollNo++;
-  if (ct !== "golden" && ct !== "bf") { rollCtx.mainOpened++; rollCtx.loot.spent += rollPrice[ct] || 0; }
+  if (ct !== "golden" && ct !== "bf") { rollCtx.mainOpened++; rollCtx.loot.spent += pricePerContainer(ct); }
   const parts = [];
   for (const s of o.ships) parts.push(`${s.name} (${ROMAN[tierOf(s)]})`);
   for (const [k, v] of Object.entries(o.res)) parts.push(`${fmt.format(v)} ${resName(k)}`);
@@ -873,17 +873,19 @@ function renderLoot() {
 }
 $("rollBtn").addEventListener("click", () => rollOpen($("rollSel").value));
 $("rollBtn20").addEventListener("click", () => { for (let i = 0; i < 20; i++) rollOpen($("rollSel").value); });
-// Preis je Container für „Money wasted“, je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
+// Preis je 20 Container für „Money wasted“, je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
+const ROLL_PACK = 20;
 const rollPrice = (() => {
-  const saved = store.get("rollPrice", {}) || {}, out = { santa: 0, mega: 0, ultra: 6.15 };
-  for (const k of Object.keys(out)) { const v = parseFloat(saved[k]); if (Number.isFinite(v) && v >= 0 && v < 10000) out[k] = v; }
+  const saved = store.get("rollPrice20", {}) || {}, out = { santa: 0, mega: 0, ultra: 123 };
+  for (const k of Object.keys(out)) { const v = parseFloat(saved[k]); if (Number.isFinite(v) && v >= 0 && v < 100000) out[k] = v; }
   return out;
 })();
+const pricePerContainer = (ct) => (rollPrice[ct] || 0) / ROLL_PACK;
 const showRollPrice = () => { $("rollPrice").value = rollPrice[$("rollSel").value]; };
 $("rollPrice").addEventListener("change", () => {
   const v = parseFloat($("rollPrice").value);
-  rollPrice[$("rollSel").value] = Number.isFinite(v) && v >= 0 ? Math.min(9999, v) : 0;
-  store.set("rollPrice", rollPrice); showRollPrice();
+  rollPrice[$("rollSel").value] = Number.isFinite(v) && v >= 0 ? Math.min(99999, v) : 0;
+  store.set("rollPrice20", rollPrice); showRollPrice();
 });
 $("rollSel").addEventListener("change", showRollPrice);
 showRollPrice();

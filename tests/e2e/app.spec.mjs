@@ -140,7 +140,7 @@ test("20 auf einmal öffnen und Money wasted je Container-Typ", async ({ page })
   await page.goto("/#kaufplan");
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
   await page.selectOption("#rollSel", "ultra");
-  await expect(page.locator("#rollPrice")).toHaveValue("6.15");
+  await expect(page.locator("#rollPrice")).toHaveValue("123");
   await page.locator("#rollBtn20").click();
   await expect(page.locator("#lootReadout .v").nth(1)).toHaveText("20");
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
@@ -150,14 +150,14 @@ test("20 auf einmal öffnen und Money wasted je Container-Typ", async ({ page })
   await page.locator("#rollBtn").click();
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
   // Eigener Preis wird je Typ gemerkt
-  await page.fill("#rollPrice", "0.5");
+  await page.fill("#rollPrice", "10");
   await page.press("#rollPrice", "Tab");
   await page.locator("#rollBtn").click();
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,50\s*€/);
   await page.reload();
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
   await page.selectOption("#rollSel", "santa");
-  await expect(page.locator("#rollPrice")).toHaveValue("0.5");
+  await expect(page.locator("#rollPrice")).toHaveValue("10");
   expect(errors).toEqual([]);
 });
 
