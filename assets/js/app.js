@@ -882,7 +882,7 @@ function renderLoot() {
 }
 $("rollBtn").addEventListener("click", () => rollPull($("rollSel").value, 1));
 $("rollBtn20").addEventListener("click", () => rollPull($("rollSel").value, 20));
-// Preis je 20 Container für „Money wasted“, je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
+// Preis je 20 Container für „Verbranntes Geld“ (EN: Money wasted), je Typ gemerkt; Golden Gifts und Battle Forged kommen aus Drops und kosten nichts
 const ROLL_PACK = 20;
 const rollPrice = (() => {
   const saved = store.get("rollPrice20", {}) || {}, out = { santa: 0, mega: 0, ultra: 123 };

@@ -134,7 +134,7 @@ test("Beute-Übersicht summiert geöffnete Container und Ressourcen, Zurücksetz
   expect(errors).toEqual([]);
 });
 
-test("20 auf einmal öffnen und Money wasted je Container-Typ", async ({ page }) => {
+test("20 auf einmal öffnen und verbranntes Geld je Container-Typ", async ({ page }) => {
   const errors = await guard(page);
   await openManual(page, { lang: "de" });
   await page.goto("/#kaufplan");
