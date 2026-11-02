@@ -12,11 +12,12 @@ const DISABLED = ["target-size"];
 
 for (const theme of ["light", "dark"]) {
   test(`axe: alle Reiter ohne WCAG-2.2-AA-Verstöße (${theme})`, async ({ page }) => {
-    await openManual(page, { theme });
+    // Schnellcheck auf der Antwortseite prüfen (Schritt 3 mit Zahlen)
+    await openManual(page, { theme, qc: { step: 3, goal: "any" } });
     await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
     await page.goto("/#kaufplan");
     await page.locator("#buyBody tr").first().waitFor();
-    for (const v of ["stufen", "kaufplan", "plan", "schiffe", "tracker"]) {
+    for (const v of ["stufen", "kaufplan", "plan", "schiffe", "tracker", "schnell"]) {
       await page.goto(`/#${v}`);
       await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
       await page.waitForTimeout(200);

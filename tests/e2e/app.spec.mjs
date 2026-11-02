@@ -239,3 +239,36 @@ test("Gemeinsame Container-Wahl, Hinweise hinter „i“, Ressourcen ohne 0-Zeil
   expect(vals.filter((v) => v.trim() === "0")).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("Schnellcheck: Ziel → Bestand → Antwort, gleiche Zahlen wie im Kaufplan", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  await page.goto("/#schnell");
+  await expect(page.locator("#ctypeBar")).toBeVisible();
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
+  // Zielliste folgt dem Container
+  await expect(page.locator('.qc-goal[data-goal="pool"]')).toContainText("Ultra Gift");
+  await page.locator('.qc-goal[data-goal="all7"]').click();
+  await expect(page.locator('.qc-goal[data-goal="all7"]')).toHaveAttribute("aria-pressed", "true");
+  await page.locator("#qcNext").click();
+  await expect(page.locator("#qcBody h3")).toHaveText("Was hast du schon?");
+  await expect(page.locator("#qcBody")).toContainText("Ohne Anmeldung");
+  await page.locator("#qcPack").fill("20");
+  await page.locator("#qcPrice").fill("123");
+  await page.locator("#qcNext").click();
+  const ans = page.locator(".qc-answer:not(.wait)");
+  await expect(ans).toContainText("alle 7 Golden-Gift-Schiffe", { timeout: 60_000 });
+  const packs50 = await page.locator(".qc-card strong").first().innerText();
+  // Gegenprobe: dieselbe Zahl steht im Kaufplan
+  await page.goto("/#kaufplan");
+  const row = page.locator("#buyBody tr", { hasText: "Alle 7 Golden-Gift-Schiffe" });
+  await expect(row.locator("td").nth(1)).toContainText(packs50, { timeout: 60_000 });
+  // Antwortseite: weiter zum Tracker, Neustart springt auf Schritt 1
+  await page.goto("/#schnell");
+  await page.locator(".btn-link.primary").click();
+  await expect(page).toHaveURL(/#tracker$/);
+  await page.goto("/#schnell");
+  await page.locator("#qcRestart").click();
+  await expect(page.locator("#qcBody h3")).toHaveText("Was willst du bekommen?");
+  expect(errors).toEqual([]);
+});

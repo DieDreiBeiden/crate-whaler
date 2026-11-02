@@ -341,6 +341,7 @@ function drawNeeds(result) {
   if (result) lastNeeds = result;
   $("curveBox").classList.toggle("stale", !result);
   drawCurve();
+  quickRefresh();
 }
 
 // ---------- Kurve: Wahrscheinlichkeit nach geöffneten Containern ----------
@@ -516,6 +517,7 @@ function drawBuy() {
     rows.push(`<tr><td>${p}</td><td class="num">${fmt1.format(y)}</td><td class="num">${y > 0 ? fmtEur.format(buy.price / y) : "–"}</td></tr>`);
   }
   $("yieldBody").innerHTML = rows.join("") || `<tr><td colspan="3" class="mini">${t("buy.calc")}</td></tr>`;
+  quickRefresh();
 }
 
 function drawPity() {
@@ -980,7 +982,7 @@ $("rollReset").addEventListener("click", resetRoll);
 // ---------- Gemeinsame Container-Wahl ----------
 // Ein Container-Typ für Pro Stufe, Kaufplan, Einzeln öffnen und Tracker; die alten Auswahlfelder bleiben
 // versteckt als Zustand der jeweiligen Bereiche und werden hier mitgezogen.
-const CTYPE_VIEWS = ["stufen", "kaufplan", "tracker"];
+const CTYPE_VIEWS = ["stufen", "kaufplan", "tracker", "schnell"];
 function setCtype(ct) {
   if (!["santa", "mega", "ultra"].includes(ct)) ct = "santa";
   state.ctype = ct; store.set("ctype", ct);
@@ -989,6 +991,8 @@ function setCtype(ct) {
     const el = $(id);
     if (el && el.value !== ct) { el.value = ct; el.dispatchEvent(new Event("change")); }
   }
+  // Schnellcheck: Ziele und Fehlende hängen am Container-Typ
+  if (qcReady && !$("v-schnell").hidden) renderQuick();
 }
 
 // ---------- Hinweise hinter „i“ ----------
@@ -1035,13 +1039,119 @@ if (infoHover) {
 window.addEventListener("scroll", () => { if (infoOpen) placeInfo(infoOpen, $(infoOpen.getAttribute("aria-controls"))); }, { passive: true, capture: true });
 window.addEventListener("resize", () => { if (infoOpen) setInfo(infoOpen, false); });
 
+// ---------- Schnellcheck: Ziel → Bestand → Antwort ----------
+// Nutzt dieselben Ergebnisse wie „Pro Stufe“ (needsCache) und „Kaufplan“ (buyResult), damit die Zahlen überall gleich sind.
+var qcReady = false;
+const qc = { step: 1, goal: "any", ...store.get("qc", {}) };
+const QC_GOALS = [
+  { id: "any", src: "needs", row: 0, label: () => t("qc.gAny"), sub: () => t("qc.gAnySub"), phrase: () => t("qc.pAny") }
+].concat([10, 9, 8, 7, 6, 5].map((tier, k) => ({
+  id: "t" + tier, src: "needs", row: k + 1, tier,
+  label: () => t("qc.gTier", { t: ROMAN[tier] }), sub: (m) => t("qc.gTierSub", { n: fmt.format(m[k + 1]) }), phrase: () => t("qc.pTier", { t: ROMAN[tier] })
+}))).concat([
+  { id: "pool", src: "buy", g: "pool", label: () => t("qc.gPool", { c: SHORT[state.ctype] }), sub: () => "", phrase: () => t("qc.pPool", { c: SHORT[state.ctype] }) },
+  { id: "reg3", src: "buy", g: "reg3", label: () => t("qc.gReg3"), sub: () => t("qc.gReg3Sub"), phrase: () => t("qc.pReg3") },
+  { id: "all7", src: "buy", g: "all7", label: () => t("qc.gAll7"), sub: () => "", phrase: () => t("qc.pAll7") },
+  { id: "nj", src: "buy", g: "nj", label: () => t("qc.gNj"), sub: () => t("qc.gNjSub"), phrase: () => t("qc.pNj") }
+]);
+const qcGoal = () => QC_GOALS.find((g) => g.id === qc.goal) || QC_GOALS[0];
+const saveQc = () => store.set("qc", { step: qc.step, goal: qc.goal });
+// Ergebnis in Containern: { state: calc | done | never | ok, p50, p90 }
+function qcResult(g) {
+  if (g.src === "needs") {
+    if (!missingByRow(ownedSet())[g.row]) return { state: "done" };
+    const hit = needsCache.get(needsKey()), r = hit && hit.result["r" + g.row];
+    if (!r) return { state: "calc" };
+    return Number.isFinite(r.p50) ? { state: "ok", p50: r.p50, p90: r.p90 } : { state: "never", cap: NEED_CAP };
+  }
+  if (!buyResult || buy.type !== state.ctype) return { state: "calc" };
+  const m = buyResult[g.g];
+  if (!m) return { state: "calc" };
+  if (m.done) return { state: "done" };
+  return Number.isFinite(m.p50) ? { state: "ok", p50: m.p50, p90: m.p90 } : { state: "never", cap: BUY_CAP };
+}
+// Deutsch durchgekoppelt („Ultra-Gift-Paketen“); nom = Nominativ für den 90-%-Satz
+function qcPacks(n, nom = false) {
+  if (!Number.isFinite(n)) return null;
+  const k = Math.ceil(n / buy.pack), eur = fmtEur.format(k * buy.price);
+  const c = LANG === "de" ? SHORT[state.ctype].replace(/ /g, "-") : SHORT[state.ctype];
+  return { k, eur, text: t((k === 1 ? "qc.packs1" : "qc.packs") + (nom ? "N" : ""), { n: fmt.format(k), c, eur }) };
+}
+function renderQuick() {
+  const steps = [t("qc.s1"), t("qc.s2"), t("qc.s3")];
+  $("qcSteps").innerHTML = steps.map((label, i) => `<li><button type="button" data-qstep="${i + 1}" class="${i + 1 < qc.step ? "done" : ""}"${i + 1 === qc.step ? ' aria-current="step"' : ""}><span aria-hidden="true">${i + 1}</span>${esc(label)}</button></li>`).join("");
+  const missing = missingByRow(ownedSet());
+  let html = "";
+  if (qc.step === 1) {
+    html = `<h3>${esc(t("qc.q1"))}</h3><div class="qc-goals" role="group" aria-label="${esc(t("qc.q1"))}">${QC_GOALS.map((g) => {
+      const owned = g.src === "needs" && !missing[g.row], sub = owned ? t("needs.allOwned") : g.sub(missing);
+      return `<button type="button" class="qc-goal" data-goal="${g.id}" aria-pressed="${qc.goal === g.id}"><span class="qc-gl">${esc(g.label())}</span>${sub ? `<span class="mini">${esc(sub)}</span>` : ""}</button>`;
+    }).join("")}</div>`;
+  } else if (qc.step === 2) {
+    const port = hasImport() ? t("qc.portIn") : Object.keys(state.manual || {}).length ? t("qc.portManual", { n: fmt.format(Object.keys(state.manual).length) }) : t("qc.portNone");
+    html = `<h3>${esc(t("qc.q2"))}</h3>
+      <p class="mini">${esc(t("qc.ctypeHint"))}</p>
+      <p>${esc(port)}</p>
+      <p><strong>${esc(t("qc.missing", { n: fmt.format(missing[0]), c: SHORT[state.ctype] }))}</strong></p>
+      <div class="row">${hasImport() ? "" : `${state.source === "manual" ? `<button type="button" class="ghost" id="qcLogin">${esc(t("qc.login"))}</button>` : ""}<a class="btn-link" href="#schiffe">${esc(t("qc.tick"))}</a>`}</div>
+      <div class="fields qc-fields">
+        <label class="f"><span>${esc(t("qc.pack"))}</span><input type="number" inputmode="numeric" min="1" id="qcPack" value="${buy.pack}"></label>
+        <label class="f"><span>${esc(t("qc.price"))}</span><input type="number" inputmode="decimal" min="0" step="0.01" id="qcPrice" value="${buy.price}"></label>
+      </div>`;
+  } else {
+    const g = qcGoal(), r = qcResult(g);
+    let ans;
+    if (r.state === "calc") ans = `<p class="qc-answer wait" aria-busy="true">${esc(t("qc.calc"))}</p>`;
+    else if (r.state === "done") ans = `<p class="qc-answer ok">${esc(t("qc.done", { c: SHORT[state.ctype] }))}</p>`;
+    else if (r.state === "never") ans = `<p class="qc-answer">${esc(t("qc.never", { c: SHORT[state.ctype], n: fmt.format(r.cap) }))}</p>`;
+    else {
+      const a = qcPacks(r.p50), b = qcPacks(r.p90, true);
+      const card = (pct, x, n) => `<div class="qc-card"><span class="qc-pct">${pct}</span><strong>${x ? esc(t(x.k === 1 ? "qc.pk1" : "qc.pk", { n: fmt.format(x.k) })) : "–"}</strong><span class="qc-eur">${x ? esc(x.eur) : ""}</span><span class="mini">${esc(t("qc.containers", { n: fmt.format(Math.round(n)) }))}</span></div>`;
+      ans = `<p class="qc-answer">${esc(t("qc.answer", { p50: a.text, goal: g.phrase() }))}${b ? " " + esc(t("qc.answer90", { p90: b.text })) : ""}</p>
+        <div class="qc-cards">${card("50 %", a, r.p50)}${card("90 %", b, r.p90)}</div>`;
+    }
+    html = `<h3>${esc(t("qc.q3"))}</h3>${ans}<p class="mini">${esc(t("qc.basis"))}</p>
+      <div class="row"><a class="btn-link primary" href="#tracker">${esc(t("qc.open"))}</a><a class="btn-link" href="${g.src === "needs" ? "#stufen" : "#kaufplan"}">${esc(t("qc.tables"))}</a></div>`;
+  }
+  $("qcBody").innerHTML = html;
+  $("qcBack").hidden = qc.step === 1;
+  $("qcNext").hidden = qc.step === 3;
+  $("qcNext").textContent = qc.step === 1 ? t("qc.next", { s: t("qc.s2") }) : t("qc.show");
+}
+// Nur die Antwortseite zeigt Rechenergebnisse; Schritt 2 nicht neu zeichnen (Eingabefelder behalten den Fokus)
+function quickRefresh() { if (qcReady && !$("v-schnell").hidden && qc.step === 3) renderQuick(); }
+function qcGo(step) {
+  qc.step = Math.max(1, Math.min(3, step)); saveQc();
+  if (qc.step === 3) { renderNeeds(); if (!buyResult) requestBuy(); }
+  renderQuick();
+  const h = $("qcBody").querySelector("h3"); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
+}
+$("qcSteps").addEventListener("click", (e) => { const b = e.target.closest("[data-qstep]"); if (b) qcGo(+b.dataset.qstep); });
+$("qcNext").addEventListener("click", () => qcGo(qc.step + 1));
+$("qcBack").addEventListener("click", () => qcGo(qc.step - 1));
+$("qcRestart").addEventListener("click", () => { qc.goal = "any"; qcGo(1); });
+$("qcBody").addEventListener("click", (e) => {
+  const g = e.target.closest("[data-goal]");
+  if (g) { qc.goal = g.dataset.goal; saveQc(); renderQuick(); $("qcBody").querySelector(`[data-goal="${qc.goal}"]`).focus(); return; }
+  if (e.target.closest("#qcLogin")) setSource("import");
+});
+// Paketgröße und Preis teilen sich Schnellcheck und Kaufplan
+$("qcBody").addEventListener("input", (e) => {
+  const map = { qcPack: "b-pack", qcPrice: "b-price" }, id = map[e.target.id];
+  if (!id) return;
+  $(id).value = e.target.value;
+  $(id).dispatchEvent(new Event("input"));
+});
+qcReady = true;
+
 // ---------- Reiter ----------
-const VIEWS = ["stufen", "kaufplan", "plan", "schiffe", "tracker"];
+const VIEWS = ["stufen", "kaufplan", "plan", "schiffe", "tracker", "schnell"];
 function showView() {
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "stufen";
   for (const id of VIEWS) $("v-" + id).hidden = id !== v;
   $("ctypeBar").hidden = !CTYPE_VIEWS.includes(v);
   if (v === "tracker" && typeof renderTracker === "function") renderTracker();
+  if (v === "schnell") { if (qc.step === 3) { renderNeeds(); if (!buyResult) requestBuy(); } renderQuick(); }
   document.querySelectorAll("nav.tabs a").forEach((el) => { if (el.dataset.view === v) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
 }
 window.addEventListener("hashchange", () => {

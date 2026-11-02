@@ -24,9 +24,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261102-2">
-<link rel="stylesheet" href="assets/css/app.css?v=20261102-2">
-<script src="assets/js/boot.js?v=20261102-2"></script>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261102-3">
+<link rel="stylesheet" href="assets/css/app.css?v=20261102-3">
+<script src="assets/js/boot.js?v=20261102-3"></script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
@@ -108,6 +108,7 @@
     <a href="#plan" data-view="plan"><span class="n">03</span><span data-i18n="tab.plan">Mein Plan</span></a>
     <a href="#schiffe" data-view="schiffe"><span class="n">04</span><span data-i18n="tab.ships">Schiffe</span></a>
     <a href="#tracker" data-view="tracker"><span class="n">05</span><span data-i18n="tab.tracker">Tracker</span></a>
+    <a href="#schnell" data-view="schnell"><span class="n">06</span><span data-i18n="tab.quick">Schnellcheck</span></a>
   </nav>
 
   <!-- Gemeinsame Container-Wahl: gilt für Pro Stufe, Kaufplan, Einzeln öffnen und Tracker -->
@@ -353,6 +354,23 @@
   </details>
   </div>
 
+  <div class="view stack" id="v-schnell" hidden>
+  <!-- ============ SCHNELLCHECK: geführt in drei Schritten ============ -->
+  <section class="panel qc" aria-labelledby="qcTitle">
+    <div class="panel-head">
+      <h2 id="qcTitle" data-i18n="qc.title">Schnellcheck</h2>
+      <button type="button" class="ghost sm" id="qcRestart" data-i18n="qc.restart">Neu starten</button>
+    </div>
+    <p class="lede" data-i18n="qc.lede"></p>
+    <ol class="qc-steps" id="qcSteps"></ol>
+    <div class="qc-body" id="qcBody"></div>
+    <div class="qc-nav">
+      <button type="button" class="ghost" id="qcBack" data-i18n="qc.back">Zurück</button>
+      <button type="button" id="qcNext"></button>
+    </div>
+  </section>
+  </div>
+
   <div class="view stack" id="v-tracker" hidden>
   <!-- ============ TRACKER ============ -->
   <section class="panel trk" aria-labelledby="trkTitle">
@@ -422,10 +440,10 @@
   </footer>
 </div>
 
-<script src="assets/js/ships.js?v=20261102-2" defer></script>
-<script src="assets/js/santa2026.js?v=20261102-2" defer></script>
-<script src="assets/js/sim.js?v=20261102-2" defer></script>
-<script src="assets/js/i18n.js?v=20261102-2" defer></script>
-<script src="assets/js/app.js?v=20261102-2" defer></script>
+<script src="assets/js/ships.js?v=20261102-3" defer></script>
+<script src="assets/js/santa2026.js?v=20261102-3" defer></script>
+<script src="assets/js/sim.js?v=20261102-3" defer></script>
+<script src="assets/js/i18n.js?v=20261102-3" defer></script>
+<script src="assets/js/app.js?v=20261102-3" defer></script>
 </body>
 </html>
