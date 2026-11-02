@@ -8,7 +8,7 @@ test("Tracker: Eintrag auswerten, Schiff gilt als im Hafen, Rückgängig und Spe
   await page.locator('nav.tabs a[data-view="tracker"]').click();
   await expect(page.locator("#trkEmpty")).toBeVisible();
 
-  await page.selectOption("#trkType", "ultra");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
   await page.fill("#trkPacks", "2");
   await page.fill("#trkPer", "20");
   await expect(page.locator("#trkSum")).toContainText("40");

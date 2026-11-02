@@ -119,7 +119,7 @@ test("Beute-Übersicht summiert geöffnete Container und Ressourcen, Zurücksetz
   await page.goto("/#kaufplan");
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
   await expect(page.locator("#rollLoot")).toBeHidden();
-  await page.selectOption("#rollSel", "ultra");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
   for (let i = 0; i < 5; i++) await page.locator("#rollBtn").click();
   await expect(page.locator("#rollLoot")).toBeVisible();
   await expect(page.locator("#lootReadout .v").nth(1)).toHaveText("5");
@@ -139,13 +139,13 @@ test("20 auf einmal öffnen und verbranntes Geld je Container-Typ", async ({ pag
   await openManual(page, { lang: "de" });
   await page.goto("/#kaufplan");
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
-  await page.selectOption("#rollSel", "ultra");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
   await expect(page.locator("#rollPrice")).toHaveValue("123");
   await page.locator("#rollBtn20").click();
   await expect(page.locator("#lootReadout .v").nth(1)).toHaveText("20");
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
   // Santa's aus Event-Marken kosten nichts: Zähler bleibt gleich
-  await page.selectOption("#rollSel", "santa");
+  await page.locator('#ctypeBar [data-ctype="santa"]').click();
   await expect(page.locator("#rollPrice")).toHaveValue("0");
   await page.locator("#rollBtn").click();
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,00\s*€/);
@@ -156,7 +156,7 @@ test("20 auf einmal öffnen und verbranntes Geld je Container-Typ", async ({ pag
   await expect(page.locator("#lootReadout .v").first()).toHaveText(/123,50\s*€/);
   await page.reload();
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
-  await page.selectOption("#rollSel", "santa");
+  await page.locator('#ctypeBar [data-ctype="santa"]').click();
   await expect(page.locator("#rollPrice")).toHaveValue("10");
   expect(errors).toEqual([]);
 });
@@ -166,7 +166,7 @@ test("Alle Golden Gifts auf einmal öffnen", async ({ page }) => {
   await openManual(page, { lang: "de" });
   await page.goto("/#kaufplan");
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
-  await page.selectOption("#rollSel", "ultra");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
   for (let i = 0; i < 10 && !(await page.isVisible("#openAllGolden")); i++) await page.locator("#rollBtn20").click();
   await expect(page.locator("#openAllGolden")).toBeVisible();
   const n = +(await page.locator("#openAllGolden .count").textContent());
@@ -186,7 +186,7 @@ test("Einzeln öffnen: Chancen für letzten Pull und gesamten Run", async ({ pag
   await openManual(page, { lang: "de" });
   await page.goto("/#kaufplan");
   await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
-  await page.selectOption("#rollSel", "ultra");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
   await page.locator("#rollBtn20").click();
   const rows = page.locator("#oddsBody tr");
   await expect(rows).toHaveCount(2);
@@ -209,5 +209,33 @@ test("Einzeln öffnen: Chancen für letzten Pull und gesamten Run", async ({ pag
   await expect(rows.nth(0).locator("th")).toHaveText(pullBefore);
   await page.locator("#rollReset").click();
   await expect(page.locator("#rollLoot")).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test("Gemeinsame Container-Wahl, Hinweise hinter „i“, Ressourcen ohne 0-Zeilen", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" });
+  // Eine Wahl gilt für Pro Stufe, Kaufplan, Einzeln öffnen und Tracker
+  await page.locator('#ctypeBar [data-ctype="mega"]').click();
+  await expect(page.locator("#needsLede")).toContainText("Mega");
+  await page.goto("/#kaufplan");
+  await expect(page.locator('#ctypeBar [data-ctype="mega"]')).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => ["b-type", "rollSel", "trkType"].map((id) => document.getElementById(id).value))).toEqual(["mega", "mega", "mega"]);
+  // Wo die Wahl nichts bewirkt, ist sie ausgeblendet
+  await page.goto("/#plan");
+  await expect(page.locator("#ctypeBar")).toBeHidden();
+  // Hinweis: Klick öffnet, Esc schließt und gibt den Fokus zurück
+  const btn = page.locator('.info-btn[aria-controls="freeHint"]');
+  await btn.click();
+  await expect(page.locator("#freeHint")).toBeVisible();
+  await expect(page.locator("#freeHint")).toContainText("Login-Kalender");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#freeHint")).toBeHidden();
+  await expect(btn).toBeFocused();
+  // Ressourcen: keine Zeile mit 0
+  await expect(page.locator("#resBody tr").first()).toBeVisible();
+  const vals = await page.locator("#resBody td.num").allInnerTexts();
+  expect(vals.length).toBeGreaterThan(0);
+  expect(vals.filter((v) => v.trim() === "0")).toEqual([]);
   expect(errors).toEqual([]);
 });

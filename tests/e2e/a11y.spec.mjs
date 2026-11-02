@@ -45,7 +45,7 @@ for (const theme of ["light", "dark"]) {
     await openManual(page, { theme });
     await page.goto("/#kaufplan");
     await page.evaluate(() => document.querySelectorAll("details.more").forEach((d) => (d.open = true)));
-    await page.selectOption("#rollSel", "ultra");
+    await page.locator('#ctypeBar [data-ctype="ultra"]').click();
     for (let i = 0; i < 40 && !(await page.isVisible("#openGolden")); i++) await page.locator("#rollBtn").click();
     await expect(page.locator("#openGolden")).toBeVisible();
     await expect(page.locator("#rollLoot")).toBeVisible();

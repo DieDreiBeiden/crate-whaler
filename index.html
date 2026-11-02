@@ -24,9 +24,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="fonts/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261102-1">
-<link rel="stylesheet" href="assets/css/app.css?v=20261102-1">
-<script src="assets/js/boot.js?v=20261102-1"></script>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261102-2">
+<link rel="stylesheet" href="assets/css/app.css?v=20261102-2">
+<script src="assets/js/boot.js?v=20261102-2"></script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Zum Inhalt springen</a>
@@ -110,18 +110,23 @@
     <a href="#tracker" data-view="tracker"><span class="n">05</span><span data-i18n="tab.tracker">Tracker</span></a>
   </nav>
 
-  <div class="view stack" id="v-stufen" hidden>
-  <!-- ============ BENÖTIGTE CONTAINER ============ -->
-  <section class="panel needs" aria-labelledby="needsTitle">
-    <div class="panel-head">
-      <h2 id="needsTitle" data-i18n="needs.title">Wie viele Container brauchst du?</h2>
-    </div>
-    <p class="lede" id="needsLede"></p>
-    <div class="boxes" role="group" data-i18n-attr="aria-label:needs.ctype">
+  <!-- Gemeinsame Container-Wahl: gilt für Pro Stufe, Kaufplan, Einzeln öffnen und Tracker -->
+  <section class="ctype-bar" id="ctypeBar" aria-labelledby="ctypeLabel">
+    <h2 class="ctype-label" id="ctypeLabel" data-i18n="ctype.label">Container</h2>
+    <div class="boxes" role="group" aria-labelledby="ctypeLabel">
       <button type="button" class="box-santa" data-ctype="santa" aria-pressed="true"><span class="box-ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="9" width="17" height="11.5"/><path d="M2.5 6h19v3h-19z"/><path d="M12 6v14.5"/><path d="M12 6C10 2.5 6.5 2.8 7 4.6 7.4 6 10 6 12 6c2 0 4.6 0 5-1.4.5-1.8-3-2.1-5 1.4z"/></svg></span><span class="box-t"><span class="box-n">Santa's</span><span class="box-s" data-box-pity="santa"></span></span></button>
       <button type="button" class="box-mega" data-ctype="mega" aria-pressed="false"><span class="box-ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="9" width="17" height="11.5"/><path d="M2.5 6h19v3h-19z"/><path d="M12 6v14.5"/><path d="M12 6C10 2.5 6.5 2.8 7 4.6 7.4 6 10 6 12 6c2 0 4.6 0 5-1.4.5-1.8-3-2.1-5 1.4z"/></svg></span><span class="box-t"><span class="box-n">Mega</span><span class="box-s" data-box-pity="mega"></span></span></button>
       <button type="button" class="box-ultra" data-ctype="ultra" aria-pressed="false"><span class="box-ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="9" width="17" height="11.5"/><path d="M2.5 6h19v3h-19z"/><path d="M12 6v14.5"/><path d="M12 6C10 2.5 6.5 2.8 7 4.6 7.4 6 10 6 12 6c2 0 4.6 0 5-1.4.5-1.8-3-2.1-5 1.4z"/></svg></span><span class="box-t"><span class="box-n">Ultra</span><span class="box-s" data-box-pity="ultra"></span></span></button>
     </div>
+  </section>
+
+  <div class="view stack" id="v-stufen" hidden>
+  <!-- ============ BENÖTIGTE CONTAINER ============ -->
+  <section class="panel needs" aria-labelledby="needsTitle">
+    <div class="panel-head">
+      <div class="title-info"><h2 id="needsTitle" data-i18n="needs.title">Wie viele Container brauchst du?</h2><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="needsNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="needsNote" role="note" hidden></span></span></div>
+    </div>
+    <p class="lede" id="needsLede"></p>
     <div class="hero-row">
       <div class="hero" id="needsHero">
         <div class="hero-k" data-i18n="needs.any">Irgendein neues Schiff</div>
@@ -149,7 +154,6 @@
       </tr></thead>
       <tbody id="needsBody"></tbody>
     </table></div>
-    <p class="mini" id="needsNote"></p>
   </section>
   </div>
 
@@ -157,12 +161,12 @@
   <!-- ============ KAUFPLAN ============ -->
   <section class="panel" aria-labelledby="buyTitle">
     <div class="panel-head">
-      <h2 id="buyTitle" data-i18n="buy.title">Kaufplan in Paketen</h2>
+      <div class="title-info"><h2 id="buyTitle" data-i18n="buy.title">Kaufplan in Paketen</h2><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="buyGoalsNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="buyGoalsNote" role="note" data-i18n="buy.goalsNote" hidden></span></span></div>
       <span class="calc-state" id="buyState" role="status"></span>
     </div>
     <p class="lede" data-i18n="buy.lede"></p>
     <div class="fields">
-      <label class="f"><span data-i18n="buy.type">Container</span>
+      <label class="f" hidden><span data-i18n="buy.type">Container</span>
         <select id="b-type">
           <option value="ultra">Ultra Gift</option>
           <option value="mega">Mega Gift</option>
@@ -172,8 +176,7 @@
       <label class="f"><span data-i18n="buy.pack">Container je Paket</span> <input type="number" inputmode="numeric" min="1" id="b-pack" value="20"></label>
       <label class="f"><span data-i18n="buy.price">Preis je Paket (€)</span> <input type="number" inputmode="decimal" min="0" step="0.01" id="b-price" value="123"></label>
     </div>
-    <label class="check"><input type="checkbox" id="b-bfpity" checked aria-describedby="bfPityHelp"> <span data-i18n="buy.bfPity"></span></label>
-    <p class="help" id="bfPityHelp" data-i18n="buy.bfPityHelp"></p>
+    <div class="check-info"><label class="check"><input type="checkbox" id="b-bfpity" checked aria-describedby="bfPityHelp"> <span data-i18n="buy.bfPity"></span></label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="bfPityHelp" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="bfPityHelp" role="note" data-i18n="buy.bfPityHelp" hidden></span></span></div>
 
     <div class="tbl"><table class="buy-table">
       <thead><tr>
@@ -184,7 +187,6 @@
       </tr></thead>
       <tbody id="buyBody"></tbody>
     </table></div>
-    <p class="mini" data-i18n="buy.goalsNote"></p>
 
     <details class="plain">
       <summary data-i18n="buy.yield">Ertrag je Paket</summary>
@@ -195,7 +197,7 @@
     </details>
 
     <div class="pity-box">
-      <h3 data-i18n="buy.more">Noch ein Paket kaufen?</h3>
+      <div class="title-info"><h3 data-i18n="buy.more">Noch ein Paket kaufen?</h3><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="pityNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="pityNote" role="note" hidden></span></span></div>
       <div class="row">
         <label class="f" style="flex: 0 1 260px;"><span data-i18n="buy.counter">Golden Gifts seit dem letzten Golden-Gift-Schiff</span>
           <input type="number" inputmode="numeric" min="0" id="b-counter" value="0">
@@ -203,7 +205,6 @@
         <p class="pity-verdict" id="pityVerdict" role="status"></p>
       </div>
       <div class="pitygrid" id="pityGrid" role="group" data-i18n-attr="aria-label:buy.gridAria"></div>
-      <p class="mini" id="pityNote"></p>
     </div>
   </section>
 
@@ -211,7 +212,7 @@
     <summary><span><span data-i18n="roll.title">Einzeln öffnen</span> <span class="mini" data-i18n="roll.sub">zum Ausprobieren</span></span></summary>
     <div class="inner">
       <div class="row">
-        <label class="f" style="flex: 1 1 200px;"><span data-i18n="buy.type">Container</span>
+        <label class="f" style="flex: 1 1 200px;" hidden><span data-i18n="buy.type">Container</span>
           <select id="rollSel"></select>
         </label>
         <label class="f" style="flex: 0 1 190px;"><span data-i18n="roll.price">Preis je 20 Container (€)</span>
@@ -220,8 +221,9 @@
         <button type="button" id="rollBtn" data-i18n="roll.open">Öffnen</button>
         <button type="button" id="rollBtn20" data-i18n="roll.open20">20 öffnen</button>
         <button type="button" class="ghost" id="rollReset" data-i18n="roll.reset">Zurücksetzen</button>
+        <span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="rollPriceHelp" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="rollPriceHelp" role="note" data-i18n="roll.priceHelp" hidden></span></span>
+        <span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="rollNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="rollNote" role="note" data-i18n="roll.note" hidden></span></span>
       </div>
-      <p class="mini" id="rollPriceHelp" data-i18n="roll.priceHelp"></p>
       <div class="inv" id="rollInv" hidden>
         <span class="mini" data-i18n="roll.inv">Erhalten, noch nicht geöffnet:</span>
         <button type="button" class="gold-btn" id="openGolden" hidden></button>
@@ -231,16 +233,14 @@
       <div class="pool-notice" id="poolNotice" role="alert" hidden></div>
       <div class="pool-notice" id="goldNotice" role="alert" hidden></div>
       <p class="mini" id="rollStatus"></p>
-      <p class="note" data-i18n="roll.note"></p>
       <section class="loot" id="rollLoot" aria-labelledby="lootTitle" hidden>
-        <h3 id="lootTitle" data-i18n="loot.title">Beute</h3>
+        <div class="title-info"><h3 id="lootTitle" data-i18n="loot.title">Beute</h3><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="oddsNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="oddsNote" role="note" hidden></span></span></div>
         <div class="readout" id="lootReadout"></div>
         <div class="tbl" tabindex="0" role="region" aria-labelledby="oddsCap"><table class="odds-table">
           <caption id="oddsCap" data-i18n="odds.cap">Wie wahrscheinlich war das?</caption>
           <thead><tr><th scope="col" data-i18n="odds.colWhat">Ergebnis</th><th scope="col" class="num" data-i18n="odds.colShips">Neue Schiffe</th><th scope="col" class="num" data-i18n="odds.colExact">Genau so</th><th scope="col" class="num" data-i18n="odds.colAtLeast">So viele oder mehr</th><th scope="col" class="num" data-i18n="odds.colLuck">Glücksfaktor</th></tr></thead>
           <tbody id="oddsBody"></tbody>
         </table></div>
-        <p class="mini" id="oddsNote"></p>
         <div class="loot-ships" id="lootShips"></div>
         <div class="tbl" tabindex="0" role="region" aria-labelledby="lootTitle"><table class="loot-table">
           <thead><tr><th scope="col" data-i18n="loot.colRes">Belohnung</th><th scope="col" class="num" data-i18n="loot.colAmount">Menge</th><th scope="col" class="num" data-i18n="loot.colTimes">Wie oft</th></tr></thead>
@@ -265,31 +265,23 @@
         <fieldset>
           <legend data-i18n="plan.free">Kostenlos</legend>
           <div class="fields">
-            <label class="f"><span data-i18n="plan.freeSanta">Santa's Gift gratis</span>
-              <input type="number" inputmode="numeric" min="0" id="c-free" value="8">
-              <span class="hint" data-i18n="plan.freeHint"></span>
-            </label>
-            <label class="f"><span data-i18n="plan.pass">Santa's Gift aus Event-Pässen</span>
-              <input type="number" inputmode="numeric" min="0" id="c-pass" value="0">
-              <span class="hint" data-i18n="plan.passHint"></span>
-            </label>
+            <div class="f"><span class="f-top"><label for="c-free"><span data-i18n="plan.freeSanta">Santa's Gift gratis</span></label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="freeHint" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="freeHint" role="note" data-i18n="plan.freeHint" hidden></span></span></span>
+              <input type="number" inputmode="numeric" min="0" id="c-free" value="8"></div>
+            <div class="f"><span class="f-top"><label for="c-pass"><span data-i18n="plan.pass">Santa's Gift aus Event-Pässen</span></label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="passHint" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="passHint" role="note" data-i18n="plan.passHint" hidden></span></span></span>
+              <input type="number" inputmode="numeric" min="0" id="c-pass" value="0"></div>
           </div>
         </fieldset>
         <fieldset>
           <legend>Festive Tokens</legend>
           <div class="fields">
-            <label class="f"><span data-i18n="plan.tokens">Anzahl Tokens</span>
-              <input type="number" inputmode="numeric" min="0" id="c-tokens" value="0">
-              <span class="hint" data-i18n="plan.tokensHint"></span>
-            </label>
-            <label class="f"><span data-i18n="plan.tokenUse">Eintauschen gegen</span>
+            <div class="f"><span class="f-top"><label for="c-tokens"><span data-i18n="plan.tokens">Anzahl Tokens</span></label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="tokensHint" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="tokensHint" role="note" data-i18n="plan.tokensHint" hidden></span></span></span>
+              <input type="number" inputmode="numeric" min="0" id="c-tokens" value="0"></div>
+            <div class="f"><span class="f-top"><label for="c-tokenUse" data-i18n="plan.tokenUse">Eintauschen gegen</label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="tokenHint" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="tokenHint" role="note" hidden></span></span></span>
               <select id="c-tokenUse">
                 <option value="santa">Santa's Gift</option>
                 <option value="mega">Mega Gift</option>
                 <option value="none" data-i18n="opt.credits">Credits</option>
-              </select>
-              <span class="hint" id="tokenHint"></span>
-            </label>
+              </select></div>
           </div>
         </fieldset>
         <fieldset>
@@ -303,10 +295,8 @@
         <fieldset>
           <legend data-i18n="plan.have">Bereits vorhanden</legend>
           <div class="fields">
-            <label class="f">Golden Gift
-              <input type="number" inputmode="numeric" min="0" id="c-golden" value="0">
-              <span class="hint" data-i18n="plan.goldenHint"></span>
-            </label>
+            <div class="f"><span class="f-top"><label for="c-golden">Golden Gift</label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="goldenHint" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="goldenHint" role="note" data-i18n="plan.goldenHint" hidden></span></span></span>
+              <input type="number" inputmode="numeric" min="0" id="c-golden" value="0"></div>
           </div>
         </fieldset>
         <p class="note" id="totalNote"></p>
@@ -327,8 +317,7 @@
       </div>
 
       <div class="panel">
-        <h2 data-i18n="plan.result">Ergebnis deines Plans</h2>
-        <p class="mini" id="histNote"></p>
+        <div class="title-info"><h2 data-i18n="plan.result">Ergebnis deines Plans</h2><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="histNote" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="histNote" role="note" hidden></span></span></div>
         <div class="hist" id="hist" role="img" data-i18n-attr="aria-label:plan.histAria"></div>
         <h3 data-i18n="plan.resTitle">Erwartete Ressourcen</h3>
         <div class="tbl"><table>
@@ -371,7 +360,7 @@
     <p class="lede" data-i18n="trk.lede"></p>
     <form id="trkForm" class="stack" novalidate>
       <div class="fields">
-        <label class="f"><span data-i18n="trk.type">Container</span>
+        <label class="f" hidden><span data-i18n="trk.type">Container</span>
           <select id="trkType"><option value="santa">Santa's Gift</option><option value="mega">Santa's Mega Gift</option><option value="ultra">Santa's Ultra Gift</option></select></label>
         <label class="f"><span data-i18n="trk.packs">Pakete</span> <input id="trkPacks" type="number" inputmode="numeric" min="0" value="1"></label>
         <label class="f"><span data-i18n="trk.perPack">Container je Paket</span> <input id="trkPer" type="number" inputmode="numeric" min="1" value="20"></label>
@@ -379,9 +368,8 @@
       </div>
       <p class="mini" id="trkSum"></p>
       <div class="stack trk-ships">
-        <label class="f"><span data-i18n="trk.ships">Neue Schiffe</span>
-          <input id="trkSearch" type="search" autocomplete="off" spellcheck="false" aria-describedby="trkShipsHelp" aria-controls="trkResults" data-i18n-attr="placeholder:trk.searchPh"></label>
-        <p class="mini" id="trkShipsHelp" data-i18n="trk.shipsHelp"></p>
+        <div class="f"><span class="f-top"><label for="trkSearch" data-i18n="trk.ships">Neue Schiffe</label><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="trkShipsHelp" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="trkShipsHelp" role="note" data-i18n="trk.shipsHelp" hidden></span></span></span>
+          <input id="trkSearch" type="search" autocomplete="off" spellcheck="false" aria-describedby="trkShipsHelp" aria-controls="trkResults" data-i18n-attr="placeholder:trk.searchPh"></div>
         <div class="trk-results" id="trkResults"></div>
         <div class="trk-picked" id="trkPicked"></div>
       </div>
@@ -393,7 +381,7 @@
   </section>
 
   <section class="panel" aria-labelledby="trkResTitle">
-    <div class="panel-head"><h2 id="trkResTitle" data-i18n="trk.resTitle">Auswertung</h2><span class="calc-state" id="trkState"></span></div>
+    <div class="panel-head"><div class="title-info"><h2 id="trkResTitle" data-i18n="trk.resTitle">Auswertung</h2><span class="info"><button type="button" class="info-btn" aria-expanded="false" aria-controls="trkMethod" data-i18n-attr="aria-label:info.aria">i</button><span class="info-pop" id="trkMethod" role="note" data-i18n="trk.method" hidden></span></span></div><span class="calc-state" id="trkState"></span></div>
     <p class="empty" id="trkEmpty" data-i18n="trk.empty"></p>
     <div class="stack" id="trkBody" hidden>
       <div class="readout" id="trkReadout"></div>
@@ -405,7 +393,6 @@
       </figure>
       <p class="mini" id="trkGoldLine"></p>
       <p class="mini" id="trkNjLine"></p>
-      <p class="note" data-i18n="trk.method"></p>
     </div>
   </section>
 
@@ -435,10 +422,10 @@
   </footer>
 </div>
 
-<script src="assets/js/ships.js?v=20261102-1" defer></script>
-<script src="assets/js/santa2026.js?v=20261102-1" defer></script>
-<script src="assets/js/sim.js?v=20261102-1" defer></script>
-<script src="assets/js/i18n.js?v=20261102-1" defer></script>
-<script src="assets/js/app.js?v=20261102-1" defer></script>
+<script src="assets/js/ships.js?v=20261102-2" defer></script>
+<script src="assets/js/santa2026.js?v=20261102-2" defer></script>
+<script src="assets/js/sim.js?v=20261102-2" defer></script>
+<script src="assets/js/i18n.js?v=20261102-2" defer></script>
+<script src="assets/js/app.js?v=20261102-2" defer></script>
 </body>
 </html>

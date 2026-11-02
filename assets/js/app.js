@@ -441,7 +441,7 @@ $("needsBody").addEventListener("click", (e) => {
   drawNeeds(lastNeeds);
 });
 document.querySelectorAll("[data-ctype]").forEach((b) => b.addEventListener("click", () => {
-  state.ctype = b.dataset.ctype; store.set("ctype", state.ctype); renderNeeds();
+  setCtype(b.dataset.ctype);
 }));
 const scheduleNeeds = debounce(renderNeeds, 250);
 let curveW = 0;
@@ -628,7 +628,9 @@ function renderSim(sim) {
     const ia = ORDER.indexOf(a[0]), ib = ORDER.indexOf(b[0]);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a[0].localeCompare(b[0], "de");
   });
-  $("resBody").innerHTML = res.length ? res.map(([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(resName(k))}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; }).join("") : `<tr><td colspan="2" class="mini">${t("plan.noCont")}</td></tr>`;
+  // Zeilen, die gerundet 0 ergeben, fallen weg
+  const shown = res.filter(([, v]) => v / sim.runs >= 0.05);
+  $("resBody").innerHTML = shown.length ? shown.map(([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(resName(k))}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; }).join("") : `<tr><td colspan="2" class="mini">${t("plan.noCont")}</td></tr>`;
 }
 function readout(el, items) {
   el.innerHTML = items.map((it) => `<div><span class="k">${esc(it.k)}</span><span class="v${it.accent ? " accent" : ""}">${it.v}</span>${it.s ? `<span class="s">${it.s}</span>` : ""}</div>`).join("");
@@ -975,11 +977,70 @@ function drawOdds() {
 $("rollSel").addEventListener("change", renderRollState);
 $("rollReset").addEventListener("click", resetRoll);
 
+// ---------- Gemeinsame Container-Wahl ----------
+// Ein Container-Typ für Pro Stufe, Kaufplan, Einzeln öffnen und Tracker; die alten Auswahlfelder bleiben
+// versteckt als Zustand der jeweiligen Bereiche und werden hier mitgezogen.
+const CTYPE_VIEWS = ["stufen", "kaufplan", "tracker"];
+function setCtype(ct) {
+  if (!["santa", "mega", "ultra"].includes(ct)) ct = "santa";
+  state.ctype = ct; store.set("ctype", ct);
+  renderNeeds();
+  for (const id of ["b-type", "rollSel", "trkType"]) {
+    const el = $(id);
+    if (el && el.value !== ct) { el.value = ct; el.dispatchEvent(new Event("change")); }
+  }
+}
+
+// ---------- Hinweise hinter „i“ ----------
+// Knopf zeigt den Text als Blase: Maus beim Überfahren, Tastatur und Touch per Klick/Tippen; Esc oder Klick daneben schließt.
+const infoHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+let infoOpen = null, infoByHover = false;
+function placeInfo(btn, pop) {
+  const r = btn.getBoundingClientRect(), gap = 6, vw = document.documentElement.clientWidth;
+  pop.style.left = "0px"; pop.style.top = "0px";
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  const left = Math.max(8, Math.min(r.left, vw - w - 8));
+  const below = r.bottom + gap + h <= window.innerHeight || r.top - gap - h < 0;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${below ? r.bottom + gap : r.top - gap - h}px`;
+}
+function setInfo(btn, open, hover = false) {
+  const pop = $(btn.getAttribute("aria-controls"));
+  if (!pop) return;
+  if (open && infoOpen && infoOpen !== btn) setInfo(infoOpen, false);
+  pop.hidden = !open;
+  btn.setAttribute("aria-expanded", String(open));
+  if (open) { infoOpen = btn; infoByHover = hover; placeInfo(btn, pop); } else if (infoOpen === btn) infoOpen = null;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".info-btn");
+  if (b) { e.preventDefault(); setInfo(b, b.getAttribute("aria-expanded") !== "true" || infoByHover); infoByHover = false; return; }
+  if (infoOpen && !e.target.closest(".info-pop")) setInfo(infoOpen, false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && infoOpen) { const b = infoOpen; setInfo(b, false); b.focus(); }
+});
+if (infoHover) {
+  document.addEventListener("mouseover", (e) => {
+    const b = e.target.closest(".info-btn");
+    if (b && infoOpen !== b) setInfo(b, true, true);
+  });
+  document.addEventListener("mouseout", (e) => {
+    const w = e.target.closest(".info");
+    if (!w || !infoOpen || !infoByHover || !w.contains(infoOpen)) return;
+    if (e.relatedTarget && w.contains(e.relatedTarget)) return;
+    setInfo(infoOpen, false);
+  });
+}
+window.addEventListener("scroll", () => { if (infoOpen) placeInfo(infoOpen, $(infoOpen.getAttribute("aria-controls"))); }, { passive: true, capture: true });
+window.addEventListener("resize", () => { if (infoOpen) setInfo(infoOpen, false); });
+
 // ---------- Reiter ----------
 const VIEWS = ["stufen", "kaufplan", "plan", "schiffe", "tracker"];
 function showView() {
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "stufen";
   for (const id of VIEWS) $("v-" + id).hidden = id !== v;
+  $("ctypeBar").hidden = !CTYPE_VIEWS.includes(v);
   if (v === "tracker" && typeof renderTracker === "function") renderTracker();
   document.querySelectorAll("nav.tabs a").forEach((el) => { if (el.dataset.view === v) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
 }
@@ -1193,5 +1254,6 @@ if (session && !sessionValid()) { session = null; store.set("session", null); im
 setSource(state.source === "manual" ? "manual" : "import");
 handleCallback();
 if (sessionValid() && !state.imported) loadPort();
+setCtype(state.ctype);
 showView();
 })();
