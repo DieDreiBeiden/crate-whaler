@@ -125,7 +125,10 @@ function runNeeds({ ownedKeys, type, pityCfg, runs, targets, tiers, cap }) {
   const reachable = new Set();
   const groups = [...new Set(CONTAINER_DEFS[type].slots.flat().filter((e) => e.ship).map((e) => e.ship))].concat(["GR", "GG"]);
   for (const g of groups) for (const s of availIn(g, base)) reachable.add(s.key);
+  // Ziel: irgendein Schiff (tier null), eine Stufe (tier) oder ein bestimmtes Schiff (ship = Schlüssel)
+  const match = (t, s) => (t.ship ? s.key === t.ship : t.tier == null || tierOf(s) === t.tier);
   const live = targets.filter((t) => [...reachable].some((k) => {
+    if (t.ship) return k === t.ship;
     if (t.tier == null) return true;
     const s = GROUP_ORDER.flatMap((g) => GROUP_SHIPS[g]).find((x) => x.key === k);
     return s && tierOf(s) === t.tier;
@@ -137,7 +140,7 @@ function runNeeds({ ownedKeys, type, pityCfg, runs, targets, tiers, cap }) {
     let n = 0;
     const hit = (ships) => {
       for (const s of ships) for (const t of live) {
-        if (open.has(t.id) && (t.tier == null || tierOf(s) === t.tier)) { open.delete(t.id); samples[t.id].push(n); }
+        if (open.has(t.id) && match(t, s)) { open.delete(t.id); samples[t.id].push(n); }
       }
     };
     while (open.size && n < cap) {

@@ -541,3 +541,10 @@ nav.tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .btn-link { display: inline-flex; align-items: center; min-height: var(--tap); padding: 8px 14px; border: 1px solid var(--rule-strong); color: var(--ink); text-decoration: none; font-weight: 600; }
 .btn-link.primary { background: var(--sea); border-color: var(--sea); color: var(--paper); }
 @media (hover: hover) { .btn-link:hover { border-color: var(--sea); } .btn-link.primary:hover { filter: brightness(1.1); } }
+
+/* Schnellcheck: Schiffssuche */
+.qc-ship { display: grid; gap: 6px; max-width: 520px; }
+.qc-hits { display: flex; flex-wrap: wrap; gap: 6px; }
+.qc-hit { display: inline-flex; gap: 6px; align-items: baseline; }
+.qc-picked { margin: 0; color: var(--ink); }
+#qcNext:disabled { opacity: .5; cursor: not-allowed; }

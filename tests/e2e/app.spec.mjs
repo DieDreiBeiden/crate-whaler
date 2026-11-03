@@ -282,3 +282,21 @@ test("Startansicht ist der Schnellcheck, erster Reiter", async ({ page }) => {
   await expect(page.locator("#qcBody h3")).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("Schnellcheck: Ziel „ein bestimmtes Schiff“ mit Suche", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" }, "#schnell");
+  await page.locator('#ctypeBar [data-ctype="ultra"]').click();
+  await page.locator('.qc-goal[data-goal="ship"]').click();
+  await expect(page.locator("#qcNext")).toBeDisabled();
+  await page.locator("#qcShip").fill("rodi");
+  // Treffer am Namensanfang zuerst
+  await expect(page.locator("#qcShipHits [data-qship]").first()).toContainText("Rodina");
+  await page.locator("#qcShip").press("Enter");
+  await expect(page.locator(".qc-picked strong")).toHaveText("Rodina");
+  await expect(page.locator("#qcNext")).toBeEnabled();
+  await page.locator('[data-qstep="3"]').click();
+  await expect(page.locator(".qc-answer:not(.wait)")).toContainText("die Rodina", { timeout: 60_000 });
+  await expect(page.locator(".qc-card strong").first()).toHaveText(/\d+ Paket/);
+  expect(errors).toEqual([]);
+});

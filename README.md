@@ -95,7 +95,7 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 
 ## Schnellcheck
 
-Der Reiter „Schnellcheck“ ist die Startansicht. Drei Schritte führen zur Antwort: Ziel wählen (irgendein neues Schiff, eine Stufe, alle Schiffe aus dem Container, die Golden-Gift-Schiffe oder New Jersey BF), Bestand prüfen (Hafen, Paketgröße, Preis) und die Antwort in einem Satz mit Paketen und Euro für 50 % und 90 %. Die Zahlen kommen aus denselben Simulationen wie „Pro Stufe“ und „Kaufplan“.
+Der Reiter „Schnellcheck“ ist die Startansicht. Drei Schritte führen zur Antwort: Ziel wählen (irgendein neues Schiff, eine Stufe, ein bestimmtes Schiff, alle Schiffe aus dem Container, die Golden-Gift-Schiffe oder New Jersey BF), Bestand prüfen (Hafen, Paketgröße, Preis) und die Antwort in einem Satz mit Paketen und Euro für 50 % und 90 %. Die Zahlen kommen aus denselben Simulationen wie „Pro Stufe“ und „Kaufplan“.
 
 ## Tracker
 

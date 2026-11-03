@@ -82,6 +82,16 @@ test("Benötigte Santa's für irgendein Schiff bei leerem Hafen: ~26 / ~86", () 
   assert.equal(r.any.qs.length, 99);
 });
 
+test("Bestimmtes Schiff: braucht mehr Container als irgendein Schiff, schon vorhanden = kein Ziel", () => {
+  const ship = g("GROUP_SHIPS")[g("CONTAINER_DEFS").santa.slots.flat().find((e) => e.ship).ship][0].key;
+  const r = runNeeds({ ownedKeys: [], type: "santa", pityCfg: PITY, runs: 1500, cap: 20000, targets: [{ id: "any", tier: null }, { id: "one", ship }], tiers: {} });
+  assert.ok(r.one, "Ziel wird gerechnet");
+  assert.ok(r.one.p50 > r.any.p50, `bestimmtes Schiff ${r.one.p50} vs. irgendeins ${r.any.p50}`);
+  assert.ok(r.one.p90 >= r.one.p50);
+  const owned = runNeeds({ ownedKeys: [ship], type: "santa", pityCfg: PITY, runs: 50, cap: 2000, targets: [{ id: "one", ship }], tiers: {} });
+  assert.equal(owned.one, undefined);
+});
+
 test("Glücksfaktor: Gleichstand zählt halb, Anteile stimmen", () => {
   const luckOf = g("luckOf");
   const r = luckOf([1, 2, 1], 4, 1);

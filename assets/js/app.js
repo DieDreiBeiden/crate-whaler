@@ -1042,22 +1042,62 @@ window.addEventListener("resize", () => { if (infoOpen) setInfo(infoOpen, false)
 // ---------- Schnellcheck: Ziel → Bestand → Antwort ----------
 // Nutzt dieselben Ergebnisse wie „Pro Stufe“ (needsCache) und „Kaufplan“ (buyResult), damit die Zahlen überall gleich sind.
 var qcReady = false;
-const qc = { step: 1, goal: "any", ...store.get("qc", {}) };
+const qc = { step: 1, goal: "any", ship: null, ...store.get("qc", {}) };
+const qcShipName = () => (qc.ship && SHIP_BY_KEY.get(qc.ship) ? SHIP_BY_KEY.get(qc.ship).name : "");
 const QC_GOALS = [
   { id: "any", src: "needs", row: 0, label: () => t("qc.gAny"), sub: () => t("qc.gAnySub"), phrase: () => t("qc.pAny") }
 ].concat([10, 9, 8, 7, 6, 5].map((tier, k) => ({
   id: "t" + tier, src: "needs", row: k + 1, tier,
   label: () => t("qc.gTier", { t: ROMAN[tier] }), sub: (m) => t("qc.gTierSub", { n: fmt.format(m[k + 1]) }), phrase: () => t("qc.pTier", { t: ROMAN[tier] })
 }))).concat([
+  { id: "ship", src: "ship", label: () => t("qc.gShip"), sub: () => qcShipName() || t("qc.gShipSub"), phrase: () => t("qc.pShip", { name: qcShipName() }) },
   { id: "pool", src: "buy", g: "pool", label: () => t("qc.gPool", { c: SHORT[state.ctype] }), sub: () => "", phrase: () => t("qc.pPool", { c: SHORT[state.ctype] }) },
   { id: "reg3", src: "buy", g: "reg3", label: () => t("qc.gReg3"), sub: () => t("qc.gReg3Sub"), phrase: () => t("qc.pReg3") },
   { id: "all7", src: "buy", g: "all7", label: () => t("qc.gAll7"), sub: () => "", phrase: () => t("qc.pAll7") },
   { id: "nj", src: "buy", g: "nj", label: () => t("qc.gNj"), sub: () => t("qc.gNjSub"), phrase: () => t("qc.pNj") }
 ]);
 const qcGoal = () => QC_GOALS.find((g) => g.id === qc.goal) || QC_GOALS[0];
-const saveQc = () => store.set("qc", { step: qc.step, goal: qc.goal });
+const saveQc = () => store.set("qc", { step: qc.step, goal: qc.goal, ship: qc.ship });
+// Bestimmtes Schiff: eigene Rechnung im Worker (ein Ziel, deshalb schnell), Ergebnis je Stand gemerkt
+const shipCache = new Map();
+let shipWorker = null, shipJob = null;
+function qcPoolGroups() { return [...new Set(CONTAINER_DEFS[state.ctype].slots.flat().filter((e) => e.ship).map((e) => e.ship))].concat(["GR", "GG"]); }
+function qcShipInPool(key) { return qcPoolGroups().some((g) => GROUP_SHIPS[g].some((s) => s.key === key)); }
+function qcShipCandidates(q) {
+  const k = shipKey(q);
+  if (!k) return [];
+  // Treffer am Namensanfang zuerst, doppelte Einträge aus mehreren Gruppen nur einmal
+  const seen = new Set();
+  return qcPoolGroups().flatMap((g) => availIn(g, ownedSet())).filter((s) => s.key.includes(k) && !seen.has(s.key) && seen.add(s.key))
+    .sort((a, b) => (a.key.startsWith(k) ? 0 : 1) - (b.key.startsWith(k) ? 0 : 1) || a.name.localeCompare(b.name)).slice(0, 8);
+}
+const shipJobKey = () => `${needsKey()}|${qc.ship}`;
+function requestShip() {
+  const key = shipJobKey();
+  if (shipCache.has(key) || (shipJob && shipJob.key === key)) return;
+  const tiers = {};
+  for (const g of GROUP_ORDER) for (const s of GROUP_SHIPS[g]) if (!s.tier) tiers[s.key] = tierOf(s);
+  const params = { ownedKeys: [...ownedSet()], type: state.ctype, pityCfg: { ...state.pity }, runs: 3000, cap: NEED_CAP, targets: [{ id: "s", ship: qc.ship }], tiers };
+  if (!shipWorker) { try { shipWorker = new Worker(WORKER_URL); shipWorker.onmessage = (e) => { if (!shipJob || shipJob.id !== e.data.id) return; shipCache.set(shipJob.key, e.data.result.s || null); shipJob = null; quickRefresh(); }; shipWorker.onerror = () => { shipWorker = null; shipJob = null; }; } catch { shipWorker = null; } }
+  if (shipWorker) {
+    // Veralteter Auftrag (anderes Schiff oder Container): Worker neu starten statt warten
+    if (shipJob) { shipWorker.terminate(); shipWorker = null; shipJob = null; return requestShip(); }
+    shipJob = { id: Date.now(), key };
+    shipWorker.postMessage({ id: shipJob.id, kind: "needs", params });
+  } else setTimeout(() => { shipCache.set(key, runNeeds({ ...params, runs: 400 }).s || null); quickRefresh(); }, 0);
+}
 // Ergebnis in Containern: { state: calc | done | never | ok, p50, p90 }
 function qcResult(g) {
+  if (g.src === "ship") {
+    if (!qc.ship) return { state: "pick" };
+    if (ownedSet().has(qc.ship)) return { state: "done" };
+    if (!qcShipInPool(qc.ship)) return { state: "notIn" };
+    const key = shipJobKey();
+    if (!shipCache.has(key)) { requestShip(); return { state: "calc" }; }
+    const r = shipCache.get(key);
+    if (!r) return { state: "done" };
+    return Number.isFinite(r.p50) ? { state: "ok", p50: r.p50, p90: r.p90 } : { state: "never", cap: NEED_CAP };
+  }
   if (g.src === "needs") {
     if (!missingByRow(ownedSet())[g.row]) return { state: "done" };
     const hit = needsCache.get(needsKey()), r = hit && hit.result["r" + g.row];
@@ -1087,6 +1127,12 @@ function renderQuick() {
       const owned = g.src === "needs" && !missing[g.row], sub = owned ? t("needs.allOwned") : g.sub(missing);
       return `<button type="button" class="qc-goal" data-goal="${g.id}" aria-pressed="${qc.goal === g.id}"><span class="qc-gl">${esc(g.label())}</span>${sub ? `<span class="mini">${esc(sub)}</span>` : ""}</button>`;
     }).join("")}</div>`;
+    if (qc.goal === "ship") html += `<div class="qc-ship">
+        <label class="f" for="qcShip"><span>${esc(t("qc.ship"))}</span></label>
+        <input id="qcShip" type="search" autocomplete="off" spellcheck="false" aria-controls="qcShipHits" placeholder="${esc(t("qc.shipPh"))}">
+        <div class="qc-hits" id="qcShipHits"></div>
+        ${qc.ship ? `<p class="qc-picked">${esc(t("qc.shipSel"))} <strong>${esc(qcShipName())}</strong>${ownedSet().has(qc.ship) ? ` · ${esc(t("needs.allOwned"))}` : ""}</p>` : ""}
+      </div>`;
   } else if (qc.step === 2) {
     const port = hasImport() ? t("qc.portIn") : Object.keys(state.manual || {}).length ? t("qc.portManual", { n: fmt.format(Object.keys(state.manual).length) }) : t("qc.portNone");
     html = `<h3>${esc(t("qc.q2"))}</h3>
@@ -1102,6 +1148,8 @@ function renderQuick() {
     const g = qcGoal(), r = qcResult(g);
     let ans;
     if (r.state === "calc") ans = `<p class="qc-answer wait" aria-busy="true">${esc(t("qc.calc"))}</p>`;
+    else if (r.state === "pick") ans = `<p class="qc-answer">${esc(t("qc.shipPick"))}</p>`;
+    else if (r.state === "notIn") ans = `<p class="qc-answer">${esc(t("qc.shipNotIn", { name: qcShipName(), c: SHORT[state.ctype] }))}</p>`;
     else if (r.state === "done") ans = `<p class="qc-answer ok">${esc(t("qc.done", { c: SHORT[state.ctype] }))}</p>`;
     else if (r.state === "never") ans = `<p class="qc-answer">${esc(t("qc.never", { c: SHORT[state.ctype], n: fmt.format(r.cap) }))}</p>`;
     else {
@@ -1111,12 +1159,21 @@ function renderQuick() {
         <div class="qc-cards">${card("50 %", a, r.p50)}${card("90 %", b, r.p90)}</div>`;
     }
     html = `<h3>${esc(t("qc.q3"))}</h3>${ans}<p class="mini">${esc(t("qc.basis"))}</p>
-      <div class="row"><a class="btn-link primary" href="#tracker">${esc(t("qc.open"))}</a><a class="btn-link" href="${g.src === "needs" ? "#stufen" : "#kaufplan"}">${esc(t("qc.tables"))}</a></div>`;
+      <div class="row"><a class="btn-link primary" href="#tracker">${esc(t("qc.open"))}</a><a class="btn-link" href="${g.src === "buy" ? "#kaufplan" : "#stufen"}">${esc(t("qc.tables"))}</a></div>`;
   }
   $("qcBody").innerHTML = html;
   $("qcBack").hidden = qc.step === 1;
   $("qcNext").hidden = qc.step === 3;
   $("qcNext").textContent = qc.step === 1 ? t("qc.next", { s: t("qc.s2") }) : t("qc.show");
+  // Ohne gewähltes Schiff geht es nicht weiter
+  $("qcNext").disabled = qc.goal === "ship" && !qc.ship;
+}
+function renderQcHits() {
+  const input = $("qcShip");
+  if (!input) return;
+  const list = qcShipCandidates(input.value);
+  $("qcShipHits").innerHTML = list.map((s) => `<button type="button" class="ghost qc-hit" data-qship="${s.key}">${esc(s.name)}<span class="mini">${ROMAN[tierOf(s)] || ""}</span></button>`).join("") +
+    (input.value.trim() && !list.length ? `<p class="mini">${esc(t("qc.noHit", { c: SHORT[state.ctype] }))}</p>` : "");
 }
 // Nur die Antwortseite zeigt Rechenergebnisse; Schritt 2 nicht neu zeichnen (Eingabefelder behalten den Fokus)
 function quickRefresh() { if (qcReady && !$("v-schnell").hidden && qc.step === 3) renderQuick(); }
@@ -1129,14 +1186,24 @@ function qcGo(step) {
 $("qcSteps").addEventListener("click", (e) => { const b = e.target.closest("[data-qstep]"); if (b) qcGo(+b.dataset.qstep); });
 $("qcNext").addEventListener("click", () => qcGo(qc.step + 1));
 $("qcBack").addEventListener("click", () => qcGo(qc.step - 1));
-$("qcRestart").addEventListener("click", () => { qc.goal = "any"; qcGo(1); });
+$("qcRestart").addEventListener("click", () => { qc.goal = "any"; qc.ship = null; qcGo(1); });
+// Enter in der Schiffssuche übernimmt den ersten Treffer
+$("qcBody").addEventListener("keydown", (e) => {
+  if (e.target.id !== "qcShip" || e.key !== "Enter") return;
+  e.preventDefault();
+  const first = qcShipCandidates(e.target.value)[0];
+  if (first) { qc.ship = first.key; saveQc(); renderQuick(); $("qcNext").focus(); }
+});
 $("qcBody").addEventListener("click", (e) => {
   const g = e.target.closest("[data-goal]");
-  if (g) { qc.goal = g.dataset.goal; saveQc(); renderQuick(); $("qcBody").querySelector(`[data-goal="${qc.goal}"]`).focus(); return; }
+  if (g) { qc.goal = g.dataset.goal; saveQc(); renderQuick(); if (qc.goal === "ship" && !qc.ship) $("qcShip").focus(); else $("qcBody").querySelector(`[data-goal="${qc.goal}"]`).focus(); return; }
+  const hit = e.target.closest("[data-qship]");
+  if (hit) { qc.ship = hit.dataset.qship; saveQc(); renderQuick(); $("qcNext").focus(); return; }
   if (e.target.closest("#qcLogin")) setSource("import");
 });
 // Paketgröße und Preis teilen sich Schnellcheck und Kaufplan
 $("qcBody").addEventListener("input", (e) => {
+  if (e.target.id === "qcShip") { renderQcHits(); return; }
   const map = { qcPack: "b-pack", qcPrice: "b-price" }, id = map[e.target.id];
   if (!id) return;
   $(id).value = e.target.value;
