@@ -35,7 +35,7 @@ npm test
 | `index.html` | Markup, Sicherheitsregel (CSP), Meta-Tags |
 | `assets/js/boot.js` | Wargaming Application ID, Sprache und Farbschema vor dem ersten Zeichnen |
 | `assets/js/i18n.js` | Alle Texte auf Deutsch und Englisch (`t()`), Übersetzung der Ressourcen |
-| `assets/js/app.js` | Seitenlogik: Login, gemeinsame Container-Wahl, sechs Reiter (Schnellcheck als Startansicht, Pro Stufe mit Kennzahl und Kurve, Kaufplan in Paketen mit Einzeln öffnen, Mein Plan, Schiffe, Tracker) |
+| `assets/js/app.js` | Seitenlogik: Login, gemeinsame Container-Wahl, sechs Reiter (Check als Startansicht, Stufen mit Kennzahl und Kurve, Kauf in Paketen mit Einzeln öffnen, Plan, Schiffe, Tracker) |
 | `assets/js/sim.js` | Container-Simulation: Plan (`runPlan`), Container je Stufe (`runNeeds`), Meilensteine je Paket (`runMilestones`), Golden-Gift-Zähler (`runPityTable`) |
 | `assets/js/sim-worker.js` | Rechnet die Simulation im Hintergrund |
 | `assets/js/santa2026.js` | Drop-Tabellen und Schiffslisten des Events |
@@ -95,7 +95,7 @@ Abgeglichen mit `santa_sim.py` und dem Kaufguide vom 29.10.2026: Meilensteine un
 
 ## Schnellcheck
 
-Der Reiter „Schnellcheck“ ist die Startansicht. Drei Schritte führen zur Antwort: Ziel wählen (irgendein neues Schiff, eine Stufe, ein bestimmtes Schiff, alle Schiffe aus dem Container, die Golden-Gift-Schiffe oder New Jersey BF), Bestand prüfen (Hafen, Paketgröße, Preis) und die Antwort in einem Satz mit Paketen und Euro für 50 % und 90 %. Die Zahlen kommen aus denselben Simulationen wie „Pro Stufe“ und „Kaufplan“.
+Der Reiter „Check“ (Schnellcheck) ist die Startansicht. Drei Schritte führen zur Antwort: Ziel wählen (irgendein neues Schiff, eine Stufe, ein bestimmtes Schiff, alle Schiffe aus dem Container, die Golden-Gift-Schiffe oder New Jersey BF), Bestand prüfen (Hafen, Paketgröße, Preis) und die Antwort in einem Satz mit Paketen und Euro für 50 % und 90 %. Die Zahlen kommen aus denselben Simulationen wie „Stufen“ und „Kauf“.
 
 ## Tracker
 

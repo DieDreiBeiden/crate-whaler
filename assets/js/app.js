@@ -247,6 +247,8 @@ $("ubLogout").addEventListener("click", () => {
 // ---------- Benötigte Container je Stufe ----------
 const NEED_ROWS = [{ label: t("needs.any"), tier: null }].concat([10, 9, 8, 7, 6, 5].map((n) => ({ label: t("needs.tier", { t: ROMAN[n] }), tier: n })));
 const SHORT = { santa: "Santa's Gift", mega: "Mega Gift", ultra: "Ultra Gift" };
+// Einheitliche Namen für Zähler und Listen
+const label = { ...SHORT, golden: "Golden Gift", bf: "Battle Forged" };
 
 // Erst schnell mit wenigen Läufen, dann im Hintergrund genauer (1000 Läufe: ±4 %, 5000: ±2 %)
 const NEED_STAGES = [1000, 5000], NEED_CAP = 20000;
@@ -286,7 +288,7 @@ function renderNeeds() {
   const type = state.ctype;
   document.querySelectorAll("[data-ctype]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ctype === type));
   $("needsLede").textContent = t("needs.lede", { c: SHORT[type], n: state.pity[type] });
-  document.querySelectorAll("[data-box-pity]").forEach((el) => { el.textContent = t("needs.boxPity", { n: fmt.format(state.pity[el.dataset.boxPity]) }); });
+  $("ctypeInfo").textContent = t("ctype.pity", { s: fmt.format(state.pity.santa), m: fmt.format(state.pity.mega), u: fmt.format(state.pity.ultra) });
   const hit = needsCache.get(needsKey());
   if (hit) { drawNeeds(hit.result); setNeedsNote(hit.runs); } else { drawNeeds(null); setNeedsNote(NEED_STAGES[0]); }
   requestNeeds();
@@ -326,11 +328,8 @@ function drawNeeds(result) {
   $("needsHero").classList.toggle("wait", !!missing[0] && !any);
   $("needsBody").innerHTML = NEED_ROWS.map((row, i) => {
     if (row.tier == null) return "";
-    // Striche: Anteil der Schiffe dieser Stufe, die dir noch fehlen
-    const on = total[i] ? Math.round(missing[i] / total[i] * 10) : 0;
-    const pips = `<span class="pips" aria-hidden="true">${Array.from({ length: 10 }, (_, k) => `<i${k < on ? ' class="on"' : ""}></i>`).join("")}</span>`;
     const head = `<th scope="row"><span class="visually-hidden">${esc(row.label)}</span><span class="roman" aria-hidden="true">${ROMAN[row.tier]}</span></th>` +
-      `<td><span class="miss-c">${pips}<span>${t("needs.missInline", { n: fmt.format(missing[i]) })}</span></span></td>`;
+      `<td><span class="miss-c">${t("needs.missInline", { n: fmt.format(missing[i]) })}</span></td>`;
     if (!missing[i]) return `<tr class="done">${head}<td colspan="2" class="mini">${t("needs.allOwned")}</td></tr>`;
     const r = result && result["r" + i];
     const cls = row.tier === curveTier ? "sel" : "";
@@ -560,10 +559,12 @@ function renderPlanInputs() {
   $("tokenHint").textContent = p.tokenUse === "mega" ? t("plan.tokMega", { n: fmt.format(Math.floor(p.tokens / 5)) }) + (rest ? t("plan.tokRest", { n: rest }) : "") : p.tokenUse === "santa" ? t("plan.tokSanta", { n: fmt.format(p.tokens) }) : t("plan.tokCredits", { n: fmt.format(p.tokens * 375000) });
   const parts = [];
   if (c.santa) parts.push(`${fmt.format(c.santa)} Santa's Gift`);
-  if (c.mega) parts.push(`${fmt.format(c.mega)} Mega`);
-  if (c.ultra) parts.push(`${fmt.format(c.ultra)} Ultra`);
-  if (c.golden) parts.push(`${fmt.format(c.golden)} Golden`);
+  if (c.mega) parts.push(`${fmt.format(c.mega)} Mega Gift`);
+  if (c.ultra) parts.push(`${fmt.format(c.ultra)} Ultra Gift`);
+  if (c.golden) parts.push(`${fmt.format(c.golden)} Golden Gift`);
   $("totalNote").textContent = parts.length ? t("plan.total", { list: parts.join(", ") }) : t("plan.empty");
+  // Kurzfassung der eingeklappten Quellen
+  $("moreSrcSum").textContent = t("plan.moreSum", { free: fmt.format(p.free + p.pass), tokens: fmt.format(p.tokens), golden: fmt.format(p.golden) });
 }
 if (state.plan) for (const [k, id] of Object.entries(PLAN_IDS)) if (state.plan[k] !== undefined) $(id).value = state.plan[k];
 for (const id of Object.values(PLAN_IDS)) {
@@ -632,7 +633,15 @@ function renderSim(sim) {
   });
   // Zeilen, die gerundet 0 ergeben, fallen weg
   const shown = res.filter(([, v]) => v / sim.runs >= 0.05);
-  $("resBody").innerHTML = shown.length ? shown.map(([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(resName(k))}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; }).join("") : `<tr><td colspan="2" class="mini">${t("plan.noCont")}</td></tr>`;
+  // Die vier wichtigsten offen, der Rest einklappbar
+  const MAIN = ["Credits", "Dublonen", "Kohle", "Stahl"];
+  const row = ([k, v]) => { const a = v / sim.runs; return `<tr><td>${esc(resName(k))}</td><td class="num">${a >= 100 ? fmt.format(Math.round(a)) : fmt1.format(a)}</td></tr>`; };
+  const main = shown.filter(([k]) => MAIN.includes(k)).sort((a, b) => MAIN.indexOf(a[0]) - MAIN.indexOf(b[0])), more = shown.filter(([k]) => !MAIN.includes(k));
+  $("resBody").innerHTML = shown.length ? (main.length ? main : more.slice(0, 4)).map(row).join("") : `<tr><td colspan="2" class="mini">${t("plan.noCont")}</td></tr>`;
+  const rest = main.length ? more : more.slice(4);
+  $("resMore").innerHTML = rest.map(row).join("");
+  $("resMoreWrap").hidden = !rest.length;
+  $("resMoreSum").textContent = t("plan.resMore", { n: fmt.format(rest.length) });
 }
 function readout(el, items) {
   el.innerHTML = items.map((it) => `<div><span class="k">${esc(it.k)}</span><span class="v${it.accent ? " accent" : ""}">${it.v}</span>${it.s ? `<span class="s">${it.s}</span>` : ""}</div>`).join("");
@@ -812,7 +821,6 @@ function renderRollState() {
   $("openBf").hidden = !inv.bf;
   $("openBf").innerHTML = `${esc(t("roll.openBf"))}<span class="count">${inv.bf}</span>`;
   const types = [$("rollSel").value, "golden"].concat(isRollBf() ? ["bf"] : []);
-  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
   $("rollStatus").textContent = t("roll.status", { list: types.map((ct) => `${label[ct]} ${rollCtx ? rollCtx.pity[ct] || 0 : 0}/${state.pity[ct]}`).join(" · ") });
 }
 const isRollBf = () => rollCtx && (rollCtx.inv.bf > 0 || (rollCtx.pity.bf || 0) > 0 || isEmpty(["GR", "GG"]));
@@ -860,7 +868,6 @@ function renderLoot() {
   const total = L ? Object.values(L.opened).reduce((a, b) => a + b, 0) : 0;
   $("rollLoot").hidden = !total;
   if (!total) return;
-  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
   const opened = ["ultra", "mega", "santa", "golden", "bf"].filter((ct) => L.opened[ct]).map((ct) => `${fmt.format(L.opened[ct])} ${label[ct]}`).join(" · ");
   const left = (g) => (rollCtx.inv[g] ? t("loot.notOpened", { n: fmt.format(rollCtx.inv[g]) }) : "");
   const eur = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "EUR" });
@@ -962,7 +969,6 @@ function drawOdds() {
   $("oddsNote").hidden = !f;
   if (!f) return;
   $("oddsNote").textContent = t("odds.note");
-  const label = { santa: "Santa's", mega: "Mega", ultra: "Ultra", golden: "Golden", bf: "Battle Forged" };
   const what = (opened) => ["ultra", "mega", "santa", "golden", "bf"].filter((ct) => opened[ct]).map((ct) => `${fmt.format(opened[ct])} ${label[ct]}`).join(" · ");
   const fp = (p, runs) => (p <= 0 ? `< ${fmtP(1 / runs)}` : p >= 1 ? `> ${fmtP(1 - 1 / runs)}` : fmtP(p));
   // data-label: auf schmalen Bildschirmen wird jede Zeile zur Karte mit Beschriftung je Wert
@@ -1401,9 +1407,12 @@ function renderTrkMissing() {
     const tiers = Object.keys(byTier).map(Number).sort((a, b) => b - a).map((tr) => `${ROMAN[tr]}: ${fmt.format(byTier[tr])}`).join(" · ");
     return `<div class="trk-mg">${head}<p class="trk-names">${esc(tiers)}</p></div>`;
   }).join("");
+  const n = GROUP_ORDER.reduce((a, g) => a + GROUP_SHIPS[g].filter((s) => !owned.has(s.key)).length, 0);
+  $("trkMissSum").textContent = t("trk.missSum", { n: fmt.format(n) });
 }
 
 function renderTrkLog() {
+  $("trkLogSum").textContent = t("trk.logSum", { n: fmt.format(tracker.entries.length) });
   const dt = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   $("trkLog").innerHTML = tracker.entries.length ? [...tracker.entries].reverse().map((e) => `<tr>
     <td>${esc(dt.format(e.at))}</td>

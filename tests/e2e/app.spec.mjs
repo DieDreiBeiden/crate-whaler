@@ -8,7 +8,8 @@ test("Stufen-Tabelle und Kurve werden ohne Fehler aufgebaut", async ({ page }) =
   await expect(page.locator("#needsBody tr")).toHaveCount(6);
   await expect(page.locator("#heroP50")).toHaveText(/\d/);
   await expect(page.locator("#heroP90")).toHaveText(/\d/);
-  await expect(page.locator('[data-box-pity="santa"]')).toHaveText(/100/);
+  // Garantie steht hinter dem „i“ der Container-Leiste
+  await expect(page.locator("#ctypeInfo")).toContainText("100");
   await expect(page.locator("#curvePlot svg path.line, #curvePlot svg path").first()).toBeVisible();
   // Klick auf eine Stufe hebt die Kurve hervor
   const row = page.locator("#needsBody tr[data-tier]").nth(1);
@@ -225,6 +226,8 @@ test("Gemeinsame Container-Wahl, Hinweise hinter „i“, Ressourcen ohne 0-Zeil
   await page.goto("/#plan");
   await expect(page.locator("#ctypeBar")).toBeHidden();
   // Hinweis: Klick öffnet, Esc schließt und gibt den Fokus zurück
+  // Gratis-Container stehen unter „Weitere Quellen“
+  await page.locator("#moreSrc > summary").click();
   const btn = page.locator('.info-btn[aria-controls="freeHint"]');
   await btn.click();
   await expect(page.locator("#freeHint")).toBeVisible();
@@ -298,5 +301,30 @@ test("Schnellcheck: Ziel „ein bestimmtes Schiff“ mit Suche", async ({ page }
   await page.locator('[data-qstep="3"]').click();
   await expect(page.locator(".qc-answer:not(.wait)")).toContainText("die Rodina", { timeout: 60_000 });
   await expect(page.locator(".qc-card strong").first()).toHaveText(/\d+ Paket/);
+  expect(errors).toEqual([]);
+});
+
+test("Minimal: Umschaltleiste, Reiter ohne Nummern, einklappbare Abschnitte mit Kurzfassung", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" }, "#plan");
+  await expect(page.locator("nav.tabs a .n")).toHaveCount(0);
+  await expect(page.locator("nav.tabs a").nth(1)).toHaveText("Stufen");
+  // Mein Plan: nur „Gekauft“ offen, Rest eingeklappt mit Kurzfassung
+  await expect(page.locator("#c-santa")).toBeVisible();
+  await expect(page.locator("#c-free")).toBeHidden();
+  await expect(page.locator("#moreSrcSum")).toContainText("8 gratis");
+  // Ressourcen: höchstens vier Zeilen offen
+  await expect(page.locator("#resBody tr").first()).toBeVisible();
+  expect(await page.locator("#resBody tr").count()).toBeLessThanOrEqual(4);
+  // Tracker: Abschnitte eingeklappt mit Anzahl
+  await page.goto("/#tracker");
+  await expect(page.locator("#trkLogSum")).toHaveText("0 Einträge");
+  await expect(page.locator("#trkMissSum")).toContainText("Schiffe");
+  await expect(page.locator("#trkMissing")).toBeHidden();
+  // Kaufplan: „Noch ein Paket kaufen?“ eingeklappt
+  await page.goto("/#kaufplan");
+  await expect(page.locator("#pityGrid")).toBeHidden();
+  await page.locator(".pity-more > summary").click();
+  await expect(page.locator("#pityGrid")).toBeVisible();
   expect(errors).toEqual([]);
 });

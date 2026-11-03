@@ -21,13 +21,13 @@ const SANTA_GROUPS = {
 };
 const B = (p, res) => ({ p, res });
 const CONTAINER_DEFS = {
-  ultra: { label: "Santa's Ultra Gift", pity: 7, comp: { "Stahl": 1250 }, slots: [
+  ultra: { label: "Ultra Gift", pity: 7, comp: { "Stahl": 1250 }, slots: [
     [B(.05, { "Dublonen": 2500 }), B(.40, { "Kohle": 6000 }), { p: .20, give: "golden" }, B(.03, { "Premium-Tage": 180 }),
      { p: .03, ship: "A" }, { p: .09, ship: "B" }, { p: .20, ship: "C" }],
     [B(1, { "Booster episch (6×)": 1 })],
     [B(.05, { "Dublonen": 2500 }), B(.81, { "Elite-Kommandanten-EP": 37500 }), B(.14, { "Kohle": 6000 })]
   ] },
-  mega: { label: "Santa's Mega Gift", pity: 15, comp: { "Stahl": 1250 }, slots: [
+  mega: { label: "Mega Gift", pity: 15, comp: { "Stahl": 1250 }, slots: [
     [B(.05, { "Dublonen": 2500 }), B(.08, { "Kohle": 12500 }), { p: .10, give: "golden" }, B(.01, { "Premium-Tage": 180 }),
      B(.10, { "Elite-Kommandanten-EP": 100000 }), B(.10, { "Credits": 2250000 }), B(.32, { "Booster selten (20×)": 1 }), B(.08, { "Booster episch (7×)": 1 }),
      { p: .01, ship: "A" }, { p: .03, ship: "B" }, { p: .12, ship: "C" }]

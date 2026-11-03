@@ -39,6 +39,8 @@ test("Tracker: Eintrag auswerten, Schiff gilt als im Hafen, Rückgängig und Spe
   await page.reload();
   await page.goto("/#tracker");
   await expect(page.locator("#trkLog tr")).toHaveCount(1);
+  // Verlauf ist eingeklappt
+  await page.locator("#trkLogWrap > summary").click();
   await page.locator("#trkUndo").click();
   await expect(page.locator("#trkEmpty")).toBeVisible();
   await page.goto("/#stufen");
