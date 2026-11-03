@@ -1145,9 +1145,10 @@ $("qcBody").addEventListener("input", (e) => {
 qcReady = true;
 
 // ---------- Reiter ----------
-const VIEWS = ["stufen", "kaufplan", "plan", "schiffe", "tracker", "schnell"];
+const VIEWS = ["schnell", "stufen", "kaufplan", "plan", "schiffe", "tracker"];
 function showView() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "stufen";
+  // Startansicht ist der Schnellcheck
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "schnell";
   for (const id of VIEWS) $("v-" + id).hidden = id !== v;
   $("ctypeBar").hidden = !CTYPE_VIEWS.includes(v);
   if (v === "tracker" && typeof renderTracker === "function") renderTracker();

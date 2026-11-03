@@ -14,14 +14,15 @@ export async function guard(page, { allow = [] } = {}) {
 }
 
 // Startet ohne Anmeldung im Modus „von Hand“
-export async function openManual(page, extra = {}) {
+export async function openManual(page, extra = {}, hash = "#stufen") {
   await page.addInitScript((kv) => {
     if (sessionStorage.getItem("e2e:init")) return;
     sessionStorage.setItem("e2e:init", "1");
     localStorage.setItem("santa26:source", '"manual"');
     for (const [k, v] of Object.entries(kv)) localStorage.setItem("santa26:" + k, JSON.stringify(v));
   }, extra);
-  await page.goto("/");
+  // Startansicht ist der Schnellcheck; die Tests beginnen standardmäßig auf „Pro Stufe“
+  await page.goto("/" + hash);
   await page.locator("#app").waitFor();
-  await page.locator("#needsBody tr").first().waitFor();
+  await page.locator("#needsBody tr").first().waitFor({ state: "attached" });
 }

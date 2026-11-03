@@ -272,3 +272,13 @@ test("Schnellcheck: Ziel → Bestand → Antwort, gleiche Zahlen wie im Kaufplan
   await expect(page.locator("#qcBody h3")).toHaveText("Was willst du bekommen?");
   expect(errors).toEqual([]);
 });
+
+test("Startansicht ist der Schnellcheck, erster Reiter", async ({ page }) => {
+  const errors = await guard(page);
+  await openManual(page, { lang: "de" }, "");
+  await expect(page.locator("#v-schnell")).toBeVisible();
+  await expect(page.locator("nav.tabs a").first()).toHaveAttribute("data-view", "schnell");
+  await expect(page.locator("nav.tabs a").first()).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("#qcBody h3")).toBeVisible();
+  expect(errors).toEqual([]);
+});
